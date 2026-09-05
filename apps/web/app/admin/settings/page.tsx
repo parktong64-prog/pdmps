@@ -2,10 +2,9 @@
 
 import { useRef, useState } from "react";
 
-type Stab = "procedure" | "staff" | "templates" | "videos";
+type Stab = "procedure" | "templates" | "videos";
 const TABS: { key: Stab; label: string }[] = [
   { key: "procedure", label: "시술 항목" },
-  { key: "staff", label: "상담사 계정" },
   { key: "templates", label: "알림 템플릿" },
   { key: "videos", label: "시술 안내 영상" },
 ];
@@ -17,7 +16,7 @@ export default function SettingsPage() {
     <div>
       <div className="mb-6 flex items-end justify-between">
         <h1 className="font-[family-name:var(--font-display)] text-[1.4rem] font-bold">설정</h1>
-        <div className="text-[0.8rem] text-[var(--ink-soft)]">시술 항목 · 상담사 계정 · 알림 템플릿 · 시술 영상</div>
+        <div className="text-[0.8rem] text-[var(--ink-soft)]">시술 항목 · 알림 템플릿 · 시술 영상</div>
       </div>
 
       <div className="mb-[18px] flex flex-wrap gap-5 border-b border-[var(--line)]">
@@ -37,7 +36,6 @@ export default function SettingsPage() {
 
       <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-[18px]">
         {stab === "procedure" && <ProcedureTab />}
-        {stab === "staff" && <StaffTab />}
         {stab === "templates" && <TemplatesTab />}
         {stab === "videos" && <VideosTab />}
       </div>
@@ -130,114 +128,6 @@ function Field({ label, note, children }: { label: string; note?: string; childr
       <label className="mb-1.5 block text-[0.8rem] font-bold">{label}</label>
       {children}
       {note && <div className="mt-1.5 text-[0.7rem] text-[var(--ink-soft)]">{note}</div>}
-    </div>
-  );
-}
-
-type Staff = { name: string; role: string; phone: string; active: boolean };
-
-function StaffTab() {
-  const [staff, setStaff] = useState<Staff[]>([
-    { name: "박동만", role: "원장", phone: "010-1111-2222", active: true },
-    { name: "김민지", role: "상담실장", phone: "010-3333-4444", active: true },
-    { name: "정하늘", role: "상담사", phone: "010-5555-6666", active: true },
-  ]);
-  const [showAdd, setShowAdd] = useState(false);
-  const [newName, setNewName] = useState("");
-  const [newRole, setNewRole] = useState("상담사");
-  const [newPhone, setNewPhone] = useState("");
-
-  function toggleActive(idx: number) {
-    setStaff((prev) => prev.map((s, i) => (i === idx ? { ...s, active: !s.active } : s)));
-  }
-
-  function addStaff() {
-    if (!newName.trim()) return;
-    setStaff((prev) => [...prev, { name: newName.trim(), role: newRole, phone: newPhone.trim() || "-", active: true }]);
-    setNewName("");
-    setNewPhone("");
-    setShowAdd(false);
-  }
-
-  return (
-    <div>
-      <table className="mb-4 w-full border-collapse text-[0.82rem]">
-        <thead>
-          <tr>
-            {["이름", "역할", "연락처", "상태"].map((h) => (
-              <th key={h} className="border-b border-[var(--line)] px-2.5 pb-2.5 text-left text-[0.7rem] font-semibold tracking-[0.03em] text-[var(--ink-soft)] uppercase">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {staff.map((s, i) => (
-            <tr key={i}>
-              <td className="border-b border-[var(--line)] px-2.5 py-3 font-semibold">{s.name}</td>
-              <td className="border-b border-[var(--line)] px-2.5 py-3">{s.role}</td>
-              <td className="border-b border-[var(--line)] px-2.5 py-3">{s.phone}</td>
-              <td className="border-b border-[var(--line)] px-2.5 py-3">
-                <button
-                  type="button"
-                  onClick={() => toggleActive(i)}
-                  className="rounded-full px-2.5 py-1 text-[0.68rem] font-bold"
-                  style={{
-                    background: s.active ? "var(--st-done-soft)" : "var(--st-cancel-soft)",
-                    color: s.active ? "var(--st-done)" : "var(--st-cancel)",
-                  }}
-                >
-                  {s.active ? "재직" : "비활성"}
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {!showAdd ? (
-        <button
-          type="button"
-          onClick={() => setShowAdd(true)}
-          className="rounded-lg bg-[var(--accent-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--accent-ink)]"
-        >
-          + 상담사 추가
-        </button>
-      ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="text"
-            placeholder="이름"
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            className="rounded-lg border border-[var(--line)] bg-[var(--card-bg)] px-2.5 py-2 text-[0.82rem] outline-none focus:border-[var(--accent)]"
-          />
-          <select
-            value={newRole}
-            onChange={(e) => setNewRole(e.target.value)}
-            className="rounded-lg border border-[var(--line)] bg-[var(--card-bg)] px-2.5 py-2 text-[0.82rem]"
-          >
-            <option>상담사</option>
-            <option>상담실장</option>
-            <option>원장</option>
-            <option>관리자</option>
-          </select>
-          <input
-            type="text"
-            placeholder="010-0000-0000"
-            value={newPhone}
-            onChange={(e) => setNewPhone(e.target.value)}
-            className="rounded-lg border border-[var(--line)] bg-[var(--card-bg)] px-2.5 py-2 text-[0.82rem] outline-none focus:border-[var(--accent)]"
-          />
-          <button
-            type="button"
-            onClick={addStaff}
-            className="rounded-lg bg-[var(--accent-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--accent-ink)]"
-          >
-            추가
-          </button>
-        </div>
-      )}
     </div>
   );
 }

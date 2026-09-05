@@ -49,8 +49,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
 
         <div className="mt-auto hidden border-t border-white/10 pt-3 text-[0.76rem] text-[var(--sidebar-muted)] md:block">
-          <b className="block font-semibold text-[var(--sidebar-ink)]">김민지</b>
-          상담실장 · 로그아웃
+          <b className="block font-semibold text-[var(--sidebar-ink)]">박동만</b>
+          원장 · 로그아웃
         </div>
       </nav>
 

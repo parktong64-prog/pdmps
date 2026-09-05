@@ -3,17 +3,17 @@
 import { useState } from "react";
 import { StatusPill, type StatusKey } from "@/lib/admin/status";
 
-type Row = { name: string; channel: string; status: StatusKey; staff: string; date: string; flagged: boolean };
+type Row = { name: string; channel: string; status: StatusKey; date: string; flagged: boolean };
 
 const ROWS: Row[] = [
-  { name: "이은지", channel: "웹", status: "review", staff: "미배정", date: "09.05", flagged: true },
-  { name: "박서연", channel: "앱", status: "progress", staff: "김민지", date: "09.05", flagged: false },
-  { name: "최유리", channel: "웹", status: "done", staff: "정하늘", date: "09.04", flagged: false },
-  { name: "한소민", channel: "앱", status: "pending", staff: "미배정", date: "09.04", flagged: false },
-  { name: "오지훈", channel: "웹", status: "review", staff: "미배정", date: "09.04", flagged: true },
-  { name: "배수아", channel: "앱", status: "progress", staff: "정하늘", date: "09.03", flagged: false },
-  { name: "문태현", channel: "웹", status: "pending", staff: "미배정", date: "09.03", flagged: false },
-  { name: "강하은", channel: "앱", status: "cancel", staff: "김민지", date: "08.30", flagged: false },
+  { name: "이은지", channel: "웹", status: "review", date: "09.05", flagged: true },
+  { name: "박서연", channel: "앱", status: "progress", date: "09.05", flagged: false },
+  { name: "최유리", channel: "웹", status: "done", date: "09.04", flagged: false },
+  { name: "한소민", channel: "앱", status: "pending", date: "09.04", flagged: false },
+  { name: "오지훈", channel: "웹", status: "review", date: "09.04", flagged: true },
+  { name: "배수아", channel: "앱", status: "progress", date: "09.03", flagged: false },
+  { name: "문태현", channel: "웹", status: "pending", date: "09.03", flagged: false },
+  { name: "강하은", channel: "앱", status: "cancel", date: "08.30", flagged: false },
 ];
 
 const STATUS_LABEL: Record<StatusKey, string> = {
@@ -74,7 +74,7 @@ export default function ConsultationsPage() {
           <table className="w-full min-w-[480px] border-collapse text-[0.82rem]">
             <thead>
               <tr>
-                {["환자", "채널", "상태", "담당", "신청일"].map((h) => (
+                {["환자", "채널", "상태", "신청일"].map((h) => (
                   <th
                     key={h}
                     className="border-b border-[var(--line)] px-2.5 pb-2.5 text-left text-[0.7rem] font-semibold tracking-[0.03em] text-[var(--ink-soft)] uppercase"
@@ -99,7 +99,6 @@ export default function ConsultationsPage() {
                   <td className="border-b border-[var(--line)] px-2.5 py-3">
                     <StatusPill status={r.status} label={STATUS_LABEL[r.status]} />
                   </td>
-                  <td className="border-b border-[var(--line)] px-2.5 py-3">{r.staff}</td>
                   <td className="border-b border-[var(--line)] px-2.5 py-3">{r.date}</td>
                 </tr>
               ))}
