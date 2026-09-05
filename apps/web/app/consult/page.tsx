@@ -23,6 +23,8 @@ export default function ConsultPage() {
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    // localStorage는 SSR에서 접근 불가하므로 마운트 후 클라이언트에서만 읽어 상태에 반영한다.
+    /* eslint-disable react-hooks/set-state-in-effect */
     try {
       if (localStorage.getItem(STORAGE_KEY) === "1") {
         setProgress(100);
@@ -31,6 +33,7 @@ export default function ConsultPage() {
     } catch {
       // 개인정보/시크릿 모드 등으로 접근 불가할 수 있음 — 무시하고 미시청 상태로 진행
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };

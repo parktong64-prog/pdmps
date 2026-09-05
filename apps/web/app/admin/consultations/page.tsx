@@ -1,28 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StatusPill, type StatusKey } from "@/lib/admin/status";
-
-type Row = { name: string; channel: string; status: StatusKey; date: string; flagged: boolean };
-
-const ROWS: Row[] = [
-  { name: "이은지", channel: "웹", status: "review", date: "09.05", flagged: true },
-  { name: "박서연", channel: "앱", status: "progress", date: "09.05", flagged: false },
-  { name: "최유리", channel: "웹", status: "done", date: "09.04", flagged: false },
-  { name: "한소민", channel: "앱", status: "pending", date: "09.04", flagged: false },
-  { name: "오지훈", channel: "웹", status: "review", date: "09.04", flagged: true },
-  { name: "배수아", channel: "앱", status: "progress", date: "09.03", flagged: false },
-  { name: "문태현", channel: "웹", status: "pending", date: "09.03", flagged: false },
-  { name: "강하은", channel: "앱", status: "cancel", date: "08.30", flagged: false },
-];
-
-const STATUS_LABEL: Record<StatusKey, string> = {
-  pending: "대기",
-  progress: "응대중",
-  review: "확인필요",
-  done: "예약완료",
-  cancel: "취소",
-};
+import { getConsultations, type ConsultationRow } from "@/lib/admin/actions";
 
 const FILTERS: { key: StatusKey | "all"; label: string }[] = [
   { key: "all", label: "전체" },
@@ -34,19 +14,29 @@ const FILTERS: { key: StatusKey | "all"; label: string }[] = [
 ];
 
 export default function ConsultationsPage() {
+  const [rowsAll, setRowsAll] = useState<ConsultationRow[] | null>(null);
   const [filter, setFilter] = useState<StatusKey | "all">("all");
-  const rows = filter === "all" ? ROWS : ROWS.filter((r) => r.status === filter);
+
+  useEffect(() => {
+    getConsultations().then(setRowsAll);
+  }, []);
+
+  if (rowsAll === null) {
+    return <div className="py-10 text-center text-[0.84rem] text-[var(--ink-soft)]">불러오는 중…</div>;
+  }
+
+  const rows = filter === "all" ? rowsAll : rowsAll.filter((r) => r.status === filter);
 
   return (
     <div>
       <div className="mb-6 flex items-end justify-between">
         <h1 className="font-[family-name:var(--font-display)] text-[1.4rem] font-bold">상담 관리</h1>
-        <div className="text-[0.8rem] text-[var(--ink-soft)]">전체 32건</div>
+        <div className="text-[0.8rem] text-[var(--ink-soft)]">전체 {rowsAll.length}건</div>
       </div>
 
       <div className="mb-4 flex flex-wrap gap-2">
         {FILTERS.map((f) => {
-          const count = f.key === "all" ? ROWS.length : ROWS.filter((r) => r.status === f.key).length;
+          const count = f.key === "all" ? rowsAll.length : rowsAll.filter((r) => r.status === f.key).length;
           const active = filter === f.key;
           return (
             <button
@@ -85,8 +75,8 @@ export default function ConsultationsPage() {
               </tr>
             </thead>
             <tbody>
-              {rows.map((r, i) => (
-                <tr key={i} className="hover:bg-[var(--accent-soft)]">
+              {rows.map((r) => (
+                <tr key={r.id} className="hover:bg-[var(--accent-soft)]">
                   <td className="border-b border-[var(--line)] px-2.5 py-3 font-semibold">
                     {r.name}
                     {r.flagged && (
@@ -97,7 +87,7 @@ export default function ConsultationsPage() {
                   </td>
                   <td className="border-b border-[var(--line)] px-2.5 py-3">{r.channel}</td>
                   <td className="border-b border-[var(--line)] px-2.5 py-3">
-                    <StatusPill status={r.status} label={STATUS_LABEL[r.status]} />
+                    <StatusPill status={r.status} label={r.statusLabel} />
                   </td>
                   <td className="border-b border-[var(--line)] px-2.5 py-3">{r.date}</td>
                 </tr>

@@ -21,3 +21,18 @@ export function StatusPill({ status, label }: { status: StatusKey; label: string
     </span>
   );
 }
+
+/** DB의 consultations.status 값을 화면 표시용 StatusKey/라벨로 변환 */
+export type ConsultationDbStatus = "pending" | "needs_review" | "in_progress" | "reserved" | "cancelled";
+
+const CONSULTATION_STATUS_META: Record<ConsultationDbStatus, { key: StatusKey; label: string }> = {
+  pending: { key: "pending", label: "대기" },
+  needs_review: { key: "review", label: "확인필요" },
+  in_progress: { key: "progress", label: "응대중" },
+  reserved: { key: "done", label: "예약완료" },
+  cancelled: { key: "cancel", label: "취소" },
+};
+
+export function consultationStatusMeta(status: string) {
+  return CONSULTATION_STATUS_META[status as ConsultationDbStatus] ?? { key: "pending" as StatusKey, label: status };
+}

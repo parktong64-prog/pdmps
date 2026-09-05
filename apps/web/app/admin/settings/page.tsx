@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { getProcedureSettings, updateProcedureSettings, getActiveVideo, updateVideoTitle } from "@/lib/admin/actions";
 
 type Stab = "procedure" | "templates" | "videos";
 const TABS: { key: Stab; label: string }[] = [
@@ -48,21 +49,48 @@ function fmt(n: number) {
 }
 
 function ProcedureTab() {
-  const [name, setName] = useState("Face Lift");
-  const [price, setPrice] = useState(27500000);
-  const [deposit, setDeposit] = useState(50000);
+  const [id, setId] = useState<string | null>(null);
+  const [name, setName] = useState("");
   const [active, setActive] = useState(true);
-  const [priceInput, setPriceInput] = useState(fmt(27500000));
-  const [depositInput, setDepositInput] = useState(fmt(50000));
+  const [priceInput, setPriceInput] = useState("");
+  const [depositInput, setDepositInput] = useState("");
   const [showToast, setShowToast] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  function handleSave() {
-    setPrice(Number(priceInput.replace(/\D/g, "")) || price);
-    setDeposit(Number(depositInput.replace(/\D/g, "")) || deposit);
-    setShowToast(true);
-    if (toastTimer.current) clearTimeout(toastTimer.current);
-    toastTimer.current = setTimeout(() => setShowToast(false), 2200);
+  useEffect(() => {
+    getProcedureSettings().then((p) => {
+      if (p) {
+        setId(p.id);
+        setName(p.name);
+        setActive(p.is_active);
+        setPriceInput(fmt(p.base_price));
+        setDepositInput(fmt(p.deposit_amount));
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  async function handleSave() {
+    if (!id) return;
+    setSaving(true);
+    try {
+      const base_price = Number(priceInput.replace(/\D/g, "")) || 0;
+      const deposit_amount = Number(depositInput.replace(/\D/g, "")) || 0;
+      await updateProcedureSettings({ id, name, base_price, deposit_amount, is_active: active });
+      setPriceInput(fmt(base_price));
+      setDepositInput(fmt(deposit_amount));
+      setShowToast(true);
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+      toastTimer.current = setTimeout(() => setShowToast(false), 2200);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return <div className="py-6 text-center text-[0.82rem] text-[var(--ink-soft)]">불러오는 중…</div>;
   }
 
   return (
@@ -109,10 +137,11 @@ function ProcedureTab() {
       <div className="flex items-center gap-3">
         <button
           type="button"
+          disabled={saving}
           onClick={handleSave}
-          className="rounded-lg bg-[var(--accent)] px-[18px] py-2.5 text-[0.84rem] font-bold text-white hover:brightness-[1.06]"
+          className="rounded-lg bg-[var(--accent)] px-[18px] py-2.5 text-[0.84rem] font-bold text-white hover:brightness-[1.06] disabled:opacity-60"
         >
-          변경사항 저장
+          {saving ? "저장 중…" : "변경사항 저장"}
         </button>
         <span className={`text-[0.78rem] font-semibold text-[var(--st-done)] transition-opacity ${showToast ? "opacity-100" : "opacity-0"}`}>
           저장되었습니다
@@ -216,17 +245,36 @@ function TemplatesTab() {
   );
 }
 
+function formatDuration(sec: number | null) {
+  if (!sec) return "-";
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
 function VideosTab() {
-  const [video, setVideo] = useState({
-    title: "Face Lift 과정 안내",
-    duration: "3:24",
-    registered: "2026.08.20",
-  });
+  const [id, setId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [durationSec, setDurationSec] = useState<number | null>(null);
+  const [isActive, setIsActive] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [progress, setProgress] = useState<number | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    getActiveVideo().then((v) => {
+      if (v) {
+        setId(v.id);
+        setTitle(v.title);
+        setDurationSec(v.duration_sec);
+        setIsActive(v.is_active);
+      }
+      setLoading(false);
+    });
+  }, []);
+
   function handleFile(file: File | null) {
-    if (!file) return;
+    if (!file || !id) return;
     setProgress(0);
     let pct = 0;
     const timer = setInterval(() => {
@@ -234,45 +282,59 @@ function VideosTab() {
       setProgress(Math.min(pct, 100));
       if (pct >= 100) {
         clearInterval(timer);
-        setVideo({ title: file.name.replace(/\.[^.]+$/, ""), duration: "3:10", registered: "2026.09.05" });
+        const newTitle = file.name.replace(/\.[^.]+$/, "");
+        updateVideoTitle(id, newTitle).then(() => setTitle(newTitle));
         setProgress(null);
       }
     }, 150);
   }
 
+  if (loading) {
+    return <div className="py-6 text-center text-[0.82rem] text-[var(--ink-soft)]">불러오는 중…</div>;
+  }
+
+  if (!id) {
+    return <div className="py-6 text-center text-[0.82rem] text-[var(--ink-soft)]">등록된 안내 영상이 없습니다.</div>;
+  }
+
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3.5 rounded-xl border border-[var(--line)] p-4">
-      <div>
-        <div className="text-[0.88rem] font-bold">{video.title}</div>
-        <div className="mt-1 text-[0.76rem] text-[var(--ink-soft)]">
-          {progress !== null ? (
-            <>
-              업로드 중…
-              <div className="mt-1.5 h-[5px] w-[160px] overflow-hidden rounded-full bg-[var(--line)]">
-                <div className="h-full bg-[var(--accent)] transition-[width] duration-100" style={{ width: `${progress}%` }} />
-              </div>
-            </>
-          ) : (
-            <>
-              재생시간 {video.duration} · 등록일 {video.registered} · 노출중
-            </>
-          )}
+    <div>
+      <div className="flex flex-wrap items-center justify-between gap-3.5 rounded-xl border border-[var(--line)] p-4">
+        <div>
+          <div className="text-[0.88rem] font-bold">{title}</div>
+          <div className="mt-1 text-[0.76rem] text-[var(--ink-soft)]">
+            {progress !== null ? (
+              <>
+                업로드 중…
+                <div className="mt-1.5 h-[5px] w-[160px] overflow-hidden rounded-full bg-[var(--line)]">
+                  <div className="h-full bg-[var(--accent)] transition-[width] duration-100" style={{ width: `${progress}%` }} />
+                </div>
+              </>
+            ) : (
+              <>
+                재생시간 {formatDuration(durationSec)} · {isActive ? "노출중" : "비노출"}
+              </>
+            )}
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={() => fileInput.current?.click()}
+          className="rounded-lg bg-[var(--accent-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--accent-ink)]"
+        >
+          제목 변경(파일명 반영)
+        </button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept="video/*"
+          hidden
+          onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+        />
       </div>
-      <button
-        type="button"
-        onClick={() => fileInput.current?.click()}
-        className="rounded-lg bg-[var(--accent-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--accent-ink)]"
-      >
-        새 영상으로 교체
-      </button>
-      <input
-        ref={fileInput}
-        type="file"
-        accept="video/*"
-        hidden
-        onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-      />
+      <p className="mt-2.5 text-[0.7rem] text-[var(--ink-soft)]">
+        실제 영상 파일 업로드·재생 시간 교체는 Storage 연동 후 지원됩니다. 지금은 선택한 파일명으로 제목만 갱신합니다.
+      </p>
     </div>
   );
 }
