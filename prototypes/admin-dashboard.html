@@ -302,6 +302,19 @@
   }
   .photo-note{font-size:.72rem;color:var(--ink-soft);margin-top:12px;}
 
+  /* 결제·매출 */
+  .chart-panel{margin-bottom:16px;}
+  .chart-title{font-size:.82rem;font-weight:700;margin-bottom:16px;}
+  .chart-title span{font-weight:400;color:var(--ink-soft);font-size:.76rem;margin-left:6px;}
+  .rev-bar{transition:opacity .1s;}
+  .rev-bar:hover{opacity:.8;}
+  .rev-axis-label{font-family:var(--font-mono);font-size:9px;fill:var(--ink-soft);}
+  .rev-value-label{font-family:var(--font-mono);font-size:10px;font-weight:600;fill:var(--ink);}
+
+  .pay-type-tag{font-size:.68rem;color:var(--ink-soft);background:var(--page-bg);border:1px solid var(--line);padding:2px 8px;border-radius:100px;}
+  .amt-cell{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600;}
+  .norefund-note{font-size:.7rem;color:var(--ink-faint);}
+
   @media (max-width:860px){
     .shell{flex-direction:column;}
     .sidebar{width:100%;flex-direction:row;overflow-x:auto;padding:14px;}
@@ -323,7 +336,7 @@
     <div class="nav-item" data-view="reservations"><span class="dot"></span>예약 관리</div>
     <div class="nav-item" data-view="schedule"><span class="dot"></span>일정 설정</div>
     <div class="nav-item" data-view="patients"><span class="dot"></span>환자 관리</div>
-    <div class="nav-item" data-disabled><span class="dot"></span>결제·매출<span class="soon">준비중</span></div>
+    <div class="nav-item" data-view="payments"><span class="dot"></span>결제·매출</div>
     <div class="nav-item" data-disabled><span class="dot"></span>설정<span class="soon">준비중</span></div>
 
     <div class="sidebar-foot"><b>김민지</b>상담실장 · 로그아웃</div>
@@ -505,6 +518,46 @@
 
           <div id="pd-tab-body"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- 결제·매출 관리 -->
+    <div class="view" id="view-payments">
+      <div class="topbar">
+        <h1>결제·매출 관리</h1>
+        <div class="date">2026년 9월</div>
+      </div>
+
+      <div class="tiles">
+        <div class="tile"><div class="lbl">이번달 매출</div><div class="val">18.4M</div><div class="delta up">▲ 12%</div></div>
+        <div class="tile"><div class="lbl">이번달 결제건수</div><div class="val">42</div><div class="delta up">▲ 5건</div></div>
+        <div class="tile"><div class="lbl">환불액</div><div class="val">380K</div><div class="delta flat">시술비 환불 1건</div></div>
+        <div class="tile"><div class="lbl">결제 성공률</div><div class="val">97.6%</div><div class="delta up">▲ 0.4p</div></div>
+      </div>
+
+      <div class="panel chart-panel">
+        <div class="chart-title">최근 7일 매출 추이<span>단위: 원</span></div>
+        <svg viewBox="0 0 560 170" width="100%" role="img" aria-label="최근 7일 매출 막대그래프">
+          <line x1="30" y1="138" x2="550" y2="138" style="stroke:var(--line);stroke-width:1"></line>
+          <!-- bars: value, x -->
+          <g id="rev-bars"></g>
+        </svg>
+      </div>
+
+      <div class="panel">
+        <div class="filter-tabs" id="pay-filter-tabs">
+          <button class="filter-tab active" data-filter="all">전체</button>
+          <button class="filter-tab" data-filter="paid">결제완료</button>
+          <button class="filter-tab" data-filter="pending">대기</button>
+          <button class="filter-tab" data-filter="failed">실패</button>
+          <button class="filter-tab" data-filter="refunded">환불</button>
+        </div>
+        <table class="dtable">
+          <thead>
+            <tr><th>환자</th><th>종류</th><th>금액</th><th>결제수단</th><th>결제일</th><th>상태</th><th>액션</th></tr>
+          </thead>
+          <tbody id="pay-tbody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -1066,6 +1119,128 @@
     });
 
     renderList();
+  })();
+
+  // ---------- 결제·매출 관리 ----------
+  (function(){
+    const REVENUE = [
+      { d: '8/30', v: 1250000 },
+      { d: '8/31', v: 2600000 },
+      { d: '9/1', v: 1800000 },
+      { d: '9/2', v: 4250000 },
+      { d: '9/3', v: 900000 },
+      { d: '9/4', v: 3200000 },
+      { d: '9/5', v: 2100000 },
+    ];
+
+    const bars = document.getElementById('rev-bars');
+    if (bars) {
+      const max = Math.max(...REVENUE.map((r) => r.v));
+      const baseY = 138, topY = 14, chartLeft = 40, chartRight = 550;
+      const gap = 14;
+      const barW = (chartRight - chartLeft - gap * (REVENUE.length - 1)) / REVENUE.length;
+      REVENUE.forEach((r, i) => {
+        const x = chartLeft + i * (barW + gap);
+        const h = Math.max(4, (r.v / max) * (baseY - topY));
+        const y = baseY - h;
+        const isMax = r.v === max;
+
+        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rect.setAttribute('x', x); rect.setAttribute('y', y);
+        rect.setAttribute('width', barW); rect.setAttribute('height', h);
+        rect.setAttribute('rx', 4);
+        rect.setAttribute('class', 'rev-bar');
+        rect.setAttribute('style', 'fill:var(--accent)');
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = r.d + ' · ' + r.v.toLocaleString() + '원';
+        rect.appendChild(title);
+        bars.appendChild(rect);
+
+        if (isMax) {
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          label.setAttribute('x', x + barW / 2); label.setAttribute('y', y - 6);
+          label.setAttribute('text-anchor', 'middle');
+          label.setAttribute('class', 'rev-value-label');
+          label.textContent = (r.v / 10000).toLocaleString() + '만';
+          bars.appendChild(label);
+        }
+
+        const axisLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        axisLabel.setAttribute('x', x + barW / 2); axisLabel.setAttribute('y', 152);
+        axisLabel.setAttribute('text-anchor', 'middle');
+        axisLabel.setAttribute('class', 'rev-axis-label');
+        axisLabel.textContent = r.d;
+        bars.appendChild(axisLabel);
+      });
+    }
+
+    const PAYMENTS = [
+      { patient: '이은지', type: '예약금', amount: 50000, method: '-', date: '09.05', status: 'pending', refundable: false },
+      { patient: '박서연', type: '예약금', amount: 50000, method: '카카오페이', date: '09.04', status: 'paid', refundable: false },
+      { patient: '최유리', type: '예약금', amount: 50000, method: '카드', date: '09.04', status: 'paid', refundable: false },
+      { patient: '최유리', type: '시술비', amount: 4200000, method: '카드', date: '09.02', status: 'paid', refundable: true },
+      { patient: '한소민', type: '예약금', amount: 50000, method: '-', date: '09.04', status: 'pending', refundable: false },
+      { patient: '오지훈', type: '예약금', amount: 50000, method: '카카오페이', date: '09.03', status: 'paid', refundable: false },
+      { patient: '배수아', type: '예약금', amount: 50000, method: '-', date: '09.03', status: 'pending', refundable: false },
+      { patient: '문태현', type: '예약금', amount: 50000, method: '카드', date: '09.03', status: 'failed', refundable: false },
+      { patient: '강하은', type: '예약금', amount: 50000, method: '카드', date: '08.29', status: 'paid_noref', refundable: false },
+      { patient: '김도윤', type: '예약금', amount: 50000, method: '카드', date: '08.15', status: 'paid', refundable: false },
+      { patient: '김도윤', type: '시술비', amount: 3800000, method: '카드', date: '08.20', status: 'refunded', refundable: false },
+    ];
+    const STATUS_META = {
+      paid: ['결제완료', 'status-done'],
+      paid_noref: ['결제완료', 'status-done'],
+      pending: ['대기', 'status-pending'],
+      failed: ['실패', 'status-cancel'],
+      refunded: ['환불', 'status-review'],
+    };
+    const FILTER_MAP = { all: null, paid: ['paid', 'paid_noref'], pending: ['pending'], failed: ['failed'], refunded: ['refunded'] };
+
+    const payTbody = document.getElementById('pay-tbody');
+    const payFilterTabs = document.getElementById('pay-filter-tabs');
+
+    function renderPayments(filter) {
+      const allow = FILTER_MAP[filter];
+      const rows = allow ? PAYMENTS.filter((p) => allow.includes(p.status)) : PAYMENTS;
+      payTbody.innerHTML = '';
+      rows.forEach((p, i) => {
+        const [label, cls] = STATUS_META[p.status];
+        const tr = document.createElement('tr');
+        let action = '<span class="norefund-note">-</span>';
+        if (p.type === '예약금') action = '<span class="norefund-note">환불 불가</span>';
+        else if (p.status === 'paid' && p.refundable) action = '<button type="button" class="btn-outline2" data-refund="' + i + '">환불 처리</button>';
+        else if (p.status === 'refunded') action = '<span class="norefund-note">환불 완료</span>';
+
+        tr.innerHTML =
+          '<td class="name-cell">' + p.patient + '</td>' +
+          '<td><span class="pay-type-tag">' + p.type + '</span></td>' +
+          '<td class="amt-cell">' + p.amount.toLocaleString() + '원</td>' +
+          '<td>' + p.method + '</td>' +
+          '<td>' + p.date + '</td>' +
+          '<td><span class="status-pill ' + cls + '"><i></i>' + label + (p.status === 'paid_noref' ? ' (환불불가)' : '') + '</span></td>' +
+          '<td>' + action + '</td>';
+        payTbody.appendChild(tr);
+      });
+
+      payTbody.querySelectorAll('[data-refund]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.dataset.refund);
+          PAYMENTS[idx].status = 'refunded';
+          PAYMENTS[idx].refundable = false;
+          renderPayments(payFilterTabs.querySelector('.filter-tab.active').dataset.filter);
+        });
+      });
+    }
+
+    payFilterTabs.addEventListener('click', (e) => {
+      const btn = e.target.closest('.filter-tab');
+      if (!btn) return;
+      payFilterTabs.querySelectorAll('.filter-tab').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderPayments(btn.dataset.filter);
+    });
+
+    renderPayments('all');
   })();
 })();
 </script>
