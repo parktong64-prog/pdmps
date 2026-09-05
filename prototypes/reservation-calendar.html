@@ -1,0 +1,242 @@
+<title>예약 캘린더</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  :root{
+    --page-bg:#f6f1ee;
+    --card-bg:#ffffff;
+    --ink:#2a1f22;
+    --ink-soft:#6f6265;
+    --line:#e8e0dd;
+    --accent:#a1546a;
+    --accent-soft:#f4e6ea;
+    --accent-ink:#7d3f52;
+    --focus-ring:rgba(161,84,106,.28);
+    --font-display:'Noto Serif KR',ui-serif,'Nanum Myeongjo',serif;
+    --font-body:'Noto Sans KR',-apple-system,'Malgun Gothic',sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --page-bg:#1b1517; --card-bg:#241d20; --ink:#f3ebe9; --ink-soft:#b6a8ac;
+      --line:#3a2f33; --accent:#e08aa1; --accent-soft:#3a2530; --accent-ink:#f0aabb;
+      --focus-ring:rgba(224,138,161,.28);
+    }
+  }
+  :root[data-theme="dark"]{
+    --page-bg:#1b1517; --card-bg:#241d20; --ink:#f3ebe9; --ink-soft:#b6a8ac;
+    --line:#3a2f33; --accent:#e08aa1; --accent-soft:#3a2530; --accent-ink:#f0aabb;
+    --focus-ring:rgba(224,138,161,.28);
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page-bg);color:var(--ink);font-family:var(--font-body);}
+  h1,h2,p{text-wrap:balance;margin:0;}
+
+  .wrap{max-width:560px;margin:0 auto;padding:48px 20px 96px;}
+
+  .eyebrow{
+    font-size:.72rem;letter-spacing:.14em;color:var(--accent-ink);font-weight:700;
+    text-transform:uppercase;margin-bottom:10px;
+  }
+  .hero h1{font-family:var(--font-display);font-size:1.6rem;font-weight:700;margin-bottom:10px;}
+  .hero p{font-size:.88rem;color:var(--ink-soft);line-height:1.65;margin-bottom:28px;}
+
+  .card{background:var(--card-bg);border:1px solid var(--line);border-radius:16px;padding:20px;}
+  .card + .card{margin-top:16px;}
+
+  .card-title{font-size:.84rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+  .card-title .step{
+    width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);
+    font-family:var(--font-mono);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;
+  }
+
+  /* 날짜 스트립 */
+  .date-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin:0 -2px;}
+  .date-pill{
+    flex:0 0 auto;width:52px;padding:10px 0;border-radius:11px;border:1px solid var(--line);
+    background:var(--card-bg);text-align:center;cursor:pointer;transition:border-color .15s, background .15s;
+  }
+  .date-pill .d{font-size:.66rem;color:var(--ink-soft);}
+  .date-pill .n{font-family:var(--font-mono);font-size:1rem;font-weight:600;color:var(--ink);margin-top:2px;}
+  .date-pill:hover:not(.closed){border-color:var(--accent);}
+  .date-pill.active{background:var(--accent);border-color:var(--accent);}
+  .date-pill.active .d, .date-pill.active .n{color:#fff;}
+  .date-pill.closed{opacity:.4;cursor:not-allowed;}
+  .date-pill.closed .n{text-decoration:line-through;}
+
+  /* 시간 슬롯 */
+  .slot-label{font-size:.8rem;font-weight:600;margin-bottom:12px;color:var(--ink);}
+  .slot-label span{color:var(--ink-soft);font-weight:400;}
+  .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
+  .slot{
+    font:inherit;font-family:var(--font-mono);font-size:.82rem;padding:11px 0;border-radius:9px;
+    border:1px solid var(--line);background:var(--card-bg);color:var(--ink);cursor:pointer;
+    transition:border-color .15s, background .15s, color .15s;
+  }
+  .slot:hover:not(:disabled){border-color:var(--accent);}
+  .slot.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .slot:disabled{color:var(--line);text-decoration:line-through;cursor:not-allowed;background:var(--page-bg);}
+  .closed-note{font-size:.8rem;color:var(--ink-soft);text-align:center;padding:18px 0;}
+
+  /* 요약 & CTA */
+  .summary{
+    position:sticky;bottom:16px;background:var(--card-bg);border:1px solid var(--line);
+    border-radius:14px;padding:16px 18px;margin-top:24px;box-shadow:0 18px 40px -24px rgba(42,31,34,.35);
+  }
+  .summary-row{display:flex;justify-content:space-between;font-size:.82rem;color:var(--ink-soft);padding:3px 0;}
+  .summary-row b{color:var(--ink);font-weight:600;}
+  .summary-empty{font-size:.82rem;color:var(--ink-soft);text-align:center;padding:4px 0;}
+  .btn-primary{
+    display:block;width:100%;font:inherit;font-size:.9rem;font-weight:700;color:#fff;background:var(--accent);
+    border:none;border-radius:10px;padding:13px 0;cursor:pointer;text-align:center;margin-top:12px;
+    text-decoration:none;transition:filter .15s, transform .05s, opacity .15s;
+  }
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-primary:not(:disabled):hover{filter:brightness(1.06);}
+  .summary-note{font-size:.68rem;color:var(--ink-soft);text-align:center;margin-top:9px;}
+
+  [hidden]{display:none!important;}
+</style>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">Face Lift 전문 · 박동만 원장</div>
+    <h1>예약 캘린더</h1>
+    <p>원하는 날짜와 시간을 선택해주세요. 예약금 결제가 완료되어야 예약이 확정됩니다.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="step">1</span>날짜 선택</div>
+    <div class="date-strip" id="date-strip"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span class="step">2</span>시간 선택</div>
+    <div class="slot-label" id="slot-label"></div>
+    <div class="slot-grid" id="slot-grid"></div>
+  </div>
+
+  <div class="summary">
+    <div id="summary-empty" class="summary-empty">날짜와 시간을 선택하면 예약 내용이 여기에 표시돼요</div>
+    <div id="summary-filled" hidden>
+      <div class="summary-row"><span>시술</span><b>Face Lift</b></div>
+      <div class="summary-row"><span>담당</span><b>박동만 원장</b></div>
+      <div class="summary-row"><span>일시</span><b id="summary-when"></b></div>
+    </div>
+    <button type="button" class="btn-primary" id="next-btn" disabled>다음 · 예약자 정보 입력</button>
+    <div class="summary-note">선택한 시간은 결제 전까지 10분간 임시로 잡아드려요</div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const WEEKDAYS = ['일','월','화','수','목','금','토'];
+  const MONTH = 9;
+  // 2026-09-18이 목요일이 되도록 맞춘 날짜 시퀀스 (16일=수 ~ 29일=화)
+  const DAYS = [];
+  for (let day = 16; day <= 29; day++) {
+    const weekdayIndex = (day - 18 + 4 + 700) % 7; // 18일 = 목(4)
+    DAYS.push({ day, weekday: WEEKDAYS[weekdayIndex], closed: weekdayIndex === 0 }); // 일요일 휴진
+  }
+
+  const TIMES = ['10:00', '11:00', '13:00', '14:30', '16:00', '17:30'];
+
+  function hash(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+    return h;
+  }
+  function isBooked(day, time) {
+    if (day === 18 && time === '14:30') return false; // 대표 예시 슬롯은 항상 비워둠
+    return hash(day + '-' + time) % 100 < 30;
+  }
+
+  const dateStrip = document.getElementById('date-strip');
+  const slotLabel = document.getElementById('slot-label');
+  const slotGrid = document.getElementById('slot-grid');
+  const summaryEmpty = document.getElementById('summary-empty');
+  const summaryFilled = document.getElementById('summary-filled');
+  const summaryWhen = document.getElementById('summary-when');
+  const nextBtn = document.getElementById('next-btn');
+
+  let selectedDay = 18;
+  let selectedTime = '14:30';
+
+  function renderDates() {
+    dateStrip.innerHTML = '';
+    DAYS.forEach((d) => {
+      const pill = document.createElement('button');
+      pill.type = 'button';
+      pill.className = 'date-pill' + (d.closed ? ' closed' : '') + (d.day === selectedDay ? ' active' : '');
+      pill.innerHTML = '<div class="d">' + d.weekday + '</div><div class="n">' + d.day + '</div>';
+      if (!d.closed) {
+        pill.addEventListener('click', () => {
+          selectedDay = d.day;
+          selectedTime = null;
+          renderDates();
+          renderSlots();
+          updateSummary();
+        });
+      }
+      dateStrip.appendChild(pill);
+    });
+  }
+
+  function renderSlots() {
+    const dayInfo = DAYS.find((d) => d.day === selectedDay);
+    slotLabel.innerHTML = '9월 ' + selectedDay + '일(' + dayInfo.weekday + ') <span>· 박동만 원장</span>';
+
+    if (dayInfo.closed) {
+      slotGrid.innerHTML = '<div class="closed-note">이 날은 휴진일입니다. 다른 날짜를 선택해주세요.</div>';
+      return;
+    }
+
+    slotGrid.innerHTML = '';
+    TIMES.forEach((time) => {
+      const booked = isBooked(selectedDay, time);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'slot' + (time === selectedTime ? ' selected' : '');
+      btn.textContent = booked ? time + ' 마감' : time;
+      btn.disabled = booked;
+      if (!booked) {
+        btn.addEventListener('click', () => {
+          selectedTime = time;
+          renderSlots();
+          updateSummary();
+        });
+      }
+      slotGrid.appendChild(btn);
+    });
+  }
+
+  function updateSummary() {
+    const dayInfo = DAYS.find((d) => d.day === selectedDay);
+    if (selectedTime && dayInfo && !dayInfo.closed) {
+      const when = MONTH + '월 ' + selectedDay + '일(' + dayInfo.weekday + ') ' + selectedTime;
+      summaryWhen.textContent = when;
+      summaryEmpty.hidden = true;
+      summaryFilled.hidden = false;
+      nextBtn.disabled = false;
+      nextBtn.dataset.when = when;
+    } else {
+      summaryEmpty.hidden = false;
+      summaryFilled.hidden = true;
+      nextBtn.disabled = true;
+    }
+  }
+
+  nextBtn.addEventListener('click', () => {
+    if (nextBtn.disabled) return;
+    const when = nextBtn.dataset.when || '';
+    window.location.href = 'https://claude.ai/code/artifact/f7f23bf5-cf68-4251-af89-d89063128c8c?when=' + encodeURIComponent(when);
+  });
+
+  renderDates();
+  renderSlots();
+  updateSummary();
+})();
+</script>

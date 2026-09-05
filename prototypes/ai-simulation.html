@@ -253,6 +253,10 @@
     }, 1600);
   });
 
+  document.getElementById('next-btn').addEventListener('click', () => {
+    window.location.href = 'https://claude.ai/code/artifact/a83bf645-e75c-4bc1-90ea-a7e2b0c015fb';
+  });
+
   retryBtn.addEventListener('click', () => {
     angles.forEach((angle) => {
       delete photos[angle];
