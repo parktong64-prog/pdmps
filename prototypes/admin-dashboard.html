@@ -258,6 +258,50 @@
   .save-toast{font-size:.78rem;color:var(--st-done);font-weight:600;opacity:0;transition:opacity .2s;}
   .save-toast.show{opacity:1;}
 
+  /* 환자 관리 */
+  .patients-table tr{cursor:pointer;}
+  .back-link2{
+    font:inherit;font-size:.8rem;color:var(--ink-soft);background:none;border:none;
+    cursor:pointer;padding:0;margin-bottom:18px;display:inline-flex;align-items:center;gap:5px;
+  }
+  .back-link2:hover{color:var(--accent-ink);}
+
+  .p-head{display:flex;gap:16px;align-items:center;margin-bottom:22px;}
+  .p-avatar{
+    width:52px;height:52px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.05rem;flex:0 0 auto;
+  }
+  .p-name{font-family:var(--font-display);font-size:1.2rem;font-weight:700;}
+  .p-sub{font-size:.8rem;color:var(--ink-soft);margin-top:2px;}
+  .p-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+  .p-badge{font-size:.68rem;background:var(--page-bg);border:1px solid var(--line);padding:3px 10px;border-radius:100px;color:var(--ink-soft);}
+  .p-badge.warn{background:var(--st-review-soft);border-color:transparent;color:var(--st-review);font-weight:700;}
+
+  .ptabs{display:flex;gap:20px;border-bottom:1px solid var(--line);margin-bottom:18px;flex-wrap:wrap;}
+  .ptab{font-size:.82rem;padding-bottom:10px;color:var(--ink-soft);border-bottom:2px solid transparent;cursor:pointer;font-weight:600;}
+  .ptab.active{color:var(--ink);border-color:var(--accent);}
+
+  .qa-grid{display:grid;grid-template-columns:110px 1fr;gap:10px 14px;font-size:.84rem;margin-bottom:20px;}
+  .qa-grid dt{color:var(--ink-soft);margin:0;}
+  .qa-grid dd{margin:0;color:var(--ink);}
+
+  .ai-box{border:1px solid var(--line);border-radius:12px;padding:16px;}
+  .ai-box-title{font-size:.78rem;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;}
+  .gauge-track{height:8px;border-radius:4px;background:var(--page-bg);overflow:hidden;margin:8px 0 4px;}
+  .gauge-fill{height:100%;background:var(--accent);}
+  .gauge-label{display:flex;justify-content:space-between;font-size:.72rem;color:var(--ink-soft);}
+  .gauge-label b{color:var(--ink);font-family:var(--font-mono);}
+  .ai-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+  .ai-tag{font-size:.68rem;background:var(--page-bg);border:1px solid var(--line);padding:3px 9px;border-radius:100px;color:var(--ink-soft);}
+
+  .photo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
+  .photo-slot{
+    aspect-ratio:1;background:var(--page-bg);border:1px solid var(--line);border-radius:10px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+    color:var(--ink-soft);font-size:.66rem;
+  }
+  .photo-note{font-size:.72rem;color:var(--ink-soft);margin-top:12px;}
+
   @media (max-width:860px){
     .shell{flex-direction:column;}
     .sidebar{width:100%;flex-direction:row;overflow-x:auto;padding:14px;}
@@ -278,7 +322,7 @@
     <div class="nav-item" data-view="consultations"><span class="dot"></span>상담 관리</div>
     <div class="nav-item" data-view="reservations"><span class="dot"></span>예약 관리</div>
     <div class="nav-item" data-view="schedule"><span class="dot"></span>일정 설정</div>
-    <div class="nav-item" data-disabled><span class="dot"></span>환자 관리<span class="soon">준비중</span></div>
+    <div class="nav-item" data-view="patients"><span class="dot"></span>환자 관리</div>
     <div class="nav-item" data-disabled><span class="dot"></span>결제·매출<span class="soon">준비중</span></div>
     <div class="nav-item" data-disabled><span class="dot"></span>설정<span class="soon">준비중</span></div>
 
@@ -419,6 +463,47 @@
         <div class="panel-title" id="set-date-label">날짜를 선택해주세요</div>
         <div id="set-panel-body">
           <div class="detail-empty">위 달력에서 설정할 날짜를 선택하세요.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 환자 관리 -->
+    <div class="view" id="view-patients">
+      <div class="topbar">
+        <h1>환자 관리</h1>
+        <div class="date">전체 8명</div>
+      </div>
+
+      <div class="panel" id="patients-list-panel">
+        <table class="dtable patients-table">
+          <thead>
+            <tr><th>환자</th><th>전화번호</th><th>상담</th><th>예약</th><th>최근 활동</th></tr>
+          </thead>
+          <tbody id="patients-tbody"></tbody>
+        </table>
+      </div>
+
+      <div id="patient-detail-panel" hidden>
+        <button type="button" class="back-link2" id="patient-back">‹ 환자 목록으로</button>
+
+        <div class="panel">
+          <div class="p-head">
+            <div class="p-avatar" id="pd-avatar"></div>
+            <div>
+              <div class="p-name" id="pd-name"></div>
+              <div class="p-sub" id="pd-phone"></div>
+              <div class="p-badges" id="pd-badges"></div>
+            </div>
+          </div>
+
+          <div class="ptabs" id="pd-tabs">
+            <div class="ptab active" data-tab="intake">문진표 · AI 분석</div>
+            <div class="ptab" data-tab="reservations">예약 이력</div>
+            <div class="ptab" data-tab="payments">결제 이력</div>
+            <div class="ptab" data-tab="photos">첨부 사진</div>
+          </div>
+
+          <div id="pd-tab-body"></div>
         </div>
       </div>
     </div>
@@ -809,6 +894,178 @@
     nextBtn4.addEventListener('click', () => { monthIdx = Math.min(MONTHS.length - 1, monthIdx + 1); selected = null; renderMonth(); panelBody.innerHTML = '<div class="detail-empty">위 달력에서 설정할 날짜를 선택하세요.</div>'; dateLabel.textContent = '날짜를 선택해주세요'; });
 
     renderMonth();
+  })();
+
+  // ---------- 환자 관리 ----------
+  (function(){
+    const PATIENTS = [
+      {
+        name: '이은지', phone: '010-1234-5678', visits: 3, reservations: 2, last: '09.05',
+        concern: '팔자주름, 턱선 처짐', hope: '자연스러운 갸름한 라인, 흉터 최소화', history: '없음',
+        ai: { severity: 68, label: '중등도', areas: ['턱선 처짐', '목주름'], needsReview: true },
+        reservationList: [
+          { when: '2026.09.18 14:30', status: 'pending', label: '결제대기' },
+        ],
+        paymentList: [
+          { type: '예약금', amount: 50000, status: '대기', date: '-' },
+        ],
+        photos: 3,
+      },
+      {
+        name: '최유리', phone: '010-2222-3333', visits: 2, reservations: 1, last: '09.04',
+        concern: '광대 처짐, 이중턱', hope: '작은 얼굴형, 자연스러운 인상', history: '3년 전 실리프팅',
+        ai: { severity: 42, label: '경미', areas: ['이중턱'], needsReview: false },
+        reservationList: [
+          { when: '2026.09.18 11:00', status: 'confirmed', label: '확정' },
+        ],
+        paymentList: [
+          { type: '예약금', amount: 50000, status: '결제완료', date: '09.04' },
+        ],
+        photos: 3,
+      },
+      {
+        name: '박서연', phone: '010-4444-5555', visits: 1, reservations: 0, last: '09.05',
+        concern: '목주름', hope: '흉터 없이 자연스럽게', history: '없음',
+        ai: { severity: 55, label: '중등도', areas: ['목주름'], needsReview: false },
+        reservationList: [],
+        paymentList: [],
+        photos: 2,
+      },
+      {
+        name: '한소민', phone: '010-6666-7777', visits: 1, reservations: 0, last: '09.04',
+        concern: '턱선 처짐', hope: '상담 후 결정', history: '없음',
+        ai: { severity: 30, label: '경미', areas: ['턱선 처짐'], needsReview: false },
+        reservationList: [], paymentList: [], photos: 1,
+      },
+      {
+        name: '오지훈', phone: '010-8888-1234', visits: 2, reservations: 0, last: '09.04',
+        concern: '팔자주름, 목주름', hope: '자연스러운 개선', history: '없음',
+        ai: { severity: 71, label: '중등도', areas: ['팔자주름', '목주름'], needsReview: true },
+        reservationList: [], paymentList: [], photos: 3,
+      },
+      {
+        name: '배수아', phone: '010-1357-2468', visits: 2, reservations: 1, last: '09.03',
+        concern: '턱선 처짐', hope: '작은 얼굴형', history: '없음',
+        ai: { severity: 60, label: '중등도', areas: ['턱선 처짐'], needsReview: false },
+        reservationList: [{ when: '2026.09.22 11:00', status: 'pending', label: '결제대기' }],
+        paymentList: [{ type: '예약금', amount: 50000, status: '대기', date: '-' }],
+        photos: 2,
+      },
+      {
+        name: '문태현', phone: '010-9876-5432', visits: 1, reservations: 0, last: '09.03',
+        concern: '이중턱', hope: '상담 후 결정', history: '없음',
+        ai: { severity: 25, label: '경미', areas: ['이중턱'], needsReview: false },
+        reservationList: [], paymentList: [], photos: 1,
+      },
+      {
+        name: '강하은', phone: '010-2580-3691', visits: 2, reservations: 1, last: '08.30',
+        concern: '목주름, 턱선 처짐', hope: '자연스러운 라인', history: '없음',
+        ai: { severity: 58, label: '중등도', areas: ['목주름', '턱선 처짐'], needsReview: false },
+        reservationList: [{ when: '2026.08.29 16:00', status: 'cancelled', label: '취소' }],
+        paymentList: [{ type: '예약금', amount: 50000, status: '환불불가·취소', date: '08.29' }],
+        photos: 2,
+      },
+    ];
+
+    const listPanel = document.getElementById('patients-list-panel');
+    const detailPanel = document.getElementById('patient-detail-panel');
+    const tbody = document.getElementById('patients-tbody');
+    let currentTab = 'intake';
+
+    function maskPhone(phone) {
+      const parts = phone.split('-');
+      return parts[0] + '-****-' + parts[2];
+    }
+
+    function renderList() {
+      tbody.innerHTML = '';
+      PATIENTS.forEach((p, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML =
+          '<td class="name-cell">' + p.name + (p.ai.needsReview ? '<span class="flag-badge">AI 확인</span>' : '') + '</td>' +
+          '<td>' + maskPhone(p.phone) + '</td>' +
+          '<td>' + p.visits + '회</td>' +
+          '<td>' + p.reservations + '회</td>' +
+          '<td>' + p.last + '</td>';
+        tr.addEventListener('click', () => openPatient(idx));
+        tbody.appendChild(tr);
+      });
+    }
+
+    function openPatient(idx) {
+      const p = PATIENTS[idx];
+      currentTab = 'intake';
+      document.getElementById('pd-avatar').textContent = p.name.slice(0, 2);
+      document.getElementById('pd-name').textContent = p.name;
+      document.getElementById('pd-phone').textContent = maskPhone(p.phone);
+      document.getElementById('pd-badges').innerHTML =
+        '<span class="p-badge">상담 ' + p.visits + '회</span>' +
+        '<span class="p-badge">예약 ' + p.reservations + '회</span>' +
+        (p.ai.needsReview ? '<span class="p-badge warn">AI 확인 필요</span>' : '');
+
+      document.querySelectorAll('#pd-tabs .ptab').forEach((t) => t.classList.toggle('active', t.dataset.tab === currentTab));
+      renderTab(p);
+
+      document.querySelectorAll('#pd-tabs .ptab').forEach((t) => {
+        t.onclick = () => {
+          currentTab = t.dataset.tab;
+          document.querySelectorAll('#pd-tabs .ptab').forEach((x) => x.classList.remove('active'));
+          t.classList.add('active');
+          renderTab(p);
+        };
+      });
+
+      listPanel.hidden = true;
+      detailPanel.hidden = false;
+    }
+
+    function renderTab(p) {
+      const body = document.getElementById('pd-tab-body');
+      if (currentTab === 'intake') {
+        body.innerHTML =
+          '<dl class="qa-grid">' +
+            '<dt>고민 부위</dt><dd>' + p.concern + '</dd>' +
+            '<dt>희망 사항</dt><dd>' + p.hope + '</dd>' +
+            '<dt>기존 시술 이력</dt><dd>' + p.history + '</dd>' +
+          '</dl>' +
+          '<div class="ai-box">' +
+            '<div class="ai-box-title"><span>AI 사진 분석 결과</span>' + (p.ai.needsReview ? '<span class="status-pill status-review"><i></i>확인필요</span>' : '<span class="status-pill status-done"><i></i>정상 판정</span>') + '</div>' +
+            '<div class="gauge-track"><div class="gauge-fill" style="width:' + p.ai.severity + '%"></div></div>' +
+            '<div class="gauge-label"><span>경미</span><b>' + p.ai.label + ' · ' + p.ai.severity + '/100</b><span>심함</span></div>' +
+            '<div class="ai-tags">' + p.ai.areas.map((a) => '<span class="ai-tag">' + a + '</span>').join('') + '</div>' +
+          '</div>';
+      } else if (currentTab === 'reservations') {
+        if (p.reservationList.length === 0) {
+          body.innerHTML = '<div class="detail-empty">예약 이력이 없습니다.</div>';
+        } else {
+          body.innerHTML = p.reservationList.map((r) => {
+            const cls = r.status === 'confirmed' ? 'status-done' : r.status === 'cancelled' ? 'status-cancel' : 'status-pending';
+            return '<div class="mini-row"><div><div class="who">Face Lift</div><div class="meta">' + r.when + '</div></div><span class="status-pill ' + cls + '"><i></i>' + r.label + '</span></div>';
+          }).join('');
+        }
+      } else if (currentTab === 'payments') {
+        if (p.paymentList.length === 0) {
+          body.innerHTML = '<div class="detail-empty">결제 이력이 없습니다.</div>';
+        } else {
+          body.innerHTML = p.paymentList.map((pay) => {
+            return '<div class="mini-row"><div><div class="who">' + pay.type + ' · ' + pay.amount.toLocaleString() + '원</div><div class="meta">' + pay.date + '</div></div><span class="status-pill status-progress"><i></i>' + pay.status + '</span></div>';
+          }).join('');
+        }
+      } else if (currentTab === 'photos') {
+        body.innerHTML =
+          '<div class="photo-grid">' +
+            Array.from({ length: p.photos }).map(() => '<div class="photo-slot"><span>🔒</span><span>IMG</span></div>').join('') +
+          '</div>' +
+          '<p class="photo-note">비공개 Storage에 저장되며, 서명된 URL로만 열람할 수 있습니다.</p>';
+      }
+    }
+
+    document.getElementById('patient-back').addEventListener('click', () => {
+      detailPanel.hidden = true;
+      listPanel.hidden = false;
+    });
+
+    renderList();
   })();
 })();
 </script>
