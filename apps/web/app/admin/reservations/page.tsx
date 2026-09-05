@@ -127,7 +127,7 @@ export default function ReservationsPage() {
                     const label =
                       status === "closed"
                         ? BLOCKED[dateKey(d.getFullYear(), d.getMonth(), d.getDate())] || "휴진"
-                        : status === "booked"
+                        : status === "booked" || status === "pending"
                           ? cell.patientName
                           : status === "blocked"
                             ? "차단"
@@ -144,9 +144,11 @@ export default function ReservationsPage() {
                         onClick={() => status !== "closed" && selectCell(d, time)}
                         className={`min-h-[46px] px-1 py-2 text-center leading-[1.25] ${stripe} ${
                           status === "booked" ? "bg-[var(--accent-soft)] font-bold text-[var(--accent-ink)]" : ""
-                        } ${status === "open" ? "text-[var(--ink-faint)] hover:bg-[var(--accent-soft)]" : ""} ${
-                          status === "closed" ? "cursor-default text-[var(--ink-faint)]" : "cursor-pointer"
-                        } ${isSelected ? "outline outline-2 -outline-offset-2 outline-[var(--accent)]" : ""}`}
+                        } ${status === "pending" ? "bg-[var(--st-pending-soft)] font-bold text-[var(--st-pending)]" : ""} ${
+                          status === "open" ? "text-[var(--ink-faint)] hover:bg-[var(--accent-soft)]" : ""
+                        } ${status === "closed" ? "cursor-default text-[var(--ink-faint)]" : "cursor-pointer"} ${
+                          isSelected ? "outline outline-2 -outline-offset-2 outline-[var(--accent)]" : ""
+                        }`}
                       >
                         {label}
                       </button>
@@ -231,6 +233,34 @@ function SlotDetail({
             className="rounded-lg bg-[var(--danger-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--danger)] disabled:opacity-50"
           >
             예약 취소
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (cell.status === "pending") {
+    return (
+      <div>
+        <Row label="환자" value={cell.patientName ?? "-"} />
+        <Row label="연락처" value={cell.patientPhone ?? "-"} />
+        <Row label="시술" value="Face Lift" />
+        <Row label="일시" value={when} />
+        <div className="flex justify-between border-b border-[var(--line)] py-1.5 text-[0.84rem]">
+          <span className="text-[var(--ink-soft)]">상태</span>
+          <StatusPill status="pending" label="결제 대기중" />
+        </div>
+        <p className="mt-2.5 text-[0.72rem] text-[var(--ink-soft)]">
+          결제창으로 이동했지만 아직 승인되지 않았습니다. 오래 방치된 경우 취소해서 슬롯을 다시 열 수 있어요.
+        </p>
+        <div className="mt-3.5">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onCancel}
+            className="rounded-lg bg-[var(--danger-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--danger)] disabled:opacity-50"
+          >
+            대기 취소하고 슬롯 열기
           </button>
         </div>
       </div>

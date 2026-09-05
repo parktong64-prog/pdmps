@@ -2,9 +2,10 @@
 
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { loadTossPayments } from "@tosspayments/payment-sdk";
 
 type FieldErrors = { name?: string; phone?: string; email?: string; consent?: string };
-type Step = "form" | "payment" | "success";
+type Step = "form" | "payment";
 
 function formatPhone(value: string) {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -27,7 +28,6 @@ function CheckoutForm() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
-  const [confirmed, setConfirmed] = useState<{ name: string; phone: string; email: string } | null>(null);
 
   function validate(): boolean {
     const next: FieldErrors = {};
@@ -54,46 +54,35 @@ function CheckoutForm() {
     setPaying(true);
     setSubmitError(null);
     try {
-      // 실제 PG 결제창 연동 전까지는 결제 승인을 흉내내고, 그 직후 예약을 실제로 확정합니다.
-      await new Promise((r) => setTimeout(r, 900));
-
+      // 1) 슬롯을 잠깐 선점(pending_payment)하고 주문 정보를 받는다
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: name.trim(),
-          phone: phone.trim(),
-          email: email.trim(),
-          date,
-          time,
-        }),
+        body: JSON.stringify({ name: name.trim(), phone: phone.trim(), email: email.trim(), date, time }),
       });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error || "예약 처리 중 문제가 발생했습니다.");
 
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        throw new Error(data?.error || "예약 처리 중 문제가 발생했습니다.");
-      }
-
-      setConfirmed({ name: name.trim(), phone: phone.trim(), email: email.trim() });
-      setStep("success");
+      // 2) 토스페이먼츠 결제창으로 이동 (성공/실패 후 콜백 URL로 자동 리다이렉트됨)
+      const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY;
+      if (!clientKey) throw new Error("결제 설정이 올바르지 않습니다.");
+      const tossPayments = await loadTossPayments(clientKey);
+      const origin = window.location.origin;
+      await tossPayments.requestPayment("카드", {
+        amount: data.amount,
+        orderId: data.orderId,
+        orderName: data.orderName,
+        customerName: data.customerName,
+        successUrl: `${origin}/consult/checkout/success`,
+        failUrl: `${origin}/consult/checkout/fail`,
+      });
+      // requestPayment는 성공 시 브라우저를 successUrl로 이동시키므로 이 아래는 보통 실행되지 않음
     } catch (err) {
       setSubmitError(
-        err instanceof Error ? err.message : "결제 확인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+        err instanceof Error ? err.message : "결제 진행 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
       );
-      setStep("form");
-    } finally {
       setPaying(false);
     }
-  }
-
-  function handleReset() {
-    setName("");
-    setPhone("");
-    setEmail("");
-    setConsent(false);
-    setErrors({});
-    setConfirmed(null);
-    setStep("form");
   }
 
   return (
@@ -251,69 +240,21 @@ function CheckoutForm() {
                 </div>
               </div>
 
+              {submitError && (
+                <div className="mt-3.5 rounded-[10px] bg-[var(--danger-soft)] px-3 py-2.5 text-[0.78rem] leading-[1.55] text-[var(--danger)]">
+                  {submitError}
+                </div>
+              )}
+
               <button
                 type="button"
                 disabled={paying}
                 onClick={handlePay}
                 className="mt-[18px] block w-full rounded-[10px] bg-[var(--accent)] py-[13px] text-center text-[0.92rem] font-bold text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-60"
               >
-                {paying ? "결제 처리 중…" : "50,000원 결제하기"}
+                {paying ? "결제창 여는 중…" : "50,000원 결제하기"}
               </button>
             </>
-          )}
-
-          {step === "success" && confirmed && (
-            <div className="py-3 text-center">
-              <div className="mx-auto mb-4 flex h-[52px] w-[52px] items-center justify-center rounded-full bg-[var(--success-soft)] text-[1.4rem] text-[var(--success)]">
-                ✓
-              </div>
-              <h1 className="mb-2 font-[family-name:var(--font-display)] text-[1.5rem] font-bold">
-                예약이 확정되었습니다
-              </h1>
-              <p className="mb-[22px] text-[0.86rem] leading-[1.6] text-[var(--ink-soft)]">
-                예약일에 방문하시면 박동만 원장님과 상담해요.
-              </p>
-
-              <div className="mb-[18px] flex flex-col gap-1.5 rounded-[10px] border border-[var(--line)] p-4 text-left text-[0.82rem] text-[var(--ink-soft)]">
-                <div>
-                  <b className="font-semibold text-[var(--ink)]">이름</b> · {confirmed.name}
-                </div>
-                <div>
-                  <b className="font-semibold text-[var(--ink)]">전화번호</b> · {confirmed.phone}
-                </div>
-                <div>
-                  <b className="font-semibold text-[var(--ink)]">이메일</b> · {confirmed.email}
-                </div>
-                <div>
-                  <b className="font-semibold text-[var(--ink)]">일시</b> · {scheduleLabel} · Face Lift
-                </div>
-              </div>
-
-              <div className="mb-2 flex items-center gap-1.5 text-[0.74rem] font-bold text-[var(--ink-soft)]">
-                <span className="h-2 w-2 rounded-full bg-[#fee500] shadow-[0_0_0_1px_#d8c400_inset]" />
-                카카오 알림톡 자동 발송
-              </div>
-              <div className="mb-1.5 rounded-[4px_14px_14px_14px] bg-[#fee500] px-3.5 py-3 text-left text-[0.78rem] leading-[1.6] text-[#3c1e1e]">
-                <b className="mb-1 block">[PDMPS] 예약이 확정되었습니다</b>
-                {confirmed.name}님, Face Lift 상담 예약이 확정되었습니다.
-                <br />· 일시: {scheduleLabel}
-                <br />· 담당: 박동만 원장
-                <br />· 예약금 50,000원 결제 완료
-                <br />
-                예약일에 늦지 않게 방문해주세요 :)
-              </div>
-              <div className="mb-[18px] text-left text-[0.68rem] text-[var(--ink-soft)]">
-                알림톡 발송 실패 시 문자(SMS)로 자동 재발송됩니다.
-              </div>
-
-              <button
-                type="button"
-                onClick={handleReset}
-                className="text-[0.82rem] text-[var(--accent-ink)] underline underline-offset-2"
-              >
-                다른 예약 남기기
-              </button>
-            </div>
           )}
         </div>
       </div>

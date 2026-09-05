@@ -146,7 +146,7 @@ export async function getConsultations(): Promise<ConsultationRow[]> {
 // ───────────────────────── 예약 관리 (주간 그리드) ─────────────────────────
 
 export type SlotCell = {
-  status: "open" | "booked" | "blocked";
+  status: "open" | "booked" | "blocked" | "pending";
   reservationId?: string;
   patientName?: string;
   patientPhone?: string;
@@ -184,6 +184,14 @@ export async function getWeekSlots(y: number, m: number, d: number): Promise<Rec
     if (row.status === "booked" && reservation && reservation.status !== "cancelled") {
       map[key] = {
         status: "booked",
+        reservationId: reservation.id,
+        patientName: patientObj?.name,
+        patientPhone: patientObj?.phone,
+      };
+    } else if (row.status === "held" && reservation && reservation.status === "pending_payment") {
+      // 결제창으로 이동한 뒤 아직 승인되지 않은 슬롯 — 결제 대기중으로 표시
+      map[key] = {
+        status: "pending",
         reservationId: reservation.id,
         patientName: patientObj?.name,
         patientPhone: patientObj?.phone,

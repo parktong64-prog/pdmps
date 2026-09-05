@@ -10,7 +10,7 @@ import { blockSlot, reopenSlot } from "@/lib/admin/actions";
 
 const DOCTOR_ID = "00000000-0000-0000-0000-000000000001";
 
-export type TimeState = "blocked" | "booked";
+export type TimeState = "blocked" | "booked" | "pending";
 
 /** 지정한 년/월(0-indexed month)의 슬롯 상태 맵. key: `${YYYY-MM-DD}_${HH:mm}`.
  *  "open"은 별도 표시하지 않음 — 맵에 없으면 오픈이라는 뜻. */
@@ -30,10 +30,10 @@ export async function getMonthSlotStates(y: number, m: number): Promise<Record<s
 
   const map: Record<string, TimeState> = {};
   for (const row of data) {
-    if (row.status !== "booked" && row.status !== "blocked") continue;
+    if (row.status !== "booked" && row.status !== "blocked" && row.status !== "held") continue;
     const d = new Date(row.start_at as string);
     const key = `${dateKey(d.getFullYear(), d.getMonth(), d.getDate())}_${d.toTimeString().slice(0, 5)}`;
-    map[key] = row.status as TimeState;
+    map[key] = (row.status === "held" ? "pending" : row.status) as TimeState;
   }
   return map;
 }
