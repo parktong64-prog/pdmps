@@ -1,0 +1,308 @@
+<title>카운슬 문의</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --page-bg:#f6f1ee;
+    --card-bg:#ffffff;
+    --ink:#2a1f22;
+    --ink-soft:#6f6265;
+    --line:#e8e0dd;
+    --accent:#a1546a;
+    --accent-soft:#f4e6ea;
+    --accent-ink:#7d3f52;
+    --danger:#b3392c;
+    --danger-soft:#fbeae7;
+    --success:#2c8a5b;
+    --success-soft:#e3f3ea;
+    --focus-ring:rgba(161,84,106,.28);
+    --font-display:'Noto Serif KR',ui-serif,'Nanum Myeongjo',serif;
+    --font-body:'Noto Sans KR',-apple-system,'Malgun Gothic',sans-serif;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --page-bg:#1b1517;
+      --card-bg:#241d20;
+      --ink:#f3ebe9;
+      --ink-soft:#b6a8ac;
+      --line:#3a2f33;
+      --accent:#e08aa1;
+      --accent-soft:#3a2530;
+      --accent-ink:#f0aabb;
+      --danger:#f0897a;
+      --danger-soft:#3a2321;
+      --success:#7fd1a6;
+      --success-soft:#1f3329;
+      --focus-ring:rgba(224,138,161,.28);
+    }
+  }
+  :root[data-theme="dark"]{
+    --page-bg:#1b1517;
+    --card-bg:#241d20;
+    --ink:#f3ebe9;
+    --ink-soft:#b6a8ac;
+    --line:#3a2f33;
+    --accent:#e08aa1;
+    --accent-soft:#3a2530;
+    --accent-ink:#f0aabb;
+    --danger:#f0897a;
+    --danger-soft:#3a2321;
+    --success:#7fd1a6;
+    --success-soft:#1f3329;
+    --focus-ring:rgba(224,138,161,.28);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--page-bg);color:var(--ink);font-family:var(--font-body);
+    display:flex;justify-content:center;padding:56px 20px;
+  }
+  h1,h2,p{text-wrap:balance;margin:0;}
+
+  .card{
+    width:100%;max-width:440px;background:var(--card-bg);border:1px solid var(--line);
+    border-radius:18px;padding:36px 32px 32px;box-shadow:0 24px 60px -32px rgba(42,31,34,.35);
+  }
+
+  .eyebrow{
+    font-size:.72rem;letter-spacing:.14em;color:var(--accent-ink);font-weight:700;
+    text-transform:uppercase;margin-bottom:10px;
+  }
+  .title{font-family:var(--font-display);font-size:1.5rem;font-weight:700;color:var(--ink);margin-bottom:8px;}
+  .subtitle{font-size:.86rem;color:var(--ink-soft);line-height:1.6;margin-bottom:28px;}
+
+  form{display:flex;flex-direction:column;gap:18px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field label{font-size:.8rem;font-weight:700;color:var(--ink);}
+  .field label .req{color:var(--accent);margin-left:2px;}
+  .field input{
+    font:inherit;font-size:.92rem;padding:11px 13px;border-radius:9px;
+    border:1px solid var(--line);background:var(--card-bg);color:var(--ink);
+    outline:none;transition:border-color .15s, box-shadow .15s;
+  }
+  .field input::placeholder{color:var(--ink-soft);opacity:.7;}
+  .field input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--focus-ring);}
+  .field input[aria-invalid="true"]{border-color:var(--danger);}
+  .field-error{
+    font-size:.74rem;color:var(--danger);min-height:1.1em;display:flex;align-items:center;gap:5px;
+  }
+  .field-error[hidden]{display:none;}
+
+  .consent{
+    display:flex;align-items:flex-start;gap:9px;font-size:.78rem;color:var(--ink-soft);
+    line-height:1.55;padding-top:2px;
+  }
+  .consent input{margin-top:3px;width:16px;height:16px;accent-color:var(--accent);flex:0 0 auto;}
+  .consent b{color:var(--ink);font-weight:600;}
+
+  button[type="submit"]{
+    font:inherit;font-size:.92rem;font-weight:700;color:#fff;background:var(--accent);
+    border:none;border-radius:10px;padding:13px 0;cursor:pointer;margin-top:4px;
+    transition:filter .15s, transform .05s;
+  }
+  button[type="submit"]:hover{filter:brightness(1.06);}
+  button[type="submit"]:active{transform:scale(.99);}
+  button[type="submit"]:disabled{opacity:.6;cursor:default;}
+
+  .banner{
+    display:flex;gap:9px;align-items:flex-start;font-size:.78rem;line-height:1.55;
+    border-radius:10px;padding:11px 12px;margin-top:2px;
+  }
+  .banner.danger{background:var(--danger-soft);color:var(--danger);}
+  .banner[hidden]{display:none;}
+
+  .success{text-align:center;padding:12px 0 4px;}
+  .success-check{
+    width:52px;height:52px;border-radius:50%;background:var(--success-soft);color:var(--success);
+    display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 16px;
+  }
+  .success .title{margin-bottom:8px;}
+  .success .subtitle{margin-bottom:22px;}
+  .success-summary{
+    text-align:left;border:1px solid var(--line);border-radius:10px;padding:14px 16px;
+    font-size:.82rem;color:var(--ink-soft);margin-bottom:22px;display:flex;flex-direction:column;gap:6px;
+  }
+  .success-summary b{color:var(--ink);font-weight:600;}
+  .link-btn{
+    font:inherit;font-size:.82rem;color:var(--accent-ink);background:none;border:none;
+    text-decoration:underline;text-underline-offset:2px;cursor:pointer;padding:0;
+  }
+
+  [hidden]{display:none!important;}
+</style>
+
+<div class="card">
+
+  <div id="view-form">
+    <div class="eyebrow">Face Lift 전문 · 박동만 원장</div>
+    <h1 class="title">상담 문의 남기기</h1>
+    <p class="subtitle">이름과 연락처를 남겨주시면 상담사가 확인 후 순서대로 연락드립니다.</p>
+
+    <form id="inquiry-form" novalidate>
+      <div class="field">
+        <label for="f-name">이름<span class="req">*</span></label>
+        <input id="f-name" name="name" type="text" placeholder="홍길동" autocomplete="name">
+        <div class="field-error" id="err-name" hidden></div>
+      </div>
+
+      <div class="field">
+        <label for="f-phone">전화번호<span class="req">*</span></label>
+        <input id="f-phone" name="phone" type="tel" placeholder="010-1234-5678" inputmode="numeric" autocomplete="tel">
+        <div class="field-error" id="err-phone" hidden></div>
+      </div>
+
+      <div class="field">
+        <label for="f-email">이메일<span class="req">*</span></label>
+        <input id="f-email" name="email" type="email" placeholder="name@example.com" autocomplete="email">
+        <div class="field-error" id="err-email" hidden></div>
+      </div>
+
+      <label class="consent">
+        <input type="checkbox" id="f-consent">
+        <span><b>개인정보 수집·이용에 동의합니다.</b> 입력하신 정보는 상담 안내 목적으로만 사용되며, 상담 완료 후 관련 법령에 따른 기간 동안 보관 후 파기됩니다.</span>
+      </label>
+      <div class="field-error" id="err-consent" hidden></div>
+
+      <div class="banner danger" id="submit-error" hidden></div>
+
+      <button type="submit" id="submit-btn">문의 남기기</button>
+    </form>
+  </div>
+
+  <div id="view-success" class="success" hidden>
+    <div class="success-check">✓</div>
+    <h1 class="title">문의가 접수되었습니다</h1>
+    <p class="subtitle">빠른 시일 내에 상담사가 남겨주신 연락처로 안내드릴게요.</p>
+    <div class="success-summary">
+      <div><b>이름</b> · <span id="s-name"></span></div>
+      <div><b>전화번호</b> · <span id="s-phone"></span></div>
+      <div><b>이메일</b> · <span id="s-email"></span></div>
+    </div>
+    <button type="button" class="link-btn" id="reset-btn">다른 문의 남기기</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const formView = document.getElementById('view-form');
+  const successView = document.getElementById('view-success');
+  const form = document.getElementById('inquiry-form');
+  const submitBtn = document.getElementById('submit-btn');
+  const submitError = document.getElementById('submit-error');
+
+  const fields = {
+    name: { input: document.getElementById('f-name'), err: document.getElementById('err-name') },
+    phone: { input: document.getElementById('f-phone'), err: document.getElementById('err-phone') },
+    email: { input: document.getElementById('f-email'), err: document.getElementById('err-email') },
+  };
+  const consentInput = document.getElementById('f-consent');
+  const consentErr = document.getElementById('err-consent');
+
+  // 010-1234-5678 형태로 자동 하이픈 삽입
+  fields.phone.input.addEventListener('input', () => {
+    let digits = fields.phone.input.value.replace(/\D/g, '').slice(0, 11);
+    let out = digits;
+    if (digits.length > 3 && digits.length <= 7) {
+      out = digits.slice(0, 3) + '-' + digits.slice(3);
+    } else if (digits.length > 7) {
+      out = digits.slice(0, 3) + '-' + digits.slice(3, 7) + '-' + digits.slice(7);
+    }
+    fields.phone.input.value = out;
+  });
+
+  function setError(field, message) {
+    const f = fields[field];
+    if (message) {
+      f.input.setAttribute('aria-invalid', 'true');
+      f.err.textContent = message;
+      f.err.hidden = false;
+    } else {
+      f.input.removeAttribute('aria-invalid');
+      f.err.hidden = true;
+      f.err.textContent = '';
+    }
+  }
+
+  function validate() {
+    let ok = true;
+
+    const name = fields.name.input.value.trim();
+    if (!name) { setError('name', '이름을 입력해주세요.'); ok = false; }
+    else { setError('name', ''); }
+
+    const phone = fields.phone.input.value.trim();
+    if (!/^01[016789]-\d{3,4}-\d{4}$/.test(phone)) {
+      setError('phone', '010-1234-5678 형식으로 입력해주세요.'); ok = false;
+    } else { setError('phone', ''); }
+
+    const email = fields.email.input.value.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError('email', '올바른 이메일 주소를 입력해주세요.'); ok = false;
+    } else { setError('email', ''); }
+
+    if (!consentInput.checked) {
+      consentErr.textContent = '개인정보 수집·이용에 동의해주세요.';
+      consentErr.hidden = false;
+      ok = false;
+    } else {
+      consentErr.hidden = true;
+    }
+
+    return ok;
+  }
+
+  async function getDb() {
+    if (!window.claude || !window.claude.use) return null;
+    try {
+      return await window.claude.use('db');
+    } catch (e) {
+      return null;
+    }
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    submitError.hidden = true;
+    if (!validate()) return;
+
+    const payload = {
+      name: fields.name.input.value.trim(),
+      phone: fields.phone.input.value.trim(),
+      email: fields.email.input.value.trim(),
+      procedure: 'Face Lift',
+      source: 'inquiry_form_prototype',
+      submitted_at: new Date().toISOString(),
+    };
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = '접수 중…';
+
+    try {
+      const db = await getDb();
+      if (!db) throw new Error('db_unavailable');
+      await db.collection('inquiries').add(payload);
+
+      document.getElementById('s-name').textContent = payload.name;
+      document.getElementById('s-phone').textContent = payload.phone;
+      document.getElementById('s-email').textContent = payload.email;
+      formView.hidden = true;
+      successView.hidden = false;
+    } catch (err) {
+      submitError.textContent = '일시적으로 접수가 어렵습니다. 잠시 후 다시 시도해주세요.';
+      submitError.hidden = false;
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '문의 남기기';
+    }
+  });
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    form.reset();
+    Object.keys(fields).forEach((k) => setError(k, ''));
+    consentErr.hidden = true;
+    successView.hidden = true;
+    formView.hidden = false;
+  });
+})();
+</script>
