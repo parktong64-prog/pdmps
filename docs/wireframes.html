@@ -290,14 +290,11 @@
           <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
           <div class="appbar"><span class="logo">카운슬</span><span class="icon-shape badge"></span></div>
           <div class="scroll">
-            <div class="chip-row">
-              <span class="chip active">전체</span><span class="chip">미니 리프팅</span><span class="chip">딥플레인 리프팅</span><span class="chip">넥 리프팅</span>
-            </div>
             <div class="banner"><b>가을 Face Lift 상담 주간</b><span>9.8 – 9.30 박동만 원장 직접 상담</span></div>
-            <div class="section-title">Face Lift 프로그램</div>
-            <div class="proc-card"><div class="proc-row"><div class="ph-box"></div><div class="grow"><div class="name">미니 리프팅</div></div></div><div class="price">₩3,500,000~</div></div>
-            <div class="proc-card"><div class="proc-row"><div class="ph-box"></div><div class="grow"><div class="name">딥플레인 리프팅</div></div></div><div class="price">₩8,000,000~</div></div>
-            <div class="proc-card"><div class="proc-row"><div class="ph-box"></div><div class="grow"><div class="name">넥 리프팅</div></div></div><div class="price">₩4,200,000~</div></div>
+            <div class="section-title">Face Lift 안내</div>
+            <div class="proc-card"><div class="proc-row"><div class="ph-box"></div><div class="grow"><div class="name">Face Lift (안면거상술)</div></div></div><div class="price">₩5,000,000~</div></div>
+            <div class="field-label" style="margin-top:14px;">이런 분께 추천해요</div>
+            <div class="chip-row"><span class="chip active">팔자주름</span><span class="chip">턱선 처짐</span><span class="chip">목주름</span></div>
           </div>
           <div class="bottomnav">
             <div class="nav-item active"><div class="nav-shape circle"></div><span>홈</span></div>
@@ -306,7 +303,7 @@
             <div class="nav-item"><div class="nav-shape tri"></div><span>마이</span></div>
           </div>
         </div></div>
-        <div class="note">procedures 테이블의 <b>base_price</b>를 목록에 노출 <br>(<b>[DB_SCHEMA.md](docs/DB_SCHEMA.md)</b> 2.3)</div>
+        <div class="note">procedures 테이블은 <b>Face Lift 단일 행</b> (base_price 노출)<br>(<b>[DB_SCHEMA.md](docs/DB_SCHEMA.md)</b> 2.3)</div>
       </div>
 
       <div class="connector">→</div>
@@ -342,12 +339,12 @@
           <div class="appbar"><span class="logo" style="font-size:.85rem">나의 상담</span><span></span></div>
           <div class="scroll">
             <div class="consult-card">
-              <div class="top"><span class="proc">Face Lift · 딥플레인</span><span class="status-pill status-progress"><i></i>응대중</span></div>
+              <div class="top"><span class="proc">Face Lift</span><span class="status-pill status-progress"><i></i>응대중</span></div>
               <div class="meta">신청일 2026.09.03 · 담당 김민지 실장</div>
               <div class="chat-link">상담사와 채팅하기 ›</div>
             </div>
             <div class="consult-card">
-              <div class="top"><span class="proc">Face Lift · 넥 리프팅</span><span class="status-pill status-done"><i></i>예약완료</span></div>
+              <div class="top"><span class="proc">Face Lift</span><span class="status-pill status-done"><i></i>예약완료</span></div>
               <div class="meta">예약일 2026.09.18 14:30 · 박동만 원장</div>
             </div>
           </div>
@@ -372,7 +369,7 @@
             <div class="chat-head"><span class="icon-back"></span><div class="avatar"></div><div><div class="name">김민지 상담실장</div></div></div>
           </div>
           <div class="chat-body" style="padding:10px 14px;">
-            <div class="chat-row"><div class="bubble">안녕하세요 은지님, 문진표 확인했어요 😊 사진상 딥플레인 방식이 더 자연스러울 것 같아요.</div></div>
+            <div class="chat-row"><div class="bubble">안녕하세요 은지님, 문진표 확인했어요 😊 처짐 정도 보니 절개 범위는 크지 않아도 될 것 같아요.</div></div>
             <div class="chat-row me"><div class="bubble">네 실장님! 상담 방문은 언제가 좋을까요?</div></div>
             <div class="chat-row"><div class="bubble">이번 주 목요일 오후에 여러 타임 비어있어요. 예약 캘린더에서 골라주세요!</div></div>
           </div>
@@ -417,7 +414,7 @@
           <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">예약 확정 · 결제</span><span></span></div>
           <div class="scroll">
             <div class="pay-card">
-              <div class="pay-row"><span>시술</span><b>Face Lift · 딥플레인</b></div>
+              <div class="pay-row"><span>시술</span><b>Face Lift</b></div>
               <div class="pay-row"><span>담당</span><b>박동만 원장</b></div>
               <div class="pay-row"><span>일시</span><b>9.18(목) 14:30</b></div>
               <div class="pay-total"><span>예약금</span><span class="amt">50,000원</span></div>
@@ -457,9 +454,9 @@
               <div>
                 <div class="panel-title">최근 상담 신청</div>
                 <div class="mini-list">
-                  <div class="row"><span>이은지 · 미니 리프팅</span><span class="status-pill status-pending"><i></i>대기</span></div>
-                  <div class="row"><span>박서연 · 딥플레인 리프팅</span><span class="status-pill status-progress"><i></i>응대중</span></div>
-                  <div class="row"><span>최유리 · 넥 리프팅</span><span class="status-pill status-done"><i></i>예약완료</span></div>
+                  <div class="row"><span>이은지 · Face Lift</span><span class="status-pill status-pending"><i></i>대기</span></div>
+                  <div class="row"><span>박서연 · Face Lift</span><span class="status-pill status-progress"><i></i>응대중</span></div>
+                  <div class="row"><span>최유리 · Face Lift</span><span class="status-pill status-done"><i></i>예약완료</span></div>
                 </div>
               </div>
               <div>
@@ -485,11 +482,11 @@
               <div class="tab active">전체 32</div><div class="tab">대기 6</div><div class="tab">응대중 9</div><div class="tab">예약완료 15</div><div class="tab">취소 2</div>
             </div>
             <table class="dtable">
-              <tr><th>환자</th><th>시술</th><th>상태</th><th>담당</th><th>신청일</th></tr>
-              <tr class="hi"><td>이은지</td><td>미니 리프팅</td><td><span class="status-pill status-pending"><i></i>대기</span></td><td>미배정</td><td>09.05</td></tr>
-              <tr><td>박서연</td><td>딥플레인 리프팅</td><td><span class="status-pill status-progress"><i></i>응대중</span></td><td>김민지</td><td>09.04</td></tr>
-              <tr><td>최유리</td><td>넥 리프팅</td><td><span class="status-pill status-done"><i></i>예약완료</span></td><td>정하늘</td><td>09.02</td></tr>
-              <tr><td>한소민</td><td>딥플레인 리프팅</td><td><span class="status-pill status-cancel"><i></i>취소</span></td><td>김민지</td><td>08.29</td></tr>
+              <tr><th>환자</th><th>채널</th><th>상태</th><th>담당</th><th>신청일</th></tr>
+              <tr class="hi"><td>이은지</td><td>웹</td><td><span class="status-pill status-pending"><i></i>대기</span></td><td>미배정</td><td>09.05</td></tr>
+              <tr><td>박서연</td><td>앱</td><td><span class="status-pill status-progress"><i></i>응대중</span></td><td>김민지</td><td>09.04</td></tr>
+              <tr><td>최유리</td><td>웹</td><td><span class="status-pill status-done"><i></i>예약완료</span></td><td>정하늘</td><td>09.02</td></tr>
+              <tr><td>한소민</td><td>앱</td><td><span class="status-pill status-cancel"><i></i>취소</span></td><td>김민지</td><td>08.29</td></tr>
             </table>
           </div>
         </div>
@@ -505,9 +502,9 @@
             <div class="panel-title">9월 3주차 · 박동만 원장</div>
             <div class="cal-grid">
               <div class="hd"></div><div class="hd">월</div><div class="hd">화</div><div class="hd">수</div><div class="hd">목</div><div class="hd">금</div>
-              <div class="tm">10:00</div><div class="cal-cell open"></div><div class="cal-cell booked">이은지<br>미니리프팅</div><div class="cal-cell open"></div><div class="cal-cell blocked">휴진</div><div class="cal-cell open"></div>
-              <div class="tm">11:00</div><div class="cal-cell booked">박서연<br>딥플레인</div><div class="cal-cell open"></div><div class="cal-cell open"></div><div class="cal-cell blocked">휴진</div><div class="cal-cell booked">한소민<br>넥리프팅</div>
-              <div class="tm">14:00</div><div class="cal-cell open"></div><div class="cal-cell open"></div><div class="cal-cell booked">최유리<br>딥플레인</div><div class="cal-cell open"></div><div class="cal-cell open"></div>
+              <div class="tm">10:00</div><div class="cal-cell open"></div><div class="cal-cell booked">이은지<br>Face Lift</div><div class="cal-cell open"></div><div class="cal-cell blocked">휴진</div><div class="cal-cell open"></div>
+              <div class="tm">11:00</div><div class="cal-cell booked">박서연<br>Face Lift</div><div class="cal-cell open"></div><div class="cal-cell open"></div><div class="cal-cell blocked">휴진</div><div class="cal-cell booked">한소민<br>Face Lift</div>
+              <div class="tm">14:00</div><div class="cal-cell open"></div><div class="cal-cell open"></div><div class="cal-cell booked">최유리<br>Face Lift</div><div class="cal-cell open"></div><div class="cal-cell open"></div>
             </div>
           </div>
         </div>
@@ -534,7 +531,7 @@
               <div>
                 <div class="tabs"><div class="tab active">예약 이력</div><div class="tab">결제 이력</div><div class="tab">채팅 요약</div></div>
                 <div class="mini-list">
-                  <div class="row"><span>2026.09.18 · 딥플레인 리프팅</span><span class="status-pill status-done"><i></i>확정</span></div>
+                  <div class="row"><span>2026.09.18 · Face Lift</span><span class="status-pill status-done"><i></i>확정</span></div>
                   <div class="row"><span>2026.07.02 · 상담 방문</span><span class="status-pill status-cancel"><i></i>완료</span></div>
                 </div>
                 <div class="panel-title" style="margin-top:14px;">첨부 사진</div>
