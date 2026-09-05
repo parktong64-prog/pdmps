@@ -4,7 +4,7 @@
 <style>
   :root{
     --page-bg:#f3eeeb; --panel-bg:#ffffff; --sidebar-bg:#241d20; --sidebar-ink:#e9dfe1; --sidebar-muted:#9c8b8f;
-    --ink:#2a1f22; --ink-soft:#6f6265; --line:#e6ddd9;
+    --ink:#2a1f22; --ink-soft:#6f6265; --ink-faint:#b9adaf; --line:#e6ddd9;
     --accent:#a1546a; --accent-soft:#f4e6ea; --accent-ink:#7d3f52;
     --st-pending:#b9791f; --st-pending-soft:#faf0dc;
     --st-progress:#2d6ca8; --st-progress-soft:#e2edf7;
@@ -18,7 +18,7 @@
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
       --page-bg:#171314; --panel-bg:#221b1d; --sidebar-bg:#0f0c0d; --sidebar-ink:#efe6e8; --sidebar-muted:#8a7a7d;
-      --ink:#f2e9e7; --ink-soft:#af9fa2; --line:#382e31;
+      --ink:#f2e9e7; --ink-soft:#af9fa2; --ink-faint:#5f5254; --line:#382e31;
       --accent:#e08aa1; --accent-soft:#3a2530; --accent-ink:#f0aabb;
       --st-pending:#e0a94f; --st-pending-soft:#3a2f1c;
       --st-progress:#6fa8de; --st-progress-soft:#1c2c3c;
@@ -29,7 +29,7 @@
   }
   :root[data-theme="dark"]{
     --page-bg:#171314; --panel-bg:#221b1d; --sidebar-bg:#0f0c0d; --sidebar-ink:#efe6e8; --sidebar-muted:#8a7a7d;
-    --ink:#f2e9e7; --ink-soft:#af9fa2; --line:#382e31;
+    --ink:#f2e9e7; --ink-soft:#af9fa2; --ink-faint:#5f5254; --line:#382e31;
     --accent:#e08aa1; --accent-soft:#3a2530; --accent-ink:#f0aabb;
     --st-pending:#e0a94f; --st-pending-soft:#3a2f1c;
     --st-progress:#6fa8de; --st-progress-soft:#1c2c3c;
@@ -131,6 +131,65 @@
   }
   .empty-row{text-align:center;color:var(--ink-soft);padding:28px 0;font-size:.82rem;}
 
+  /* 예약 관리 캘린더 */
+  .week-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .week-nav button{
+    width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--panel-bg);
+    color:var(--ink);cursor:pointer;font-size:.85rem;
+  }
+  .week-nav button:disabled{opacity:.3;cursor:not-allowed;}
+  .week-nav button:not(:disabled):hover{border-color:var(--accent);}
+  .week-label{font-family:var(--font-display);font-weight:700;font-size:1rem;}
+
+  .resv-grid{
+    display:grid;grid-template-columns:56px repeat(7,1fr);gap:1px;background:var(--line);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:.74rem;
+  }
+  .resv-grid > div{background:var(--panel-bg);padding:8px 4px;min-height:46px;}
+  .resv-grid .hd{text-align:center;background:var(--page-bg);padding-top:9px;}
+  .resv-grid .hd .dow{font-size:.64rem;color:var(--ink-soft);}
+  .resv-grid .hd .dnum{font-family:var(--font-mono);font-size:.92rem;font-weight:600;}
+  .resv-grid .hd.closed .dow, .resv-grid .hd.closed .dnum{color:var(--ink-faint);}
+  .resv-grid .tm{font-family:var(--font-mono);color:var(--ink-soft);display:flex;align-items:center;justify-content:center;}
+  .resv-cell{
+    cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    text-align:center;line-height:1.25;border:none;font:inherit;width:100%;
+  }
+  .resv-cell.open{color:var(--ink-faint);}
+  .resv-cell.open:hover{background:var(--accent-soft);}
+  .resv-cell.booked{background:var(--accent-soft);color:var(--accent-ink);font-weight:700;}
+  .resv-cell.booked:hover{filter:brightness(.97);}
+  .resv-cell.blocked{
+    background:repeating-linear-gradient(45deg, var(--page-bg), var(--page-bg) 4px, var(--line) 4px, var(--line) 8px);
+    color:var(--ink-soft);cursor:pointer;
+  }
+  .resv-cell.closed{
+    background:repeating-linear-gradient(45deg, var(--page-bg), var(--page-bg) 4px, var(--line) 4px, var(--line) 8px);
+    color:var(--ink-faint);cursor:default;
+  }
+  .resv-cell.selected{outline:2px solid var(--accent);outline-offset:-2px;}
+
+  .legend2{display:flex;gap:16px;font-size:.7rem;color:var(--ink-soft);margin:14px 0 4px;}
+  .legend2 span{display:inline-flex;align-items:center;gap:6px;}
+  .legend2 i{width:11px;height:11px;border-radius:3px;display:inline-block;}
+  .legend2 i.op{background:var(--panel-bg);border:1px solid var(--line);}
+  .legend2 i.bk{background:var(--accent-soft);}
+  .legend2 i.bl{background:repeating-linear-gradient(45deg, var(--page-bg), var(--page-bg) 3px, var(--line) 3px, var(--line) 6px);}
+
+  .detail-panel{margin-top:8px;}
+  .detail-empty{color:var(--ink-soft);font-size:.82rem;text-align:center;padding:22px 0;}
+  .detail-row{display:flex;justify-content:space-between;font-size:.84rem;padding:6px 0;border-bottom:1px solid var(--line);}
+  .detail-row:last-child{border-bottom:none;}
+  .detail-row b{color:var(--ink);font-weight:600;}
+  .detail-actions{margin-top:14px;display:flex;gap:8px;}
+  .btn-danger-outline, .btn-outline2{
+    font:inherit;font-size:.8rem;font-weight:700;border:none;border-radius:8px;padding:9px 14px;cursor:pointer;
+  }
+  .btn-danger-outline{color:#b3392c;background:#fbeae7;}
+  :root[data-theme="dark"] .btn-danger-outline{color:#f0897a;background:#3a2321;}
+  .btn-outline2{color:var(--accent-ink);background:var(--accent-soft);}
+  .btn-danger-outline:disabled{opacity:.5;cursor:not-allowed;}
+
   @media (max-width:860px){
     .shell{flex-direction:column;}
     .sidebar{width:100%;flex-direction:row;overflow-x:auto;padding:14px;}
@@ -149,7 +208,7 @@
 
     <div class="nav-item active" data-view="dashboard"><span class="dot"></span>대시보드 홈</div>
     <div class="nav-item" data-view="consultations"><span class="dot"></span>상담 관리</div>
-    <div class="nav-item" data-disabled><span class="dot"></span>예약 관리<span class="soon">준비중</span></div>
+    <div class="nav-item" data-view="reservations"><span class="dot"></span>예약 관리</div>
     <div class="nav-item" data-disabled><span class="dot"></span>환자 관리<span class="soon">준비중</span></div>
     <div class="nav-item" data-disabled><span class="dot"></span>결제·매출<span class="soon">준비중</span></div>
     <div class="nav-item" data-disabled><span class="dot"></span>설정<span class="soon">준비중</span></div>
@@ -234,6 +293,35 @@
       </div>
     </div>
 
+    <!-- 예약 관리 -->
+    <div class="view" id="view-reservations">
+      <div class="topbar">
+        <h1>예약 관리</h1>
+        <div class="date">박동만 원장</div>
+      </div>
+
+      <div class="panel">
+        <div class="week-nav">
+          <button type="button" id="week-prev" aria-label="이전 주">‹</button>
+          <div class="week-label" id="week-label"></div>
+          <button type="button" id="week-next" aria-label="다음 주">›</button>
+        </div>
+
+        <div class="resv-grid" id="resv-grid"></div>
+
+        <div class="legend2">
+          <span><i class="op"></i>예약 가능</span>
+          <span><i class="bk"></i>예약됨 (클릭 시 상세)</span>
+          <span><i class="bl"></i>휴진 · 차단</span>
+        </div>
+      </div>
+
+      <div class="panel detail-panel">
+        <div class="panel-title">슬롯 상세</div>
+        <div id="detail-body"></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -304,5 +392,155 @@
   document.querySelectorAll('[data-goto]').forEach((el) => {
     el.addEventListener('click', () => goto(el.dataset.goto));
   });
+
+  // ---------- 예약 관리 캘린더 ----------
+  (function(){
+    const WEEKDAY_LABEL = ['일','월','화','수','목','금','토'];
+    const TIMES = ['10:00', '11:00', '13:00', '14:30', '16:00', '17:30'];
+    const NAMES = ['이은지','박서연','최유리','한소민','오지훈','배수아','문태현','강하은'];
+    // 환자 예약 화면(reservation-calendar.html)과 동일한 규칙: 일요일 휴진 + 관리자가 등록한 휴무일
+    const BLOCKED = {
+      '2026-09-24': '추석연휴', '2026-09-25': '추석연휴', '2026-09-26': '추석연휴',
+      '2026-10-09': '한글날',
+    };
+    // 주 시작일(일요일 기준) 2개 주 제공
+    const WEEK_STARTS = [
+      new Date(2026, 8, 13), // 9.13(일) ~ 9.19(토)
+      new Date(2026, 8, 20), // 9.20(일) ~ 9.26(토)
+    ];
+
+    function hash(str) {
+      let h = 0;
+      for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
+      return h;
+    }
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function dateKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+    function isNaturallyBooked(key, time) { return hash(key + '_' + time) % 100 < 30; }
+    function nameFor(key, time) { return NAMES[hash(key + time + 'name') % NAMES.length]; }
+    function isClosedDay(d) { return d.getDay() === 0 || !!BLOCKED[dateKey(d)]; }
+
+    let weekIdx = 0;
+    let selectedKey = null; // "YYYY-MM-DD_HH:MM"
+    const overrides = {}; // key -> 'open' | 'blocked'
+
+    const grid = document.getElementById('resv-grid');
+    const weekLabel = document.getElementById('week-label');
+    const prevBtn = document.getElementById('week-prev');
+    const nextBtn3 = document.getElementById('week-next');
+    const detailBody = document.getElementById('detail-body');
+
+    function weekDates() {
+      const start = WEEK_STARTS[weekIdx];
+      return Array.from({ length: 7 }, (_, i) => new Date(start.getFullYear(), start.getMonth(), start.getDate() + i));
+    }
+
+    function cellStatus(d, time) {
+      const key = dateKey(d) + '_' + time;
+      if (isClosedDay(d)) return 'closed';
+      if (overrides[key]) return overrides[key];
+      return isNaturallyBooked(dateKey(d), time) ? 'booked' : 'open';
+    }
+
+    function renderWeek() {
+      const dates = weekDates();
+      const first = dates[0], last = dates[6];
+      weekLabel.textContent = (first.getMonth() + 1) + '.' + first.getDate() + ' ~ ' + (last.getMonth() + 1) + '.' + last.getDate();
+      prevBtn.disabled = weekIdx === 0;
+      nextBtn3.disabled = weekIdx === WEEK_STARTS.length - 1;
+
+      grid.innerHTML = '';
+      grid.appendChild(document.createElement('div')); // 좌상단 빈칸
+      dates.forEach((d) => {
+        const hd = document.createElement('div');
+        hd.className = 'hd' + (isClosedDay(d) ? ' closed' : '');
+        hd.innerHTML = '<div class="dow">' + WEEKDAY_LABEL[d.getDay()] + '</div><div class="dnum">' + d.getDate() + '</div>';
+        grid.appendChild(hd);
+      });
+
+      TIMES.forEach((time) => {
+        const tm = document.createElement('div');
+        tm.className = 'tm';
+        tm.textContent = time;
+        grid.appendChild(tm);
+
+        dates.forEach((d) => {
+          const status = cellStatus(d, time);
+          const key = dateKey(d) + '_' + time;
+          const cell = document.createElement('button');
+          cell.type = 'button';
+          cell.className = 'resv-cell ' + status + (key === selectedKey ? ' selected' : '');
+
+          if (status === 'closed') {
+            cell.textContent = BLOCKED[dateKey(d)] || '휴진';
+          } else if (status === 'booked') {
+            cell.textContent = nameFor(dateKey(d), time);
+            cell.addEventListener('click', () => selectCell(d, time, key));
+          } else if (status === 'blocked') {
+            cell.textContent = '차단';
+            cell.addEventListener('click', () => selectCell(d, time, key));
+          } else {
+            cell.addEventListener('click', () => selectCell(d, time, key));
+          }
+          grid.appendChild(cell);
+        });
+      });
+    }
+
+    function selectCell(d, time, key) {
+      selectedKey = key;
+      renderWeek();
+      renderDetail(d, time, key);
+    }
+
+    function renderDetail(d, time, key) {
+      const status = cellStatus(d, time);
+      const when = (d.getMonth() + 1) + '월 ' + d.getDate() + '일(' + WEEKDAY_LABEL[d.getDay()] + ') ' + time;
+
+      if (status === 'booked') {
+        const patient = nameFor(dateKey(d), time);
+        detailBody.innerHTML =
+          '<div class="detail-row"><span>환자</span><b>' + patient + '</b></div>' +
+          '<div class="detail-row"><span>연락처</span><b>010-****-' + (1000 + hash(patient) % 9000) + '</b></div>' +
+          '<div class="detail-row"><span>시술</span><b>Face Lift</b></div>' +
+          '<div class="detail-row"><span>일시</span><b>' + when + '</b></div>' +
+          '<div class="detail-row"><span>상태</span><span class="status-pill status-done"><i></i>확정</span></div>' +
+          '<div class="detail-actions"><button type="button" class="btn-danger-outline" id="cancel-slot">예약 취소</button></div>';
+        document.getElementById('cancel-slot').addEventListener('click', (e) => {
+          overrides[key] = 'open';
+          e.target.disabled = true;
+          e.target.textContent = '취소 완료';
+          renderWeek();
+        });
+      } else if (status === 'blocked') {
+        detailBody.innerHTML =
+          '<div class="detail-row"><span>일시</span><b>' + when + '</b></div>' +
+          '<div class="detail-row"><span>상태</span><span class="status-pill status-cancel"><i></i>관리자 차단</span></div>' +
+          '<div class="detail-actions"><button type="button" class="btn-outline2" id="reopen-slot">슬롯 열기</button></div>';
+        document.getElementById('reopen-slot').addEventListener('click', () => {
+          overrides[key] = 'open';
+          renderWeek();
+          renderDetail(d, time, key);
+        });
+      } else {
+        detailBody.innerHTML =
+          '<div class="detail-row"><span>일시</span><b>' + when + '</b></div>' +
+          '<div class="detail-row"><span>상태</span><span class="status-pill status-progress"><i></i>예약 가능</span></div>' +
+          '<div class="detail-actions"><button type="button" class="btn-outline2" id="block-slot">슬롯 막기</button></div>';
+        document.getElementById('block-slot').addEventListener('click', () => {
+          overrides[key] = 'blocked';
+          renderWeek();
+          renderDetail(d, time, key);
+        });
+      }
+    }
+
+    detailBody.innerHTML = '<div class="detail-empty">슬롯을 선택하면 상세 정보가 여기에 표시됩니다.</div>';
+
+    prevBtn.addEventListener('click', () => { weekIdx = Math.max(0, weekIdx - 1); selectedKey = null; renderWeek(); detailBody.innerHTML = '<div class="detail-empty">슬롯을 선택하면 상세 정보가 여기에 표시됩니다.</div>'; });
+    nextBtn3.addEventListener('click', () => { weekIdx = Math.min(WEEK_STARTS.length - 1, weekIdx + 1); selectedKey = null; renderWeek(); detailBody.innerHTML = '<div class="detail-empty">슬롯을 선택하면 상세 정보가 여기에 표시됩니다.</div>'; });
+
+    renderWeek();
+  })();
 })();
 </script>
