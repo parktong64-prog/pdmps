@@ -404,7 +404,7 @@
         <div class="tile"><div class="lbl">오늘 예약</div><div class="val">4</div><div class="delta flat">— 어제와 동일</div></div>
         <div class="tile flag"><div class="lbl">AI 확인 필요</div><div class="val">2</div><div class="delta down">전화 확인 대기중</div></div>
         <div class="tile"><div class="lbl">이번주 노쇼율</div><div class="val">4.2%</div><div class="delta up">▼ 0.8p 개선</div></div>
-        <div class="tile"><div class="lbl">이번달 매출</div><div class="val">18.4M</div><div class="delta up">▲ 12%</div></div>
+        <div class="tile"><div class="lbl">이번달 매출</div><div class="val">27.8M</div><div class="delta up">▲ 12%</div></div>
       </div>
 
       <div class="grid-2">
@@ -577,9 +577,9 @@
       </div>
 
       <div class="tiles">
-        <div class="tile"><div class="lbl">이번달 매출</div><div class="val">18.4M</div><div class="delta up">▲ 12%</div></div>
+        <div class="tile"><div class="lbl">이번달 매출</div><div class="val">27.8M</div><div class="delta up">▲ 12%</div></div>
         <div class="tile"><div class="lbl">이번달 결제건수</div><div class="val">42</div><div class="delta up">▲ 5건</div></div>
-        <div class="tile"><div class="lbl">환불액</div><div class="val">380K</div><div class="delta flat">시술비 환불 1건</div></div>
+        <div class="tile"><div class="lbl">환불액</div><div class="val">27.5M</div><div class="delta flat">시술비 환불 1건</div></div>
         <div class="tile"><div class="lbl">결제 성공률</div><div class="val">97.6%</div><div class="delta up">▲ 0.4p</div></div>
       </div>
 
@@ -1243,14 +1243,14 @@
       { patient: '이은지', type: '예약금', amount: 50000, method: '-', date: '09.05', status: 'pending', refundable: false },
       { patient: '박서연', type: '예약금', amount: 50000, method: '카카오페이', date: '09.04', status: 'paid', refundable: false },
       { patient: '최유리', type: '예약금', amount: 50000, method: '카드', date: '09.04', status: 'paid', refundable: false },
-      { patient: '최유리', type: '시술비', amount: 4200000, method: '카드', date: '09.02', status: 'paid', refundable: true },
+      { patient: '최유리', type: '시술비', amount: 27500000, method: '카드', date: '09.02', status: 'paid', refundable: true },
       { patient: '한소민', type: '예약금', amount: 50000, method: '-', date: '09.04', status: 'pending', refundable: false },
       { patient: '오지훈', type: '예약금', amount: 50000, method: '카카오페이', date: '09.03', status: 'paid', refundable: false },
       { patient: '배수아', type: '예약금', amount: 50000, method: '-', date: '09.03', status: 'pending', refundable: false },
       { patient: '문태현', type: '예약금', amount: 50000, method: '카드', date: '09.03', status: 'failed', refundable: false },
       { patient: '강하은', type: '예약금', amount: 50000, method: '카드', date: '08.29', status: 'paid_noref', refundable: false },
       { patient: '김도윤', type: '예약금', amount: 50000, method: '카드', date: '08.15', status: 'paid', refundable: false },
-      { patient: '김도윤', type: '시술비', amount: 3800000, method: '카드', date: '08.20', status: 'refunded', refundable: false },
+      { patient: '김도윤', type: '시술비', amount: 27500000, method: '카드', date: '08.20', status: 'refunded', refundable: false },
     ];
     const STATUS_META = {
       paid: ['결제완료', 'status-done'],
@@ -1314,7 +1314,7 @@
     const tabs = document.getElementById('settings-tabs');
     let stab = 'procedure';
 
-    const PROCEDURE = { name: 'Face Lift', category: 'Face Lift', price: 5000000, deposit: 50000, active: true };
+    const PROCEDURE = { name: 'Face Lift', category: 'Face Lift', price: 27500000, deposit: 50000, active: true };
     const STAFF = [
       { name: '박동만', role: '원장', phone: '010-1111-2222', active: true },
       { name: '김민지', role: '상담실장', phone: '010-3333-4444', active: true },
@@ -1335,7 +1335,7 @@
       body.innerHTML =
         '<div class="settings-form">' +
           '<div class="settings-field"><label>시술명</label><input type="text" id="pf-name" value="' + PROCEDURE.name + '"></div>' +
-          '<div class="settings-field"><label>기준 시술비 (원)</label><input type="text" id="pf-price" value="' + fmt(PROCEDURE.price) + '"></div>' +
+          '<div class="settings-field"><label>기준 시술비 (원, VAT 포함)</label><input type="text" id="pf-price" value="' + fmt(PROCEDURE.price) + '"></div>' +
           '<div class="settings-field"><label>예약금 (원)</label><input type="text" id="pf-deposit" value="' + fmt(PROCEDURE.deposit) + '">' +
             '<div class="note">예약금은 환불 불가 정책과 연동되어 있어요. 변경 시 신중하게 결정해주세요.</div></div>' +
           '<div class="settings-field settings-switch-row"><span>환자 앱에 노출</span>' +
