@@ -14,6 +14,24 @@
   --success-soft: #e3f3ea;
   --warn-ink: #8a5a24;
   --warn-soft: #faf0e2;
+  --danger: #b3392c;
+  --danger-soft: #fbeae7;
+
+  /* 관리자 화면 전용 */
+  --sidebar-bg: #241d20;
+  --sidebar-ink: #e9dfe1;
+  --sidebar-muted: #9c8b8f;
+  --ink-faint: #b9adaf;
+  --st-pending: #b9791f;
+  --st-pending-soft: #faf0dc;
+  --st-progress: #2d6ca8;
+  --st-progress-soft: #e2edf7;
+  --st-review: #a1546a;
+  --st-review-soft: #f4e6ea;
+  --st-done: #2c8a5b;
+  --st-done-soft: #e3f3ea;
+  --st-cancel: #84898f;
+  --st-cancel-soft: #eceded;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -31,6 +49,23 @@
     --success-soft: #1f3329;
     --warn-ink: #e8b978;
     --warn-soft: #332a1c;
+    --danger: #f0897a;
+    --danger-soft: #3a2321;
+
+    --sidebar-bg: #0f0c0d;
+    --sidebar-ink: #efe6e8;
+    --sidebar-muted: #8a7a7d;
+    --ink-faint: #5f5254;
+    --st-pending: #e0a94f;
+    --st-pending-soft: #3a2f1c;
+    --st-progress: #6fa8de;
+    --st-progress-soft: #1c2c3c;
+    --st-review: #e08aa1;
+    --st-review-soft: #3a2530;
+    --st-done: #7fd1a6;
+    --st-done-soft: #1f3329;
+    --st-cancel: #a3a8ac;
+    --st-cancel-soft: #2a2b2d;
   }
 }
 
