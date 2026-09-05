@@ -315,6 +315,54 @@
   .amt-cell{font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:600;}
   .norefund-note{font-size:.7rem;color:var(--ink-faint);}
 
+  /* 설정 */
+  .settings-form{display:flex;flex-direction:column;gap:16px;max-width:420px;}
+  .settings-field label{display:block;font-size:.8rem;font-weight:700;margin-bottom:6px;}
+  .settings-field input[type="text"]{
+    font:inherit;font-size:.88rem;padding:10px 12px;border-radius:8px;border:1px solid var(--line);
+    background:var(--panel-bg);color:var(--ink);width:100%;outline:none;
+  }
+  .settings-field input[type="text"]:focus{border-color:var(--accent);}
+  .settings-field .note{font-size:.7rem;color:var(--ink-soft);margin-top:5px;}
+  .settings-switch-row{display:flex;justify-content:space-between;align-items:center;}
+  .settings-switch-row span{font-size:.84rem;font-weight:600;}
+
+  .staff-add-form{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;align-items:center;}
+  .staff-add-form input, .staff-add-form select{
+    font:inherit;font-size:.82rem;padding:8px 10px;border-radius:8px;border:1px solid var(--line);
+    background:var(--panel-bg);color:var(--ink);
+  }
+  .add-toggle-btn{
+    font:inherit;font-size:.8rem;font-weight:700;color:var(--accent-ink);background:var(--accent-soft);
+    border:none;border-radius:8px;padding:9px 14px;cursor:pointer;margin-top:14px;
+  }
+  .status-toggle-btn{
+    font:inherit;border:none;cursor:pointer;padding:3px 9px;border-radius:100px;font-size:.66rem;font-weight:700;
+  }
+
+  .tpl-row{border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:10px;}
+  .tpl-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .tpl-name{font-size:.84rem;font-weight:700;}
+  .tpl-channel{font-size:.64rem;font-weight:700;padding:2px 9px;border-radius:100px;margin-left:8px;background:var(--page-bg);color:var(--ink-soft);}
+  .tpl-body{font-size:.82rem;color:var(--ink-soft);line-height:1.55;}
+  .tpl-edit-btn{
+    font:inherit;font-size:.74rem;font-weight:700;color:var(--accent-ink);background:none;border:none;cursor:pointer;
+  }
+  .tpl-textarea{
+    width:100%;font:inherit;font-size:.82rem;padding:10px;border-radius:8px;border:1px solid var(--accent);
+    background:var(--panel-bg);color:var(--ink);resize:vertical;min-height:60px;
+  }
+  .tpl-actions{display:flex;gap:8px;margin-top:8px;}
+  .tpl-save{font:inherit;font-size:.76rem;font-weight:700;color:#fff;background:var(--accent);border:none;border-radius:7px;padding:6px 12px;cursor:pointer;}
+  .tpl-cancel{font:inherit;font-size:.76rem;color:var(--ink-soft);background:none;border:none;cursor:pointer;}
+  .tpl-saved-flash{font-size:.7rem;color:var(--st-done);font-weight:700;margin-left:8px;}
+
+  .video-card{border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;}
+  .video-card .vtitle{font-size:.88rem;font-weight:700;}
+  .video-card .vmeta{font-size:.76rem;color:var(--ink-soft);margin-top:4px;}
+  .video-progress-bar{height:5px;background:var(--line);border-radius:3px;overflow:hidden;width:160px;margin-top:6px;}
+  .video-progress-bar i{display:block;height:100%;background:var(--accent);width:0%;transition:width .1s linear;}
+
   @media (max-width:860px){
     .shell{flex-direction:column;}
     .sidebar{width:100%;flex-direction:row;overflow-x:auto;padding:14px;}
@@ -337,7 +385,7 @@
     <div class="nav-item" data-view="schedule"><span class="dot"></span>일정 설정</div>
     <div class="nav-item" data-view="patients"><span class="dot"></span>환자 관리</div>
     <div class="nav-item" data-view="payments"><span class="dot"></span>결제·매출</div>
-    <div class="nav-item" data-disabled><span class="dot"></span>설정<span class="soon">준비중</span></div>
+    <div class="nav-item" data-view="settings"><span class="dot"></span>설정</div>
 
     <div class="sidebar-foot"><b>김민지</b>상담실장 · 로그아웃</div>
   </nav>
@@ -559,6 +607,23 @@
           <tbody id="pay-tbody"></tbody>
         </table>
       </div>
+    </div>
+
+    <!-- 설정 -->
+    <div class="view" id="view-settings">
+      <div class="topbar">
+        <h1>설정</h1>
+        <div class="date">시술 항목 · 상담사 계정 · 알림 템플릿 · 시술 영상</div>
+      </div>
+
+      <div class="ptabs" id="settings-tabs">
+        <div class="ptab active" data-stab="procedure">시술 항목</div>
+        <div class="ptab" data-stab="staff">상담사 계정</div>
+        <div class="ptab" data-stab="templates">알림 템플릿</div>
+        <div class="ptab" data-stab="videos">시술 안내 영상</div>
+      </div>
+
+      <div class="panel" id="settings-body"></div>
     </div>
 
   </div>
@@ -1241,6 +1306,170 @@
     });
 
     renderPayments('all');
+  })();
+
+  // ---------- 설정 ----------
+  (function(){
+    const body = document.getElementById('settings-body');
+    const tabs = document.getElementById('settings-tabs');
+    let stab = 'procedure';
+
+    const PROCEDURE = { name: 'Face Lift', category: 'Face Lift', price: 5000000, deposit: 50000, active: true };
+    const STAFF = [
+      { name: '박동만', role: '원장', phone: '010-1111-2222', active: true },
+      { name: '김민지', role: '상담실장', phone: '010-3333-4444', active: true },
+      { name: '정하늘', role: '상담사', phone: '010-5555-6666', active: true },
+    ];
+    const TEMPLATES = [
+      { key: 'consult_received', name: '상담 신청 접수확인', channel: '푸시', text: '상담 신청이 접수되었습니다. AI 분석 결과를 확인해보세요.' },
+      { key: 'reservation_confirmed', name: '예약 확정', channel: '알림톡', text: '[카운슬] {날짜} {시간} Face Lift 상담 예약이 확정되었습니다.' },
+      { key: 'reminder_d1', name: '예약 리마인드 (D-1)', channel: '알림톡', text: '[카운슬] 내일 {시간} 예약이 있습니다. 잊지 말고 방문해주세요!' },
+      { key: 'payment_completed', name: '결제 완료', channel: '푸시', text: '예약금 결제가 완료되었습니다.' },
+      { key: 'ai_flag_review', name: 'AI 확인 필요 (내부)', channel: '내부', text: '{환자명}님의 AI 분석 결과 확인이 필요합니다.' },
+    ];
+    let videoState = { title: 'Face Lift 과정 안내', duration: '3:24', registered: '2026.08.20', active: true };
+
+    function fmt(n) { return n.toLocaleString(); }
+
+    function renderProcedureTab() {
+      body.innerHTML =
+        '<div class="settings-form">' +
+          '<div class="settings-field"><label>시술명</label><input type="text" id="pf-name" value="' + PROCEDURE.name + '"></div>' +
+          '<div class="settings-field"><label>기준 시술비 (원)</label><input type="text" id="pf-price" value="' + fmt(PROCEDURE.price) + '"></div>' +
+          '<div class="settings-field"><label>예약금 (원)</label><input type="text" id="pf-deposit" value="' + fmt(PROCEDURE.deposit) + '">' +
+            '<div class="note">예약금은 환불 불가 정책과 연동되어 있어요. 변경 시 신중하게 결정해주세요.</div></div>' +
+          '<div class="settings-field settings-switch-row"><span>환자 앱에 노출</span>' +
+            '<label class="switch"><input type="checkbox" id="pf-active"' + (PROCEDURE.active ? ' checked' : '') + '><span class="track"></span><span class="knob"></span></label></div>' +
+          '<div class="save-row"><button type="button" class="btn-save" id="pf-save">변경사항 저장</button><span class="save-toast" id="pf-toast">저장되었습니다</span></div>' +
+        '</div>';
+
+      document.getElementById('pf-save').addEventListener('click', () => {
+        PROCEDURE.name = document.getElementById('pf-name').value;
+        PROCEDURE.price = Number(document.getElementById('pf-price').value.replace(/[^\d]/g, '')) || PROCEDURE.price;
+        PROCEDURE.deposit = Number(document.getElementById('pf-deposit').value.replace(/[^\d]/g, '')) || PROCEDURE.deposit;
+        PROCEDURE.active = document.getElementById('pf-active').checked;
+        const toast = document.getElementById('pf-toast');
+        toast.classList.add('show');
+        clearTimeout(toast._t);
+        toast._t = setTimeout(() => toast.classList.remove('show'), 2200);
+      });
+    }
+
+    function renderStaffTab() {
+      const rows = STAFF.map((s, i) =>
+        '<tr><td class="name-cell">' + s.name + '</td><td>' + s.role + '</td><td>' + s.phone + '</td>' +
+        '<td><button type="button" class="status-toggle-btn" data-idx="' + i + '" style="background:' + (s.active ? 'var(--st-done-soft)' : 'var(--st-cancel-soft)') + ';color:' + (s.active ? 'var(--st-done)' : 'var(--st-cancel)') + '">' + (s.active ? '재직' : '비활성') + '</button></td></tr>'
+      ).join('');
+
+      body.innerHTML =
+        '<table class="dtable"><thead><tr><th>이름</th><th>역할</th><th>연락처</th><th>상태</th></tr></thead><tbody id="staff-tbody">' + rows + '</tbody></table>' +
+        '<button type="button" class="add-toggle-btn" id="staff-add-toggle">+ 상담사 추가</button>' +
+        '<div class="staff-add-form" id="staff-add-form" hidden>' +
+          '<input type="text" id="new-staff-name" placeholder="이름">' +
+          '<select id="new-staff-role"><option>상담사</option><option>상담실장</option><option>원장</option><option>관리자</option></select>' +
+          '<input type="text" id="new-staff-phone" placeholder="010-0000-0000">' +
+          '<button type="button" class="add-toggle-btn" id="staff-add-submit" style="margin-top:0;">추가</button>' +
+        '</div>';
+
+      body.querySelectorAll('.status-toggle-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.dataset.idx);
+          STAFF[idx].active = !STAFF[idx].active;
+          renderStaffTab();
+        });
+      });
+
+      document.getElementById('staff-add-toggle').addEventListener('click', () => {
+        document.getElementById('staff-add-form').hidden = false;
+      });
+      document.getElementById('staff-add-submit').addEventListener('click', () => {
+        const name = document.getElementById('new-staff-name').value.trim();
+        const role = document.getElementById('new-staff-role').value;
+        const phone = document.getElementById('new-staff-phone').value.trim() || '-';
+        if (!name) return;
+        STAFF.push({ name, role, phone, active: true });
+        renderStaffTab();
+      });
+    }
+
+    function renderTemplatesTab() {
+      body.innerHTML = TEMPLATES.map((t, i) =>
+        '<div class="tpl-row" id="tpl-row-' + i + '">' +
+          '<div class="tpl-head"><span><span class="tpl-name">' + t.name + '</span><span class="tpl-channel">' + t.channel + '</span></span>' +
+          '<button type="button" class="tpl-edit-btn" data-idx="' + i + '">수정</button></div>' +
+          '<div class="tpl-body" id="tpl-body-' + i + '">' + t.text + '</div>' +
+        '</div>'
+      ).join('');
+
+      body.querySelectorAll('.tpl-edit-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const i = Number(btn.dataset.idx);
+          const target = document.getElementById('tpl-body-' + i);
+          const current = TEMPLATES[i].text;
+          target.innerHTML =
+            '<textarea class="tpl-textarea" id="tpl-edit-' + i + '">' + current + '</textarea>' +
+            '<div class="tpl-actions"><button type="button" class="tpl-save" data-save="' + i + '">저장</button><button type="button" class="tpl-cancel" data-cancel="' + i + '">취소</button></div>';
+
+          document.querySelector('[data-save="' + i + '"]').addEventListener('click', () => {
+            TEMPLATES[i].text = document.getElementById('tpl-edit-' + i).value;
+            target.innerHTML = TEMPLATES[i].text + '<span class="tpl-saved-flash">저장됨</span>';
+          });
+          document.querySelector('[data-cancel="' + i + '"]').addEventListener('click', () => {
+            target.textContent = current;
+          });
+        });
+      });
+    }
+
+    function renderVideosTab() {
+      body.innerHTML =
+        '<div class="video-card" id="video-card">' +
+          '<div><div class="vtitle">' + videoState.title + '</div>' +
+          '<div class="vmeta">재생시간 ' + videoState.duration + ' · 등록일 ' + videoState.registered + ' · ' + (videoState.active ? '노출중' : '비노출') + '</div></div>' +
+          '<button type="button" class="add-toggle-btn" id="video-replace-btn" style="margin-top:0;">새 영상으로 교체</button>' +
+        '</div>' +
+        '<input type="file" id="video-file-input" accept="video/*" hidden>';
+
+      document.getElementById('video-replace-btn').addEventListener('click', () => {
+        document.getElementById('video-file-input').click();
+      });
+      document.getElementById('video-file-input').addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+        const card = document.getElementById('video-card');
+        card.querySelector('.vtitle').textContent = file.name;
+        card.querySelector('.vmeta').innerHTML = '업로드 중… <div class="video-progress-bar"><i id="vp-fill"></i></div>';
+        let pct = 0;
+        const timer = setInterval(() => {
+          pct += 10;
+          const fill = document.getElementById('vp-fill');
+          if (fill) fill.style.width = Math.min(pct, 100) + '%';
+          if (pct >= 100) {
+            clearInterval(timer);
+            videoState = { title: file.name.replace(/\.[^.]+$/, ''), duration: '3:10', registered: '2026.09.05', active: true };
+            renderVideosTab();
+          }
+        }, 150);
+      });
+    }
+
+    function renderStab() {
+      if (stab === 'procedure') renderProcedureTab();
+      else if (stab === 'staff') renderStaffTab();
+      else if (stab === 'templates') renderTemplatesTab();
+      else if (stab === 'videos') renderVideosTab();
+    }
+
+    tabs.querySelectorAll('.ptab').forEach((t) => {
+      t.addEventListener('click', () => {
+        stab = t.dataset.stab;
+        tabs.querySelectorAll('.ptab').forEach((x) => x.classList.remove('active'));
+        t.classList.add('active');
+        renderStab();
+      });
+    });
+
+    renderStab();
   })();
 })();
 </script>
