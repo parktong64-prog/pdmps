@@ -11,6 +11,7 @@
     --accent:#a1546a;
     --accent-soft:#f4e6ea;
     --accent-ink:#7d3f52;
+    --success:#2c8a5b;
     --warn-ink:#8a5a24;
     --warn-soft:#faf0e2;
     --focus-ring:rgba(161,84,106,.28);
@@ -22,20 +23,20 @@
     :root:not([data-theme="light"]){
       --page-bg:#1b1517; --card-bg:#241d20; --ink:#f3ebe9; --ink-soft:#b6a8ac;
       --line:#3a2f33; --accent:#e08aa1; --accent-soft:#3a2530; --accent-ink:#f0aabb;
-      --warn-ink:#e8b978; --warn-soft:#332a1c; --focus-ring:rgba(224,138,161,.28);
+      --success:#7fd1a6; --warn-ink:#e8b978; --warn-soft:#332a1c; --focus-ring:rgba(224,138,161,.28);
     }
   }
   :root[data-theme="dark"]{
     --page-bg:#1b1517; --card-bg:#241d20; --ink:#f3ebe9; --ink-soft:#b6a8ac;
     --line:#3a2f33; --accent:#e08aa1; --accent-soft:#3a2530; --accent-ink:#f0aabb;
-    --warn-ink:#e8b978; --warn-soft:#332a1c; --focus-ring:rgba(224,138,161,.28);
+    --success:#7fd1a6; --warn-ink:#e8b978; --warn-soft:#332a1c; --focus-ring:rgba(224,138,161,.28);
   }
 
   *{box-sizing:border-box;}
   body{margin:0;background:var(--page-bg);color:var(--ink);font-family:var(--font-body);}
   h1,h2,p{text-wrap:balance;margin:0;}
 
-  .wrap{max-width:520px;margin:0 auto;padding:48px 20px 72px;}
+  .wrap{max-width:640px;margin:0 auto;padding:48px 20px 72px;}
 
   .eyebrow{
     font-size:.72rem;letter-spacing:.14em;color:var(--accent-ink);font-weight:700;
@@ -44,21 +45,49 @@
   .hero h1{font-family:var(--font-display);font-size:1.6rem;font-weight:700;margin-bottom:10px;}
   .hero p{font-size:.88rem;color:var(--ink-soft);line-height:1.65;margin-bottom:28px;}
 
-  /* 업로드 전 상태 */
-  .dropzone{
-    border:1.6px dashed var(--line);border-radius:16px;background:var(--card-bg);
-    padding:40px 20px;text-align:center;cursor:pointer;transition:border-color .15s, background .15s;
+  /* 업로드 3슬롯 */
+  .slot-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+  .slot{
+    position:relative;aspect-ratio:3/4;border-radius:12px;border:1.6px dashed var(--line);
+    background:var(--card-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:8px;cursor:pointer;overflow:hidden;padding:10px;text-align:center;
+    transition:border-color .15s, background .15s;
   }
-  .dropzone:hover, .dropzone:focus-visible{border-color:var(--accent);background:var(--accent-soft);}
-  .dropzone .icon{
-    width:52px;height:52px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);
-    display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 14px;
+  .slot:hover, .slot:focus-visible{border-color:var(--accent);background:var(--accent-soft);}
+  .slot.filled{border-style:solid;border-color:var(--success);padding:0;}
+  .slot .icon{
+    width:34px;height:34px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);
+    display:flex;align-items:center;justify-content:center;font-size:1.1rem;
   }
-  .dropzone .t1{font-size:.9rem;font-weight:700;margin-bottom:4px;}
-  .dropzone .t2{font-size:.76rem;color:var(--ink-soft);}
+  .slot .label{font-size:.76rem;font-weight:700;color:var(--ink);}
+  .slot .hint{font-size:.62rem;color:var(--ink-soft);}
+  .slot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .slot .tag{
+    position:absolute;top:6px;left:6px;font-family:var(--font-mono);font-size:.58rem;font-weight:600;
+    padding:2px 7px;border-radius:100px;background:rgba(0,0,0,.55);color:#fff;
+  }
+  .slot .check{
+    position:absolute;top:6px;right:6px;width:18px;height:18px;border-radius:50%;background:var(--success);
+    color:#fff;font-size:.62rem;display:flex;align-items:center;justify-content:center;
+  }
   input[type="file"]{display:none;}
 
-  /* 처리 중 상태 */
+  .upload-hint{text-align:center;font-size:.76rem;color:var(--ink-soft);margin:14px 0 0;}
+
+  .btn-primary{
+    display:block;width:100%;font:inherit;font-size:.92rem;font-weight:700;color:#fff;background:var(--accent);
+    border:none;border-radius:10px;padding:14px 0;cursor:pointer;text-align:center;margin-top:20px;
+    transition:filter .15s, transform .05s, opacity .15s;
+  }
+  .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+  .btn-primary:not(:disabled):hover{filter:brightness(1.06);}
+  .btn-primary:not(:disabled):active{transform:scale(.99);}
+  .link-btn{
+    display:block;width:100%;font:inherit;font-size:.78rem;color:var(--ink-soft);background:none;border:none;
+    text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:center;margin-top:14px;
+  }
+
+  /* 처리 중 */
   .processing{
     background:var(--card-bg);border:1px solid var(--line);border-radius:16px;
     padding:44px 20px;text-align:center;
@@ -70,57 +99,30 @@
   @keyframes spin{to{transform:rotate(360deg);}}
   .processing p{font-size:.84rem;color:var(--ink-soft);}
 
-  /* 결과 카드 */
-  .result-card{
-    background:var(--card-bg);border:1px solid var(--line);border-radius:16px;padding:18px;
+  /* 결과 */
+  .result-card{background:var(--card-bg);border:1px solid var(--line);border-radius:16px;padding:18px;}
+  .result-section + .result-section{margin-top:20px;}
+  .result-label{
+    display:flex;align-items:center;gap:7px;font-size:.78rem;font-weight:700;color:var(--ink);margin-bottom:10px;
   }
-  .compare-wrap{
-    position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/4;background:var(--line);
+  .result-label .swatch{width:9px;height:9px;border-radius:50%;background:var(--line);}
+  .result-label.after .swatch{background:var(--accent);}
+  .photo-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .photo-row .cell{position:relative;aspect-ratio:3/4;border-radius:9px;overflow:hidden;background:var(--line);}
+  .photo-row .cell img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  .photo-row .cell.after img{filter:brightness(1.05) contrast(1.05) saturate(1.08);}
+  .photo-row .cell .tag{
+    position:absolute;bottom:6px;left:6px;font-family:var(--font-mono);font-size:.58rem;font-weight:600;
+    padding:2px 7px;border-radius:100px;background:rgba(0,0,0,.55);color:#fff;
   }
-  .cmp-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
-  #img-after{filter:brightness(1.05) contrast(1.05) saturate(1.08);}
-  .cmp-after-clip{position:absolute;inset:0;overflow:hidden;}
-  .cmp-divider{
-    position:absolute;top:0;bottom:0;width:2px;background:#fff;left:50%;
-    box-shadow:0 0 0 1px rgba(0,0,0,.15);pointer-events:none;
-  }
-  .cmp-divider::after{
-    content:"↔";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-    width:30px;height:30px;border-radius:50%;background:#fff;color:var(--ink);
-    display:flex;align-items:center;justify-content:center;font-size:.85rem;box-shadow:0 2px 8px rgba(0,0,0,.25);
-  }
-  .cmp-tag{
-    position:absolute;top:10px;font-family:var(--font-mono);font-size:.64rem;font-weight:600;
-    padding:3px 9px;border-radius:100px;background:rgba(0,0,0,.55);color:#fff;pointer-events:none;
-  }
-  .cmp-tag.before{left:10px;}
-  .cmp-tag.after{right:10px;}
-  .cmp-range{
-    width:100%;margin:14px 0 4px;accent-color:var(--accent);cursor:ew-resize;
-  }
-  .cmp-hint{text-align:center;font-size:.7rem;color:var(--ink-soft);margin-bottom:4px;}
 
-  .filter-note{font-size:.7rem;color:var(--ink-soft);line-height:1.55;margin-top:12px;}
+  .filter-note{font-size:.7rem;color:var(--ink-soft);line-height:1.55;margin-top:14px;}
 
   .disclaimer{
     display:flex;gap:10px;background:var(--warn-soft);color:var(--warn-ink);
     border-radius:12px;padding:14px 16px;font-size:.78rem;line-height:1.65;margin:22px 0 28px;
   }
   .disclaimer b{color:var(--ink);}
-
-  .cta-row{display:flex;flex-direction:column;gap:10px;}
-  .btn-primary{
-    font:inherit;font-size:.92rem;font-weight:700;color:#fff;background:var(--accent);
-    border:none;border-radius:10px;padding:14px 0;cursor:pointer;text-align:center;
-    transition:filter .15s, transform .05s, opacity .15s;
-  }
-  .btn-primary:disabled{opacity:.45;cursor:not-allowed;}
-  .btn-primary:not(:disabled):hover{filter:brightness(1.06);}
-  .btn-primary:not(:disabled):active{transform:scale(.99);}
-  .link-btn{
-    font:inherit;font-size:.78rem;color:var(--ink-soft);background:none;border:none;
-    text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:center;
-  }
 
   [hidden]{display:none!important;}
 </style>
@@ -130,36 +132,51 @@
   <div class="hero">
     <div class="eyebrow">Face Lift 전문 · 박동만 원장</div>
     <h1>AI 시뮬레이션</h1>
-    <p>얼굴 사진을 업로드하면 AI가 예상되는 변화를 보여드려요. 실제 시술 결과와는 다를 수 있습니다.</p>
+    <p>좌측면·정면·우측면 3장을 업로드하면 AI가 예상되는 변화를 보여드려요. 실제 시술 결과와는 다를 수 있습니다.</p>
   </div>
 
   <div id="view-upload">
-    <button type="button" class="dropzone" id="dropzone">
-      <div class="icon">＋</div>
-      <div class="t1">사진 업로드하기</div>
-      <div class="t2">정면 얼굴 사진 1장을 선택해주세요 (JPG, PNG)</div>
-    </button>
-    <input type="file" id="file-input" accept="image/*">
+    <div class="slot-row">
+      <button type="button" class="slot" data-angle="left" data-label="좌측면">
+        <div class="icon">＋</div><div class="label">좌측면</div><div class="hint">45˚ 측면</div>
+      </button>
+      <button type="button" class="slot" data-angle="front" data-label="정면">
+        <div class="icon">＋</div><div class="label">정면</div><div class="hint">정면 응시</div>
+      </button>
+      <button type="button" class="slot" data-angle="right" data-label="우측면">
+        <div class="icon">＋</div><div class="label">우측면</div><div class="hint">45˚ 측면</div>
+      </button>
+    </div>
+    <p class="upload-hint" id="upload-hint">3장을 모두 업로드하면 시뮬레이션을 만들 수 있어요 (0/3)</p>
+    <button type="button" class="btn-primary" id="make-btn" disabled>AI 시뮬레이션 만들기</button>
+    <input type="file" id="file-left" accept="image/*">
+    <input type="file" id="file-front" accept="image/*">
+    <input type="file" id="file-right" accept="image/*">
   </div>
 
   <div id="view-processing" class="processing" hidden>
     <div class="spinner"></div>
-    <p>AI가 시뮬레이션 이미지를 생성하고 있어요…</p>
+    <p>AI가 세 장의 사진을 분석해 시뮬레이션을 만들고 있어요…</p>
   </div>
 
   <div id="view-result" hidden>
     <div class="result-card">
-      <div class="compare-wrap">
-        <img id="img-before" class="cmp-img" alt="시술 전 사진">
-        <div class="cmp-after-clip" id="after-clip">
-          <img id="img-after" class="cmp-img" alt="AI 예상 시뮬레이션">
+      <div class="result-section">
+        <div class="result-label"><span class="swatch"></span>Before</div>
+        <div class="photo-row">
+          <div class="cell"><img id="before-left" alt="시술 전 좌측면"><span class="tag">좌측면</span></div>
+          <div class="cell"><img id="before-front" alt="시술 전 정면"><span class="tag">정면</span></div>
+          <div class="cell"><img id="before-right" alt="시술 전 우측면"><span class="tag">우측면</span></div>
         </div>
-        <div class="cmp-divider" id="cmp-divider"></div>
-        <span class="cmp-tag before">Before</span>
-        <span class="cmp-tag after">After (AI 예상)</span>
       </div>
-      <input type="range" class="cmp-range" id="cmp-range" min="0" max="100" value="50" aria-label="시술 전후 비교 슬라이더">
-      <div class="cmp-hint">슬라이더를 움직여 전후를 비교해보세요</div>
+      <div class="result-section">
+        <div class="result-label after"><span class="swatch"></span>After (AI 예상)</div>
+        <div class="photo-row">
+          <div class="cell after"><img id="after-left" alt="AI 예상 좌측면"><span class="tag">좌측면</span></div>
+          <div class="cell after"><img id="after-front" alt="AI 예상 정면"><span class="tag">정면</span></div>
+          <div class="cell after"><img id="after-right" alt="AI 예상 우측면"><span class="tag">우측면</span></div>
+        </div>
+      </div>
       <p class="filter-note">데모 화면입니다 — 실제 서비스에서는 AI가 처짐 개선을 반영한 이미지를 새로 생성합니다. 지금은 업로드하신 사진에 색 보정만 적용해 보여드려요.</p>
     </div>
 
@@ -168,63 +185,86 @@
       <span><b>AI 예상 이미지 안내.</b> 위 시뮬레이션은 AI가 생성한 참고용 이미지로 실제 시술 결과를 보장하지 않으며 의학적 진단을 대체하지 않습니다. 정확한 진단과 예상 결과는 방문 상담에서 원장이 안내합니다.</span>
     </div>
 
-    <div class="cta-row">
-      <button type="button" class="btn-primary" id="next-btn">다음 · 상담 예약하기</button>
-      <button type="button" class="link-btn" id="retry-btn">다른 사진으로 다시 해보기</button>
-    </div>
+    <button type="button" class="btn-primary" id="next-btn" style="margin-top:0;">다음 · 상담 예약하기</button>
+    <button type="button" class="link-btn" id="retry-btn">다른 사진으로 다시 해보기</button>
   </div>
 
 </div>
 
 <script>
 (function(){
-  const dropzone = document.getElementById('dropzone');
-  const fileInput = document.getElementById('file-input');
+  const angles = ['left', 'front', 'right'];
+  const photos = {}; // angle -> dataURL
+
   const viewUpload = document.getElementById('view-upload');
   const viewProcessing = document.getElementById('view-processing');
   const viewResult = document.getElementById('view-result');
-  const imgBefore = document.getElementById('img-before');
-  const imgAfter = document.getElementById('img-after');
-  const afterClip = document.getElementById('after-clip');
-  const cmpDivider = document.getElementById('cmp-divider');
-  const cmpRange = document.getElementById('cmp-range');
+  const uploadHint = document.getElementById('upload-hint');
+  const makeBtn = document.getElementById('make-btn');
   const retryBtn = document.getElementById('retry-btn');
 
-  dropzone.addEventListener('click', () => fileInput.click());
+  angles.forEach((angle) => {
+    const slot = document.querySelector('.slot[data-angle="' + angle + '"]');
+    const input = document.getElementById('file-' + angle);
 
-  fileInput.addEventListener('change', () => {
-    const file = fileInput.files && fileInput.files[0];
-    if (!file) return;
+    slot.addEventListener('click', () => input.click());
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target.result;
-      imgBefore.src = dataUrl;
-      imgAfter.src = dataUrl;
-
-      viewUpload.hidden = true;
-      viewProcessing.hidden = false;
-
-      // AI 생성 처리 시간을 흉내 (실제로는 서버의 AI 이미지 생성 호출)
-      setTimeout(() => {
-        viewProcessing.hidden = true;
-        viewResult.hidden = false;
-        setSliderPos(50);
-      }, 1400);
-    };
-    reader.readAsDataURL(file);
+    input.addEventListener('change', () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        photos[angle] = e.target.result;
+        renderSlot(slot, angle, e.target.result);
+        updateHint();
+      };
+      reader.readAsDataURL(file);
+    });
   });
 
-  function setSliderPos(pos) {
-    afterClip.style.clipPath = `inset(0 0 0 ${pos}%)`;
-    cmpDivider.style.left = pos + '%';
-    cmpRange.value = pos;
+  function renderSlot(slot, angle, dataUrl) {
+    slot.classList.add('filled');
+    slot.innerHTML =
+      '<img src="' + dataUrl + '" alt="' + slot.dataset.label + ' 업로드 사진">' +
+      '<span class="tag">' + slot.dataset.label + '</span>' +
+      '<span class="check">✓</span>';
   }
 
-  cmpRange.addEventListener('input', () => setSliderPos(cmpRange.value));
+  function updateHint() {
+    const count = angles.filter((a) => photos[a]).length;
+    uploadHint.textContent = count === 3
+      ? '3장 업로드 완료! 아래 버튼을 눌러 시뮬레이션을 만들어보세요.'
+      : '3장을 모두 업로드하면 시뮬레이션을 만들 수 있어요 (' + count + '/3)';
+    makeBtn.disabled = count < 3;
+  }
+
+  makeBtn.addEventListener('click', () => {
+    viewUpload.hidden = true;
+    viewProcessing.hidden = false;
+
+    // AI 생성 처리 시간을 흉내 (실제로는 서버의 AI 이미지 생성 호출)
+    setTimeout(() => {
+      angles.forEach((angle) => {
+        document.getElementById('before-' + angle).src = photos[angle];
+        document.getElementById('after-' + angle).src = photos[angle];
+      });
+      viewProcessing.hidden = true;
+      viewResult.hidden = false;
+    }, 1600);
+  });
 
   retryBtn.addEventListener('click', () => {
-    fileInput.value = '';
+    angles.forEach((angle) => {
+      delete photos[angle];
+      const slot = document.querySelector('.slot[data-angle="' + angle + '"]');
+      const label = slot.dataset.label;
+      const hint = angle === 'front' ? '정면 응시' : '45˚ 측면';
+      slot.classList.remove('filled');
+      slot.innerHTML =
+        '<div class="icon">＋</div><div class="label">' + label + '</div><div class="hint">' + hint + '</div>';
+      document.getElementById('file-' + angle).value = '';
+    });
+    updateHint();
     viewResult.hidden = true;
     viewUpload.hidden = false;
   });
