@@ -1,4 +1,4 @@
-<title>카운슬 문의</title>
+<title>예약자 정보 확인</title>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
@@ -120,13 +120,44 @@
   .success .subtitle{margin-bottom:22px;}
   .success-summary{
     text-align:left;border:1px solid var(--line);border-radius:10px;padding:14px 16px;
-    font-size:.82rem;color:var(--ink-soft);margin-bottom:22px;display:flex;flex-direction:column;gap:6px;
+    font-size:.82rem;color:var(--ink-soft);margin-bottom:18px;display:flex;flex-direction:column;gap:6px;
   }
   .success-summary b{color:var(--ink);font-weight:600;}
   .link-btn{
     font:inherit;font-size:.82rem;color:var(--accent-ink);background:none;border:none;
     text-decoration:underline;text-underline-offset:2px;cursor:pointer;padding:0;
   }
+
+  /* 결제 단계 */
+  .pay-card{border:1px solid var(--line);border-radius:12px;padding:16px;}
+  .pay-row{display:flex;justify-content:space-between;font-size:.84rem;padding:6px 0;color:var(--ink-soft);}
+  .pay-row b{color:var(--ink);font-weight:600;}
+  .pay-total{
+    display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;
+    margin-top:6px;border-top:1px dashed var(--line);
+  }
+  .pay-total .amt{font-size:1.2rem;font-weight:700;color:var(--ink);}
+  .warn-box{
+    background:var(--danger-soft);color:var(--danger);border-radius:9px;padding:10px 12px;
+    font-size:.74rem;line-height:1.55;margin-top:12px;
+  }
+  .back-link{
+    font:inherit;font-size:.78rem;color:var(--ink-soft);background:none;border:none;
+    cursor:pointer;padding:0;margin-bottom:16px;text-decoration:underline;text-underline-offset:2px;
+  }
+
+  /* 카카오 알림톡 미리보기 */
+  .notify-label{
+    display:flex;align-items:center;gap:6px;font-size:.74rem;font-weight:700;color:var(--ink-soft);
+    margin-bottom:8px;
+  }
+  .notify-label .dot{width:8px;height:8px;border-radius:50%;background:#fee500;box-shadow:0 0 0 1px #d8c400 inset;}
+  .kakao-bubble{
+    background:#fee500;color:#3c1e1e;border-radius:4px 14px 14px 14px;padding:12px 14px;
+    font-size:.78rem;line-height:1.6;text-align:left;margin-bottom:6px;
+  }
+  .kakao-bubble b{display:block;margin-bottom:4px;}
+  .notify-time{font-size:.68rem;color:var(--ink-soft);text-align:left;margin-bottom:18px;}
 
   [hidden]{display:none!important;}
 </style>
@@ -135,8 +166,8 @@
 
   <div id="view-form">
     <div class="eyebrow">Face Lift 전문 · 박동만 원장</div>
-    <h1 class="title">상담 문의 남기기</h1>
-    <p class="subtitle">이름과 연락처를 남겨주시면 상담사가 확인 후 순서대로 연락드립니다.</p>
+    <h1 class="title">예약자 정보를 입력해주세요</h1>
+    <p class="subtitle">예약금 결제를 진행하기 위해 예약자 정보를 확인합니다.</p>
 
     <form id="inquiry-form" novalidate>
       <div class="field">
@@ -159,26 +190,56 @@
 
       <label class="consent">
         <input type="checkbox" id="f-consent">
-        <span><b>개인정보 수집·이용에 동의합니다.</b> 입력하신 정보는 상담 안내 목적으로만 사용되며, 상담 완료 후 관련 법령에 따른 기간 동안 보관 후 파기됩니다.</span>
+        <span><b>개인정보 수집·이용에 동의합니다.</b> 입력하신 정보는 예약·결제 확인 및 안내 목적으로만 사용되며, 관련 법령에 따른 기간 동안 보관 후 파기됩니다.</span>
       </label>
       <div class="field-error" id="err-consent" hidden></div>
 
       <div class="banner danger" id="submit-error" hidden></div>
 
-      <button type="submit" id="submit-btn">문의 남기기</button>
+      <button type="submit" id="submit-btn">다음 · 예약금 결제</button>
     </form>
+  </div>
+
+  <div id="view-payment" hidden>
+    <button type="button" class="back-link" id="back-btn">‹ 예약자 정보 다시 입력</button>
+    <div class="eyebrow">예약금 결제</div>
+    <h1 class="title">예약 내용을 확인해주세요</h1>
+    <p class="subtitle">결제가 완료되면 예약이 바로 확정됩니다.</p>
+
+    <div class="pay-card">
+      <div class="pay-row"><span>시술</span><b>Face Lift</b></div>
+      <div class="pay-row"><span>담당</span><b>박동만 원장</b></div>
+      <div class="pay-row"><span>일시</span><b>9월 18일(목) 14:30</b></div>
+      <div class="pay-total"><span>예약금</span><span class="amt">50,000원</span></div>
+      <div class="warn-box">예약금은 취소·변경·노쇼 등 사유와 관계없이 환불되지 않습니다.</div>
+    </div>
+
+    <button type="button" id="pay-btn" style="margin-top:18px;">50,000원 결제하기</button>
   </div>
 
   <div id="view-success" class="success" hidden>
     <div class="success-check">✓</div>
-    <h1 class="title">문의가 접수되었습니다</h1>
-    <p class="subtitle">빠른 시일 내에 상담사가 남겨주신 연락처로 안내드릴게요.</p>
+    <h1 class="title">예약이 확정되었습니다</h1>
+    <p class="subtitle">예약일에 방문하시면 박동만 원장님과 상담해요.</p>
     <div class="success-summary">
       <div><b>이름</b> · <span id="s-name"></span></div>
       <div><b>전화번호</b> · <span id="s-phone"></span></div>
       <div><b>이메일</b> · <span id="s-email"></span></div>
+      <div><b>일시</b> · 9월 18일(목) 14:30 · Face Lift</div>
     </div>
-    <button type="button" class="link-btn" id="reset-btn">다른 문의 남기기</button>
+
+    <div class="notify-label"><span class="dot"></span>카카오 알림톡 자동 발송</div>
+    <div class="kakao-bubble">
+      <b>[카운슬] 예약이 확정되었습니다</b>
+      <span id="k-name"></span>님, Face Lift 상담 예약이 확정되었습니다.<br>
+      · 일시: 9월 18일(목) 14:30<br>
+      · 담당: 박동만 원장<br>
+      · 예약금 50,000원 결제 완료<br>
+      예약일에 늦지 않게 방문해주세요 :)
+    </div>
+    <div class="notify-time">알림톡 발송 실패 시 문자(SMS)로 자동 재발송됩니다.</div>
+
+    <button type="button" class="link-btn" id="reset-btn">다른 예약 남기기</button>
   </div>
 
 </div>
@@ -186,10 +247,15 @@
 <script>
 (function(){
   const formView = document.getElementById('view-form');
+  const paymentView = document.getElementById('view-payment');
   const successView = document.getElementById('view-success');
   const form = document.getElementById('inquiry-form');
   const submitBtn = document.getElementById('submit-btn');
   const submitError = document.getElementById('submit-error');
+  const payBtn = document.getElementById('pay-btn');
+  const backBtn = document.getElementById('back-btn');
+
+  let pendingInfo = null;
 
   const fields = {
     name: { input: document.getElementById('f-name'), err: document.getElementById('err-name') },
@@ -261,39 +327,67 @@
     }
   }
 
-  form.addEventListener('submit', async (e) => {
+  form.addEventListener('submit', (e) => {
     e.preventDefault();
     submitError.hidden = true;
     if (!validate()) return;
 
-    const payload = {
+    pendingInfo = {
       name: fields.name.input.value.trim(),
       phone: fields.phone.input.value.trim(),
       email: fields.email.input.value.trim(),
+    };
+
+    formView.hidden = true;
+    paymentView.hidden = false;
+  });
+
+  backBtn.addEventListener('click', () => {
+    paymentView.hidden = true;
+    formView.hidden = false;
+  });
+
+  payBtn.addEventListener('click', async () => {
+    if (!pendingInfo) return;
+    payBtn.disabled = true;
+    payBtn.textContent = '결제 처리 중…';
+
+    const payload = {
+      ...pendingInfo,
       procedure: 'Face Lift',
-      source: 'inquiry_form_prototype',
+      staff: '박동만 원장',
+      schedule: '2026-09-18T14:30:00+09:00',
+      deposit_amount: 50000,
+      payment_status: 'paid', // 프로토타입: 실제로는 PG 웹훅 승인 후 서버에서 기록
+      reservation_status: 'confirmed',
+      notified_channel: 'alimtalk',
+      source: 'reservation_intake_prototype',
       submitted_at: new Date().toISOString(),
     };
 
-    submitBtn.disabled = true;
-    submitBtn.textContent = '접수 중…';
-
     try {
+      // 결제 승인 대기를 흉내 (실제로는 PG 결제창 → 웹훅 콜백)
+      await new Promise((r) => setTimeout(r, 900));
+
       const db = await getDb();
       if (!db) throw new Error('db_unavailable');
-      await db.collection('inquiries').add(payload);
+      await db.collection('reservation_intakes').add(payload);
 
       document.getElementById('s-name').textContent = payload.name;
       document.getElementById('s-phone').textContent = payload.phone;
       document.getElementById('s-email').textContent = payload.email;
-      formView.hidden = true;
+      document.getElementById('k-name').textContent = payload.name;
+
+      paymentView.hidden = true;
       successView.hidden = false;
     } catch (err) {
-      submitError.textContent = '일시적으로 접수가 어렵습니다. 잠시 후 다시 시도해주세요.';
+      submitError.textContent = '결제 확인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.';
       submitError.hidden = false;
+      paymentView.hidden = true;
+      formView.hidden = false;
     } finally {
-      submitBtn.disabled = false;
-      submitBtn.textContent = '문의 남기기';
+      payBtn.disabled = false;
+      payBtn.textContent = '50,000원 결제하기';
     }
   });
 
@@ -301,7 +395,9 @@
     form.reset();
     Object.keys(fields).forEach((k) => setError(k, ''));
     consentErr.hidden = true;
+    pendingInfo = null;
     successView.hidden = true;
+    paymentView.hidden = true;
     formView.hidden = false;
   });
 })();
