@@ -16,6 +16,8 @@ function formatPhone(value: string) {
 function CheckoutForm() {
   const searchParams = useSearchParams();
   const scheduleLabel = searchParams.get("when") || "9월 18일(금) 14:30";
+  const date = searchParams.get("date");
+  const time = searchParams.get("time");
 
   const [step, setStep] = useState<Step>("form");
   const [name, setName] = useState("");
@@ -52,20 +54,32 @@ function CheckoutForm() {
     setPaying(true);
     setSubmitError(null);
     try {
-      // 결제 승인 대기를 흉내 (실제로는 PG 결제창 -> 웹훅 콜백)
+      // 실제 PG 결제창 연동 전까지는 결제 승인을 흉내내고, 그 직후 예약을 실제로 확정합니다.
       await new Promise((r) => setTimeout(r, 900));
 
-      // TODO: Supabase 연동 후 이 지점에서 실제 처리로 교체
-      //   1) POST /api/reservations — reservations(status: 'pending_payment') insert
-      //   2) PG 결제 승인 웹훅 수신 -> reservations.status='confirmed', slot.status='booked'
-      //   3) payments 테이블에 deposit 50,000원 기록 (refundable: false)
-      //   4) notifications 테이블에 alimtalk 발송 큐잉 (실패 시 sms 폴백)
-      // 지금은 위 단계를 거치지 않고 화면 흐름만 재현합니다.
+      const res = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          phone: phone.trim(),
+          email: email.trim(),
+          date,
+          time,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || "예약 처리 중 문제가 발생했습니다.");
+      }
 
       setConfirmed({ name: name.trim(), phone: phone.trim(), email: email.trim() });
       setStep("success");
-    } catch {
-      setSubmitError("결제 확인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : "결제 확인 중 문제가 발생했습니다. 잠시 후 다시 시도해주세요.",
+      );
       setStep("form");
     } finally {
       setPaying(false);

@@ -86,8 +86,13 @@ export default function SchedulePage() {
     : null;
 
   function handleNext() {
-    if (!when) return;
-    router.push(`/consult/checkout?when=${encodeURIComponent(when)}`);
+    if (!selected?.time) return;
+    const params = new URLSearchParams({
+      date: selected.key,
+      time: selected.time,
+      when: when ?? "",
+    });
+    router.push(`/consult/checkout?${params.toString()}`);
   }
 
   return (
