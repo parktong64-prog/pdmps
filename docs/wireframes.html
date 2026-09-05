@@ -1,0 +1,558 @@
+<title>성형외과 와이어프레임</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+  :root{
+    --blue-deep:#0d2a46;
+    --blue-panel:#123a5e;
+    --blue-panel-2:#0f3252;
+    --grid-line:rgba(207,232,255,.06);
+    --line-bright:#d7ecff;
+    --line-dim:#84a9c9;
+    --line-faint:#5c86a8;
+    --redline:#ff6b4a;
+    --paper:#fbfaf5;
+    --paper-ink:#1c2530;
+    --paper-muted:#6c7680;
+    --paper-line:#e4e7ea;
+    --app-accent:#a1546a;
+    --app-accent-soft:#f4e6ea;
+    --st-pending:#b9791f;
+    --st-progress:#2d6ca8;
+    --st-done:#2c8a5b;
+    --st-cancel:#84898f;
+    --font-mono:'IBM Plex Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+    --font-kr:'Noto Sans KR',-apple-system,'Malgun Gothic',sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{background:var(--blue-deep);}
+  body{margin:0;font-family:var(--font-mono);color:var(--line-bright);}
+  h1,h2,h3{text-wrap:balance;margin:0;}
+
+  .sheet{
+    max-width:1320px;margin:0 auto;padding:28px 20px 60px;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size:28px 28px;
+  }
+
+  /* ---------- title block ---------- */
+  .titleblock{
+    display:flex;flex-wrap:wrap;gap:20px;justify-content:space-between;align-items:flex-end;
+    border-bottom:2px solid var(--line-faint);padding-bottom:16px;margin-bottom:18px;
+  }
+  .tb-mark{font-size:1.9rem;font-weight:600;letter-spacing:.06em;color:var(--line-bright);}
+  .tb-sub{font-family:var(--font-kr);font-size:.95rem;color:var(--line-dim);margin-top:4px;}
+  .tb-meta{display:flex;gap:22px;margin:0;flex-wrap:wrap;}
+  .tb-meta > div{display:flex;flex-direction:column;gap:2px;}
+  .tb-meta dt{font-size:.62rem;letter-spacing:.12em;color:var(--line-faint);}
+  .tb-meta dd{margin:0;font-size:.82rem;color:var(--line-bright);}
+
+  /* ---------- legend ---------- */
+  .legend{
+    display:flex;flex-wrap:wrap;gap:18px;align-items:center;
+    font-size:.72rem;color:var(--line-dim);margin-bottom:36px;
+    padding:10px 14px;border:1px dashed var(--line-faint);border-radius:4px;
+  }
+  .legend-item{display:flex;align-items:center;gap:7px;}
+  .dot-note{width:7px;height:7px;border-radius:50%;background:var(--redline);display:inline-block;}
+  .chip-demo{font-family:var(--font-mono);font-size:.66rem;background:var(--blue-panel);color:var(--line-bright);padding:2px 6px;border-radius:3px;border:1px solid var(--line-faint);}
+  .arrow-demo{color:var(--line-dim);}
+
+  /* ---------- sections ---------- */
+  .flow-section{margin-bottom:52px;}
+  .section-label{
+    font-size:.95rem;font-weight:600;letter-spacing:.04em;color:var(--line-bright);
+    margin-bottom:18px;padding-bottom:8px;border-bottom:1px solid var(--grid-line);
+  }
+  .section-label span{
+    font-family:var(--font-kr);font-weight:400;font-size:.78rem;color:var(--line-dim);margin-left:10px;
+  }
+
+  .flow-row{display:flex;align-items:flex-start;gap:0;overflow-x:auto;padding:6px 4px 18px;}
+  .grid-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:26px;}
+
+  .frame-wrap{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;width:238px;}
+  .grid-row .frame-wrap{width:100%;}
+  .sheet-id{
+    font-size:.68rem;color:var(--line-faint);letter-spacing:.1em;margin-bottom:8px;
+  }
+  .connector{flex:0 0 auto;display:flex;align-items:center;justify-content:center;width:34px;align-self:center;margin-top:150px;color:var(--line-faint);font-size:1.1rem;}
+
+  .note{
+    font-family:var(--font-mono);font-size:.68rem;line-height:1.5;color:var(--line-dim);
+    border-left:2px dashed var(--redline);padding:8px 0 8px 10px;margin-top:12px;width:100%;max-width:230px;
+  }
+  .grid-row .note{max-width:none;}
+  .note b{color:var(--line-bright);font-weight:600;}
+
+  /* ---------- phone frame ---------- */
+  .phone{
+    width:238px;background:#03070c;border-radius:26px;padding:8px;box-shadow:0 18px 40px -18px rgba(0,0,0,.6);
+  }
+  .phone-screen{
+    background:var(--paper);border-radius:19px;overflow:hidden;height:472px;position:relative;
+    font-family:var(--font-kr);color:var(--paper-ink);display:flex;flex-direction:column;
+  }
+  .statusbar{display:flex;justify-content:space-between;padding:8px 16px 2px;font-size:.62rem;color:var(--paper-ink);font-family:var(--font-mono);}
+  .sb-icons{display:flex;gap:3px;align-items:center;}
+  .sb-icons i{display:inline-block;width:8px;height:8px;border:1px solid var(--paper-ink);border-radius:1px;}
+
+  .appbar{display:flex;align-items:center;justify-content:space-between;padding:6px 14px 10px;}
+  .appbar .logo{font-weight:700;font-size:.95rem;letter-spacing:.02em;}
+  .icon-shape{width:16px;height:16px;border:1.4px solid var(--paper-ink);border-radius:50%;position:relative;}
+  .icon-shape.badge::after{content:"";position:absolute;top:-2px;right:-2px;width:6px;height:6px;background:var(--redline);border-radius:50%;}
+  .icon-back{width:9px;height:9px;border-left:1.6px solid var(--paper-ink);border-bottom:1.6px solid var(--paper-ink);transform:rotate(45deg);}
+
+  .scroll{flex:1;overflow:hidden;padding:0 14px 14px;}
+
+  .chip-row{display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;}
+  .chip{flex:0 0 auto;font-size:.66rem;padding:6px 11px;border-radius:100px;border:1px solid var(--paper-line);color:var(--paper-muted);}
+  .chip.active{background:var(--app-accent);color:#fff;border-color:var(--app-accent);}
+
+  .banner{background:var(--app-accent-soft);border-radius:10px;padding:12px;margin-bottom:12px;}
+  .banner b{display:block;font-size:.76rem;margin-bottom:2px;}
+  .banner span{font-size:.64rem;color:var(--paper-muted);}
+
+  .section-title{font-size:.72rem;font-weight:700;margin:2px 0 8px;}
+  .proc-card{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--paper-line);}
+  .proc-card .ph-box{width:34px;height:34px;border-radius:8px;background:var(--paper-line);flex:0 0 auto;margin-right:10px;}
+  .proc-card .grow{flex:1;min-width:0;}
+  .proc-card .name{font-size:.74rem;font-weight:500;}
+  .proc-card .price{font-size:.66rem;color:var(--paper-muted);font-family:var(--font-mono);font-variant-numeric:tabular-nums;}
+  .proc-row{display:flex;align-items:center;}
+
+  .bottomnav{display:flex;justify-content:space-around;padding:9px 0;border-top:1px solid var(--paper-line);background:var(--paper);}
+  .nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .nav-shape{width:15px;height:15px;border:1.5px solid var(--paper-muted);}
+  .nav-shape.circle{border-radius:50%;}
+  .nav-shape.tri{width:0;height:0;border:none;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:12px solid var(--paper-muted);}
+  .nav-item.active .nav-shape{border-color:var(--app-accent);}
+  .nav-item span{font-size:.56rem;color:var(--paper-muted);}
+  .nav-item.active span{color:var(--app-accent);font-weight:600;}
+
+  .field-label{font-size:.68rem;font-weight:600;margin:12px 0 6px;}
+  .field-box{border:1px solid var(--paper-line);border-radius:8px;padding:8px 10px;font-size:.68rem;color:var(--paper-muted);}
+  textarea.field-box{width:100%;height:44px;font-family:var(--font-kr);resize:none;}
+  .upload-row{display:flex;gap:6px;margin-top:6px;}
+  .upload-slot{width:44px;height:44px;border:1.4px dashed var(--paper-line);border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--paper-muted);font-size:.9rem;}
+  .step-dots{display:flex;gap:5px;margin:4px 0 4px;}
+  .step-dots i{width:16px;height:3px;border-radius:2px;background:var(--paper-line);}
+  .step-dots i.on{background:var(--app-accent);}
+
+  .status-pill{display:inline-flex;align-items:center;gap:5px;font-size:.6rem;padding:3px 9px;border-radius:100px;font-weight:600;}
+  .status-pill i{width:6px;height:6px;border-radius:50%;}
+  .status-pending{background:#fbeed9;color:var(--st-pending);}
+  .status-pending i{background:var(--st-pending);}
+  .status-progress{background:#dbe9f7;color:var(--st-progress);}
+  .status-progress i{background:var(--st-progress);}
+  .status-done{background:#dbf0e4;color:var(--st-done);}
+  .status-done i{background:var(--st-done);}
+  .status-cancel{background:#e9eaeb;color:var(--st-cancel);}
+  .status-cancel i{background:var(--st-cancel);}
+
+  .consult-card{border:1px solid var(--paper-line);border-radius:10px;padding:10px;margin-bottom:10px;}
+  .consult-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .consult-card .proc{font-size:.74rem;font-weight:600;}
+  .consult-card .meta{font-size:.62rem;color:var(--paper-muted);}
+  .chat-link{margin-top:8px;font-size:.64rem;color:var(--app-accent);font-weight:600;}
+
+  .chat-head{display:flex;align-items:center;gap:8px;padding:2px 0 8px;border-bottom:1px solid var(--paper-line);}
+  .chat-head .avatar{width:24px;height:24px;border-radius:50%;background:var(--paper-line);}
+  .chat-head .name{font-size:.72rem;font-weight:600;}
+  .chat-body{flex:1;display:flex;flex-direction:column;gap:8px;padding-top:10px;overflow:hidden;}
+  .chat-row{display:flex;}
+  .chat-row.me{justify-content:flex-end;}
+  .bubble{max-width:76%;padding:7px 10px;font-size:.68rem;line-height:1.45;border-radius:13px 13px 13px 3px;background:#eef0f2;color:var(--paper-ink);}
+  .chat-row.me .bubble{background:var(--app-accent);color:#fff;border-radius:13px 13px 3px 13px;}
+  .chat-input{display:flex;gap:6px;align-items:center;padding:10px 14px;border-top:1px solid var(--paper-line);}
+  .chat-input .field-box{flex:1;padding:7px 10px;}
+
+  .date-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;}
+  .date-pill{flex:0 0 auto;width:38px;text-align:center;padding:6px 0;border-radius:9px;border:1px solid var(--paper-line);}
+  .date-pill .d{font-size:.6rem;color:var(--paper-muted);}
+  .date-pill .n{font-size:.78rem;font-weight:600;font-family:var(--font-mono);}
+  .date-pill.active{background:var(--app-accent);border-color:var(--app-accent);}
+  .date-pill.active .d,.date-pill.active .n{color:#fff;}
+  .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px;}
+  .slot{text-align:center;padding:8px 0;border-radius:8px;border:1px solid var(--paper-line);font-size:.66rem;font-family:var(--font-mono);}
+  .slot.picked{background:var(--app-accent);color:#fff;border-color:var(--app-accent);}
+  .slot.full{color:var(--paper-line);text-decoration:line-through;}
+
+  .pay-card{border:1px solid var(--paper-line);border-radius:10px;padding:12px;}
+  .pay-row{display:flex;justify-content:space-between;font-size:.68rem;padding:5px 0;color:var(--paper-muted);}
+  .pay-row b{color:var(--paper-ink);font-weight:500;}
+  .pay-total{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;margin-top:6px;border-top:1px dashed var(--paper-line);}
+  .pay-total .amt{font-family:var(--font-mono);font-size:1.05rem;font-weight:600;font-variant-numeric:tabular-nums;}
+  .warn-box{display:flex;gap:7px;background:#fbeeea;border-radius:8px;padding:8px;font-size:.6rem;line-height:1.5;color:#8a3a24;margin:8px 0;}
+  .pay-methods{display:flex;gap:6px;margin:8px 0;}
+  .method{flex:1;text-align:center;font-size:.62rem;padding:7px 0;border:1px solid var(--paper-line);border-radius:7px;color:var(--paper-muted);}
+  .method.active{border-color:var(--app-accent);color:var(--app-accent);font-weight:600;}
+  .btn-primary{display:block;text-align:center;background:var(--app-accent);color:#fff;font-size:.76rem;font-weight:600;padding:11px 0;border-radius:9px;margin-top:8px;}
+
+  /* ---------- browser (admin) frame ---------- */
+  .browser{background:#0a1219;border-radius:12px;padding:0;overflow:hidden;box-shadow:0 18px 40px -18px rgba(0,0,0,.6);}
+  .browser-bar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#101822;}
+  .browser-dots{display:flex;gap:5px;}
+  .browser-dots i{width:8px;height:8px;border-radius:50%;background:#2a3542;}
+  .browser-url{flex:1;background:#1a2431;color:var(--line-dim);font-family:var(--font-mono);font-size:.62rem;padding:4px 10px;border-radius:5px;}
+  .browser-screen{background:var(--paper);color:var(--paper-ink);font-family:var(--font-kr);padding:16px;min-height:300px;}
+
+  .db-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:16px;}
+  .tile{border:1px solid var(--paper-line);border-radius:10px;padding:10px 12px;}
+  .tile .lbl{font-size:.6rem;color:var(--paper-muted);margin-bottom:6px;}
+  .tile .val{font-family:var(--font-mono);font-size:1.15rem;font-weight:600;font-variant-numeric:tabular-nums;}
+  .tile .delta{font-size:.6rem;margin-top:3px;}
+  .delta.up{color:var(--st-done);}
+  .delta.down{color:#c0392b;}
+
+  .panel-title{font-size:.72rem;font-weight:700;margin-bottom:8px;}
+  .two-col{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;}
+  .mini-list .row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--paper-line);font-size:.66rem;}
+  .mini-list .row span:first-child{font-weight:500;}
+  .week-widget{border:1px solid var(--paper-line);border-radius:8px;padding:10px;}
+  .week-widget .wd{display:flex;justify-content:space-between;font-size:.58rem;color:var(--paper-muted);margin-bottom:6px;}
+  .week-widget .wn{display:flex;justify-content:space-between;}
+  .week-widget .wn div{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-mono);font-size:.6rem;background:#eef2f5;}
+  .week-widget .wn div.busy{background:var(--app-accent);color:#fff;}
+
+  .tabs{display:flex;gap:16px;border-bottom:1px solid var(--paper-line);margin-bottom:10px;}
+  .tab{font-size:.68rem;padding-bottom:8px;color:var(--paper-muted);border-bottom:2px solid transparent;}
+  .tab.active{color:var(--paper-ink);font-weight:600;border-color:var(--app-accent);}
+
+  table.dtable{width:100%;border-collapse:collapse;font-size:.66rem;}
+  table.dtable th{text-align:left;color:var(--paper-muted);font-weight:500;font-size:.6rem;padding:0 8px 8px;border-bottom:1px solid var(--paper-line);}
+  table.dtable td{padding:9px 8px;border-bottom:1px solid var(--paper-line);}
+  table.dtable tr.hi td{background:var(--app-accent-soft);}
+
+  .cal-grid{display:grid;grid-template-columns:52px repeat(5,1fr);gap:1px;background:var(--paper-line);border:1px solid var(--paper-line);font-size:.6rem;}
+  .cal-grid > div{background:var(--paper);padding:6px 5px;min-height:30px;}
+  .cal-grid .hd{font-weight:600;text-align:center;color:var(--paper-muted);background:#f5f6f7;}
+  .cal-grid .tm{color:var(--paper-muted);font-family:var(--font-mono);}
+  .cal-cell.booked{background:#eef0f2;font-size:.56rem;line-height:1.3;}
+  .cal-cell.blocked{background:repeating-linear-gradient(45deg,#f1f2f3,#f1f2f3 4px,#e6e8ea 4px,#e6e8ea 8px);color:var(--paper-muted);font-size:.56rem;}
+  .cal-cell.open{border:1px dashed var(--paper-line);}
+
+  .patient-grid{display:grid;grid-template-columns:220px 1fr;gap:18px;}
+  .p-card{border:1px solid var(--paper-line);border-radius:10px;padding:12px;}
+  .p-avatar{width:40px;height:40px;border-radius:50%;background:var(--app-accent-soft);color:var(--app-accent);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;margin-bottom:8px;}
+  .p-name{font-size:.8rem;font-weight:700;}
+  .p-sub{font-size:.62rem;color:var(--paper-muted);margin-bottom:8px;}
+  .p-badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px;}
+  .p-badge{font-size:.58rem;background:#f2f3f4;padding:3px 7px;border-radius:100px;color:var(--paper-muted);}
+  .qa-list dt{font-size:.6rem;color:var(--paper-muted);margin-top:8px;}
+  .qa-list dd{margin:2px 0 0;font-size:.66rem;}
+  .photo-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px;}
+  .photo-slot{aspect-ratio:1;background:#eceef0;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--paper-muted);font-size:.56rem;}
+  .lock{width:10px;height:8px;border:1.4px solid var(--paper-muted);border-radius:2px;position:relative;}
+  .lock::before{content:"";position:absolute;top:-6px;left:1px;width:6px;height:6px;border:1.4px solid var(--paper-muted);border-bottom:none;border-radius:4px 4px 0 0;}
+
+  .tb-footer{margin-top:44px;padding-top:14px;border-top:1px solid var(--grid-line);font-size:.68rem;color:var(--line-faint);}
+
+  @media (max-width:640px){
+    .two-col,.patient-grid{grid-template-columns:1fr;}
+  }
+</style>
+
+<div class="sheet">
+
+  <header class="titleblock">
+    <div>
+      <div class="tb-mark">COUNSEL</div>
+      <div class="tb-sub">성형외과 상담 · 예약 서비스 — Face Lift 전문 · 박동만 원장 (Wireframe Set)</div>
+    </div>
+    <dl class="tb-meta">
+      <div><dt>DRAWN</dt><dd>2026.09.05</dd></div>
+      <div><dt>REV</dt><dd>v0.1</dd></div>
+      <div><dt>SCALE</dt><dd>NTS *</dd></div>
+      <div><dt>REF</dt><dd>prd.md · DB_SCHEMA.md</dd></div>
+    </dl>
+  </header>
+
+  <div class="legend">
+    <span class="legend-item"><i class="dot-note"></i> 설계 노트 — 스키마/정책 근거</span>
+    <span class="legend-item"><i class="chip-demo">P-01</i> 화면 시트 번호</span>
+    <span class="legend-item"><span class="arrow-demo">→</span> 사용자 이동 흐름</span>
+    <span class="legend-item"><span class="status-pill status-progress"><i></i>응대중</span> 상태 표시</span>
+  </div>
+
+  <!-- ============ PATIENT FLOW ============ -->
+  <section class="flow-section">
+    <h2 class="section-label">01 — 환자 앱<span>PATIENT · 상담 신청 → 채팅 → 예약 → 결제</span></h2>
+
+    <div class="flow-row">
+
+      <!-- P-01 홈 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">P-01 · 홈</span>
+        <div class="phone"><div class="phone-screen">
+          <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
+          <div class="appbar"><span class="logo">카운슬</span><span class="icon-shape badge"></span></div>
+          <div class="scroll">
+            <div class="chip-row">
+              <span class="chip active">전체</span><span class="chip">미니 리프팅</span><span class="chip">딥플레인 리프팅</span><span class="chip">넥 리프팅</span>
+            </div>
+            <div class="banner"><b>가을 Face Lift 상담 주간</b><span>9.8 – 9.30 박동만 원장 직접 상담</span></div>
+            <div class="section-title">Face Lift 프로그램</div>
+            <div class="proc-card"><div class="proc-row"><div class="ph-box"></div><div class="grow"><div class="name">미니 리프팅</div></div></div><div class="price">₩3,500,000~</div></div>
+            <div class="proc-card"><div class="proc-row"><div class="ph-box"></div><div class="grow"><div class="name">딥플레인 리프팅</div></div></div><div class="price">₩8,000,000~</div></div>
+            <div class="proc-card"><div class="proc-row"><div class="ph-box"></div><div class="grow"><div class="name">넥 리프팅</div></div></div><div class="price">₩4,200,000~</div></div>
+          </div>
+          <div class="bottomnav">
+            <div class="nav-item active"><div class="nav-shape circle"></div><span>홈</span></div>
+            <div class="nav-item"><div class="nav-shape"></div><span>상담</span></div>
+            <div class="nav-item"><div class="nav-shape circle"></div><span>채팅</span></div>
+            <div class="nav-item"><div class="nav-shape tri"></div><span>마이</span></div>
+          </div>
+        </div></div>
+        <div class="note">procedures 테이블의 <b>base_price</b>를 목록에 노출 <br>(<b>[DB_SCHEMA.md](docs/DB_SCHEMA.md)</b> 2.3)</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <!-- P-02 상담신청 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">P-02 · 상담 신청</span>
+        <div class="phone"><div class="phone-screen">
+          <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
+          <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">상담 신청 · Face Lift</span><span></span></div>
+          <div class="scroll">
+            <div class="step-dots"><i class="on"></i><i class="on"></i><i></i></div>
+            <div class="field-label">고민 부위</div>
+            <div class="chip-row"><span class="chip active">팔자주름</span><span class="chip">턱선 처짐</span><span class="chip">목주름</span></div>
+            <div class="field-label">희망 사항</div>
+            <textarea class="field-box" readonly>자연스럽게 갸름한 라인을 원하고, 흉터가 최소화되는 방법을 알고 싶어요.</textarea>
+            <div class="field-label">참고 사진</div>
+            <div class="upload-row">
+              <div class="upload-slot">＋</div><div class="upload-slot">🖼</div><div class="upload-slot">🖼</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="note">항목은 <b>questionnaire_fields</b>로 관리자가<br>시술 카테고리별 동적 편집</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <!-- P-03 나의 상담 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">P-03 · 나의 상담</span>
+        <div class="phone"><div class="phone-screen">
+          <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
+          <div class="appbar"><span class="logo" style="font-size:.85rem">나의 상담</span><span></span></div>
+          <div class="scroll">
+            <div class="consult-card">
+              <div class="top"><span class="proc">Face Lift · 딥플레인</span><span class="status-pill status-progress"><i></i>응대중</span></div>
+              <div class="meta">신청일 2026.09.03 · 담당 김민지 실장</div>
+              <div class="chat-link">상담사와 채팅하기 ›</div>
+            </div>
+            <div class="consult-card">
+              <div class="top"><span class="proc">Face Lift · 넥 리프팅</span><span class="status-pill status-done"><i></i>예약완료</span></div>
+              <div class="meta">예약일 2026.09.18 14:30 · 박동만 원장</div>
+            </div>
+          </div>
+          <div class="bottomnav">
+            <div class="nav-item"><div class="nav-shape circle"></div><span>홈</span></div>
+            <div class="nav-item active"><div class="nav-shape"></div><span>상담</span></div>
+            <div class="nav-item"><div class="nav-shape circle"></div><span>채팅</span></div>
+            <div class="nav-item"><div class="nav-shape tri"></div><span>마이</span></div>
+          </div>
+        </div></div>
+        <div class="note">상태 배지는 <b>consultations.status</b><br>(대기/응대중/예약완료/취소)</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <!-- P-04 채팅 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">P-04 · 채팅</span>
+        <div class="phone"><div class="phone-screen">
+          <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
+          <div style="padding:8px 14px 0;">
+            <div class="chat-head"><span class="icon-back"></span><div class="avatar"></div><div><div class="name">김민지 상담실장</div></div></div>
+          </div>
+          <div class="chat-body" style="padding:10px 14px;">
+            <div class="chat-row"><div class="bubble">안녕하세요 은지님, 문진표 확인했어요 😊 사진상 딥플레인 방식이 더 자연스러울 것 같아요.</div></div>
+            <div class="chat-row me"><div class="bubble">네 실장님! 상담 방문은 언제가 좋을까요?</div></div>
+            <div class="chat-row"><div class="bubble">이번 주 목요일 오후에 여러 타임 비어있어요. 예약 캘린더에서 골라주세요!</div></div>
+          </div>
+          <div class="chat-input"><span class="icon-shape"></span><div class="field-box">메시지 입력</div><span class="icon-back" style="transform:rotate(225deg)"></span></div>
+        </div></div>
+        <div class="note"><b>chat_rooms</b>는 상담 건당 1개 자동 생성<br><b>sender_type</b>: patient / staff / system</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <!-- P-05 예약 캘린더 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">P-05 · 예약 캘린더</span>
+        <div class="phone"><div class="phone-screen">
+          <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
+          <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">예약 일정 선택</span><span></span></div>
+          <div class="scroll">
+            <div class="date-strip">
+              <div class="date-pill"><div class="d">화</div><div class="n">16</div></div>
+              <div class="date-pill"><div class="d">수</div><div class="n">17</div></div>
+              <div class="date-pill active"><div class="d">목</div><div class="n">18</div></div>
+              <div class="date-pill"><div class="d">금</div><div class="n">19</div></div>
+              <div class="date-pill"><div class="d">토</div><div class="n">20</div></div>
+            </div>
+            <div class="field-label">9월 18일(목) · 박동만 원장</div>
+            <div class="slot-grid">
+              <div class="slot">10:00</div><div class="slot full">11:00</div><div class="slot">13:00</div>
+              <div class="slot picked">14:30</div><div class="slot">16:00</div><div class="slot full">17:30</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="note"><b>reservation_slots.status</b> — open/held/booked<br>slot_id UNIQUE 제약으로 이중예약 방지</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <!-- P-06 결제 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">P-06 · 예약금 결제</span>
+        <div class="phone"><div class="phone-screen">
+          <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
+          <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">예약 확정 · 결제</span><span></span></div>
+          <div class="scroll">
+            <div class="pay-card">
+              <div class="pay-row"><span>시술</span><b>Face Lift · 딥플레인</b></div>
+              <div class="pay-row"><span>담당</span><b>박동만 원장</b></div>
+              <div class="pay-row"><span>일시</span><b>9.18(목) 14:30</b></div>
+              <div class="pay-total"><span>예약금</span><span class="amt">50,000원</span></div>
+              <div class="warn-box">예약금은 취소·변경·노쇼 등 사유와 관계없이 환불되지 않습니다.</div>
+              <div class="pay-methods">
+                <div class="method active">카드</div><div class="method">카카오페이</div><div class="method">네이버페이</div>
+              </div>
+              <div class="btn-primary">50,000원 결제하기</div>
+            </div>
+          </div>
+        </div></div>
+        <div class="note"><b>payments.refundable = false</b> (예약금 기본값)<br>시술비는 별도 결제, 환불 정책 상이</div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ============ ADMIN ============ -->
+  <section class="flow-section">
+    <h2 class="section-label">02 — 관리자 대시보드<span>ADMIN · 상담 · 예약 · 환자 운영</span></h2>
+
+    <div class="grid-row">
+
+      <!-- A-01 대시보드 홈 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">A-01 · 대시보드 홈</span>
+        <div class="browser">
+          <div class="browser-bar"><div class="browser-dots"><i></i><i></i><i></i></div><div class="browser-url">counsel-admin.local/dashboard</div></div>
+          <div class="browser-screen">
+            <div class="db-tiles">
+              <div class="tile"><div class="lbl">오늘 신규 상담</div><div class="val">12</div><div class="delta up">▲ 3 어제 대비</div></div>
+              <div class="tile"><div class="lbl">오늘 예약</div><div class="val">8</div><div class="delta up">▲ 1</div></div>
+              <div class="tile"><div class="lbl">이번주 노쇼율</div><div class="val">4.2%</div><div class="delta down">▼ 0.8p</div></div>
+              <div class="tile"><div class="lbl">이번달 매출</div><div class="val">18.4M</div><div class="delta up">▲ 12%</div></div>
+            </div>
+            <div class="two-col">
+              <div>
+                <div class="panel-title">최근 상담 신청</div>
+                <div class="mini-list">
+                  <div class="row"><span>이은지 · 미니 리프팅</span><span class="status-pill status-pending"><i></i>대기</span></div>
+                  <div class="row"><span>박서연 · 딥플레인 리프팅</span><span class="status-pill status-progress"><i></i>응대중</span></div>
+                  <div class="row"><span>최유리 · 넥 리프팅</span><span class="status-pill status-done"><i></i>예약완료</span></div>
+                </div>
+              </div>
+              <div>
+                <div class="panel-title">이번 주 예약 현황</div>
+                <div class="week-widget">
+                  <div class="wd"><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span></div>
+                  <div class="wn"><div>3</div><div class="busy">7</div><div>4</div><div class="busy">8</div><div>2</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="note">노쇼율 = <b>reservations.status = 'no_show'</b> 집계 / 전체 예약</div>
+      </div>
+
+      <!-- A-02 상담 관리 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">A-02 · 상담 관리</span>
+        <div class="browser">
+          <div class="browser-bar"><div class="browser-dots"><i></i><i></i><i></i></div><div class="browser-url">counsel-admin.local/consultations</div></div>
+          <div class="browser-screen">
+            <div class="tabs">
+              <div class="tab active">전체 32</div><div class="tab">대기 6</div><div class="tab">응대중 9</div><div class="tab">예약완료 15</div><div class="tab">취소 2</div>
+            </div>
+            <table class="dtable">
+              <tr><th>환자</th><th>시술</th><th>상태</th><th>담당</th><th>신청일</th></tr>
+              <tr class="hi"><td>이은지</td><td>미니 리프팅</td><td><span class="status-pill status-pending"><i></i>대기</span></td><td>미배정</td><td>09.05</td></tr>
+              <tr><td>박서연</td><td>딥플레인 리프팅</td><td><span class="status-pill status-progress"><i></i>응대중</span></td><td>김민지</td><td>09.04</td></tr>
+              <tr><td>최유리</td><td>넥 리프팅</td><td><span class="status-pill status-done"><i></i>예약완료</span></td><td>정하늘</td><td>09.02</td></tr>
+              <tr><td>한소민</td><td>딥플레인 리프팅</td><td><span class="status-pill status-cancel"><i></i>취소</span></td><td>김민지</td><td>08.29</td></tr>
+            </table>
+          </div>
+        </div>
+        <div class="note">필터는 <b>consultations.status</b> 기준, 담당자 배정은 <b>assigned_staff_id</b> 업데이트</div>
+      </div>
+
+      <!-- A-03 예약 캘린더 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">A-03 · 예약 캘린더</span>
+        <div class="browser">
+          <div class="browser-bar"><div class="browser-dots"><i></i><i></i><i></i></div><div class="browser-url">counsel-admin.local/reservations</div></div>
+          <div class="browser-screen">
+            <div class="panel-title">9월 3주차 · 박동만 원장</div>
+            <div class="cal-grid">
+              <div class="hd"></div><div class="hd">월</div><div class="hd">화</div><div class="hd">수</div><div class="hd">목</div><div class="hd">금</div>
+              <div class="tm">10:00</div><div class="cal-cell open"></div><div class="cal-cell booked">이은지<br>미니리프팅</div><div class="cal-cell open"></div><div class="cal-cell blocked">휴진</div><div class="cal-cell open"></div>
+              <div class="tm">11:00</div><div class="cal-cell booked">박서연<br>딥플레인</div><div class="cal-cell open"></div><div class="cal-cell open"></div><div class="cal-cell blocked">휴진</div><div class="cal-cell booked">한소민<br>넥리프팅</div>
+              <div class="tm">14:00</div><div class="cal-cell open"></div><div class="cal-cell open"></div><div class="cal-cell booked">최유리<br>딥플레인</div><div class="cal-cell open"></div><div class="cal-cell open"></div>
+            </div>
+          </div>
+        </div>
+        <div class="note">셀 색은 <b>reservation_slots.status</b> — open · booked · blocked</div>
+      </div>
+
+      <!-- A-04 환자 상세 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">A-04 · 환자 상세</span>
+        <div class="browser">
+          <div class="browser-bar"><div class="browser-dots"><i></i><i></i><i></i></div><div class="browser-url">counsel-admin.local/patients/8821</div></div>
+          <div class="browser-screen">
+            <div class="patient-grid">
+              <div class="p-card">
+                <div class="p-avatar">이은</div>
+                <div class="p-name">이은지</div>
+                <div class="p-sub">010-1234-5678</div>
+                <div class="p-badges"><span class="p-badge">상담 3회</span><span class="p-badge">예약 2회</span></div>
+                <dl class="qa-list">
+                  <dt>고민 부위</dt><dd>팔자주름, 턱선 처짐</dd>
+                  <dt>희망 사항</dt><dd>자연스러운 갸름한 라인, 흉터 최소화</dd>
+                </dl>
+              </div>
+              <div>
+                <div class="tabs"><div class="tab active">예약 이력</div><div class="tab">결제 이력</div><div class="tab">채팅 요약</div></div>
+                <div class="mini-list">
+                  <div class="row"><span>2026.09.18 · 딥플레인 리프팅</span><span class="status-pill status-done"><i></i>확정</span></div>
+                  <div class="row"><span>2026.07.02 · 상담 방문</span><span class="status-pill status-cancel"><i></i>완료</span></div>
+                </div>
+                <div class="panel-title" style="margin-top:14px;">첨부 사진</div>
+                <div class="photo-grid">
+                  <div class="photo-slot"><span class="lock"></span>IMG</div>
+                  <div class="photo-slot"><span class="lock"></span>IMG</div>
+                  <div class="photo-slot"><span class="lock"></span>IMG</div>
+                  <div class="photo-slot"><span class="lock"></span>IMG</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="note"><b>consultation_photos</b>는 비공개 Storage + 서명 URL로만 열람</div>
+      </div>
+
+    </div>
+  </section>
+
+  <footer class="tb-footer">* NTS = Not To Scale — 실제 여백·비율·컬러는 디자인 확정 단계에서 조정. 데이터는 예시입니다.</footer>
+</div>
