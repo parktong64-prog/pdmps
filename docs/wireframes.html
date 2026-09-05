@@ -156,18 +156,10 @@
   .consult-card .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
   .consult-card .proc{font-size:.74rem;font-weight:600;}
   .consult-card .meta{font-size:.62rem;color:var(--paper-muted);}
-  .chat-link{margin-top:8px;font-size:.64rem;color:var(--app-accent);font-weight:600;}
 
-  .chat-head{display:flex;align-items:center;gap:8px;padding:2px 0 8px;border-bottom:1px solid var(--paper-line);}
-  .chat-head .avatar{width:24px;height:24px;border-radius:50%;background:var(--paper-line);}
-  .chat-head .name{font-size:.72rem;font-weight:600;}
-  .chat-body{flex:1;display:flex;flex-direction:column;gap:8px;padding-top:10px;overflow:hidden;}
-  .chat-row{display:flex;}
-  .chat-row.me{justify-content:flex-end;}
-  .bubble{max-width:76%;padding:7px 10px;font-size:.68rem;line-height:1.45;border-radius:13px 13px 13px 3px;background:#eef0f2;color:var(--paper-ink);}
-  .chat-row.me .bubble{background:var(--app-accent);color:#fff;border-radius:13px 13px 3px 13px;}
-  .chat-input{display:flex;gap:6px;align-items:center;padding:10px 14px;border-top:1px solid var(--paper-line);}
-  .chat-input .field-box{flex:1;padding:7px 10px;}
+  .result-check{width:46px;height:46px;border-radius:50%;background:var(--st-done);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin:18px auto 10px;}
+  .result-title{text-align:center;font-size:.92rem;font-weight:700;margin-bottom:2px;}
+  .result-sub{text-align:center;font-size:.66rem;color:var(--paper-muted);margin-bottom:16px;}
 
   .date-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;}
   .date-pill{flex:0 0 auto;width:38px;text-align:center;padding:6px 0;border-radius:9px;border:1px solid var(--paper-line);}
@@ -264,7 +256,7 @@
     </div>
     <dl class="tb-meta">
       <div><dt>DRAWN</dt><dd>2026.09.05</dd></div>
-      <div><dt>REV</dt><dd>v0.1</dd></div>
+      <div><dt>REV</dt><dd>v0.2</dd></div>
       <div><dt>SCALE</dt><dd>NTS *</dd></div>
       <div><dt>REF</dt><dd>prd.md · DB_SCHEMA.md</dd></div>
     </dl>
@@ -279,7 +271,7 @@
 
   <!-- ============ PATIENT FLOW ============ -->
   <section class="flow-section">
-    <h2 class="section-label">01 — 환자 앱<span>PATIENT · 상담 신청 → 채팅 → 예약 → 결제</span></h2>
+    <h2 class="section-label">01 — 환자 앱<span>PATIENT · 상담 신청 → 예약 선택 → 결제(예약 확정)</span></h2>
 
     <div class="flow-row">
 
@@ -299,7 +291,7 @@
           <div class="bottomnav">
             <div class="nav-item active"><div class="nav-shape circle"></div><span>홈</span></div>
             <div class="nav-item"><div class="nav-shape"></div><span>상담</span></div>
-            <div class="nav-item"><div class="nav-shape circle"></div><span>채팅</span></div>
+            <div class="nav-item"><div class="nav-shape circle"></div><span>예약</span></div>
             <div class="nav-item"><div class="nav-shape tri"></div><span>마이</span></div>
           </div>
         </div></div>
@@ -340,8 +332,7 @@
           <div class="scroll">
             <div class="consult-card">
               <div class="top"><span class="proc">Face Lift</span><span class="status-pill status-progress"><i></i>응대중</span></div>
-              <div class="meta">신청일 2026.09.03 · 담당 김민지 실장</div>
-              <div class="chat-link">상담사와 채팅하기 ›</div>
+              <div class="meta">신청일 2026.09.03 · 담당 김민지 실장이 곧 전화드려요</div>
             </div>
             <div class="consult-card">
               <div class="top"><span class="proc">Face Lift</span><span class="status-pill status-done"><i></i>예약완료</span></div>
@@ -351,7 +342,7 @@
           <div class="bottomnav">
             <div class="nav-item"><div class="nav-shape circle"></div><span>홈</span></div>
             <div class="nav-item active"><div class="nav-shape"></div><span>상담</span></div>
-            <div class="nav-item"><div class="nav-shape circle"></div><span>채팅</span></div>
+            <div class="nav-item"><div class="nav-shape circle"></div><span>예약</span></div>
             <div class="nav-item"><div class="nav-shape tri"></div><span>마이</span></div>
           </div>
         </div></div>
@@ -360,29 +351,9 @@
 
       <div class="connector">→</div>
 
-      <!-- P-04 채팅 -->
+      <!-- P-04 예약 캘린더 -->
       <div class="frame-wrap">
-        <span class="sheet-id">P-04 · 채팅</span>
-        <div class="phone"><div class="phone-screen">
-          <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
-          <div style="padding:8px 14px 0;">
-            <div class="chat-head"><span class="icon-back"></span><div class="avatar"></div><div><div class="name">김민지 상담실장</div></div></div>
-          </div>
-          <div class="chat-body" style="padding:10px 14px;">
-            <div class="chat-row"><div class="bubble">안녕하세요 은지님, 문진표 확인했어요 😊 처짐 정도 보니 절개 범위는 크지 않아도 될 것 같아요.</div></div>
-            <div class="chat-row me"><div class="bubble">네 실장님! 상담 방문은 언제가 좋을까요?</div></div>
-            <div class="chat-row"><div class="bubble">이번 주 목요일 오후에 여러 타임 비어있어요. 예약 캘린더에서 골라주세요!</div></div>
-          </div>
-          <div class="chat-input"><span class="icon-shape"></span><div class="field-box">메시지 입력</div><span class="icon-back" style="transform:rotate(225deg)"></span></div>
-        </div></div>
-        <div class="note"><b>chat_rooms</b>는 상담 건당 1개 자동 생성<br><b>sender_type</b>: patient / staff / system</div>
-      </div>
-
-      <div class="connector">→</div>
-
-      <!-- P-05 예약 캘린더 -->
-      <div class="frame-wrap">
-        <span class="sheet-id">P-05 · 예약 캘린더</span>
+        <span class="sheet-id">P-04 · 예약 캘린더</span>
         <div class="phone"><div class="phone-screen">
           <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
           <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">예약 일정 선택</span><span></span></div>
@@ -401,17 +372,17 @@
             </div>
           </div>
         </div></div>
-        <div class="note"><b>reservation_slots.status</b> — open/held/booked<br>slot_id UNIQUE 제약으로 이중예약 방지</div>
+        <div class="note">슬롯 선택 시 <b>reservation_slots.status: open → held</b><br><b>reservations.status: pending_payment</b>로 생성</div>
       </div>
 
       <div class="connector">→</div>
 
-      <!-- P-06 결제 -->
+      <!-- P-05 결제 -->
       <div class="frame-wrap">
-        <span class="sheet-id">P-06 · 예약금 결제</span>
+        <span class="sheet-id">P-05 · 예약금 결제</span>
         <div class="phone"><div class="phone-screen">
           <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
-          <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">예약 확정 · 결제</span><span></span></div>
+          <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">예약금 결제</span><span></span></div>
           <div class="scroll">
             <div class="pay-card">
               <div class="pay-row"><span>시술</span><b>Face Lift</b></div>
@@ -426,7 +397,31 @@
             </div>
           </div>
         </div></div>
-        <div class="note"><b>payments.refundable = false</b> (예약금 기본값)<br>시술비는 별도 결제, 환불 정책 상이</div>
+        <div class="note">결제창 진입까지는 <b>미확정</b> 상태<br>10분 내 미결제 시 슬롯 자동 해제(open 복귀)</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <!-- P-06 예약 확정 완료 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">P-06 · 예약 확정 완료</span>
+        <div class="phone"><div class="phone-screen">
+          <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
+          <div class="appbar"><span></span><span class="logo" style="font-size:.78rem">결제 완료</span><span></span></div>
+          <div class="scroll">
+            <div class="result-check">✓</div>
+            <div class="result-title">예약이 확정되었습니다</div>
+            <div class="result-sub">결제가 완료되어 예약이 바로 확정됐어요</div>
+            <div class="pay-card">
+              <div class="pay-row"><span>시술</span><b>Face Lift</b></div>
+              <div class="pay-row"><span>담당</span><b>박동만 원장</b></div>
+              <div class="pay-row"><span>일시</span><b>9.18(목) 14:30</b></div>
+              <div class="pay-row"><span>상태</span><span class="status-pill status-done"><i></i>확정</span></div>
+            </div>
+            <div class="btn-primary">홈으로</div>
+          </div>
+        </div></div>
+        <div class="note">PG 결제승인 웹훅 수신 →<br><b>reservations.status = confirmed</b>, <b>slot.status = booked</b><br><b>payments.status = paid</b></div>
       </div>
 
     </div>
@@ -529,7 +524,7 @@
                 </dl>
               </div>
               <div>
-                <div class="tabs"><div class="tab active">예약 이력</div><div class="tab">결제 이력</div><div class="tab">채팅 요약</div></div>
+                <div class="tabs"><div class="tab active">예약 이력</div><div class="tab">결제 이력</div><div class="tab">상담 메모</div></div>
                 <div class="mini-list">
                   <div class="row"><span>2026.09.18 · Face Lift</span><span class="status-pill status-done"><i></i>확정</span></div>
                   <div class="row"><span>2026.07.02 · 상담 방문</span><span class="status-pill status-cancel"><i></i>완료</span></div>

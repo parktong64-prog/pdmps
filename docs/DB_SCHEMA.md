@@ -2,13 +2,15 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 상태 | Draft v0.1 |
+| 문서 상태 | Draft v0.2 |
 | 작성일 | 2026-09-05 |
 | DB | PostgreSQL 15+ (Supabase) |
 
 관련 문서: [prd.md](../prd.md), [TECH_STACK.md](TECH_STACK.md)
 
 > **현재 운영 범위**: `procedures`는 **Face Lift(안면거상술) 단일 행**만 보유하고(세부 프로그램 구분 없음), `staff`의 `role = 'doctor'` 행은 **박동만** 1건만 존재하는 것을 전제로 시드 데이터를 구성한다. 스키마 자체는 시술·원장이 늘어나도 그대로 확장 가능하도록 범용으로 유지한다.
+>
+> **예약 확정 원칙**: 환자-상담사 채팅은 범위에서 제외되었고(전화 응대로 대체), 예약은 **결제가 완료되어야만 확정**된다. `reservations.status`에 `pending_payment`를 두어 이 흐름을 표현한다.
 
 ---
 
@@ -21,17 +23,13 @@ erDiagram
     PROCEDURES ||--o{ CONSULTATIONS : "관심시술"
     CONSULTATIONS ||--o{ CONSULTATION_ANSWERS : "문진 응답"
     CONSULTATIONS ||--o{ CONSULTATION_PHOTOS : "첨부 사진"
-    CONSULTATIONS ||--|| CHAT_ROOMS : "1:1 채팅방"
-    CHAT_ROOMS ||--o{ CHAT_MESSAGES : "메시지"
-    STAFF ||--o{ CHAT_MESSAGES : "발신(상담사)"
-    PATIENTS ||--o{ CHAT_MESSAGES : "발신(환자)"
 
     PROCEDURES ||--o{ RESERVATION_SLOTS : "슬롯 정의"
     STAFF ||--o{ RESERVATION_SLOTS : "담당의"
     RESERVATION_SLOTS ||--o| RESERVATIONS : "1건 예약"
     CONSULTATIONS ||--o{ RESERVATIONS : "예약 생성"
     PATIENTS ||--o{ RESERVATIONS : "예약자"
-    RESERVATIONS ||--o{ PAYMENTS : "결제"
+    RESERVATIONS ||--o{ PAYMENTS : "결제 → 확정"
     RESERVATIONS ||--o{ NOTIFICATIONS : "알림"
 
     PATIENTS {
@@ -79,17 +77,6 @@ erDiagram
         integer amount
         text status
     }
-    CHAT_ROOMS {
-        uuid id PK
-        uuid consultation_id FK
-    }
-    CHAT_MESSAGES {
-        uuid id PK
-        uuid chat_room_id FK
-        text sender_type
-        uuid sender_id
-        text content
-    }
     NOTIFICATIONS {
         uuid id PK
         uuid reservation_id FK
@@ -120,7 +107,7 @@ erDiagram
 | id | uuid PK | Supabase Auth user id와 연동 |
 | name | text | 이름 |
 | role | text | `admin` \| `counselor` \| `doctor` |
-| phone | text | 내부 연락처 |
+| phone | text | 내부 연락처 (전화 응대에 사용) |
 | is_active | boolean | 재직 여부 |
 | created_at | timestamptz | |
 
@@ -128,7 +115,7 @@ erDiagram
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
-| category | text | 예: 눈성형, 코성형, 안면윤곽 등 |
+| category | text | 예: Face Lift |
 | name | text | 시술명 |
 | base_price | integer | 기준 시술비 (원) |
 | deposit_amount | integer | 예약금 (기본 50,000원 고정) |
@@ -179,7 +166,7 @@ erDiagram
 | staff_id | uuid FK → staff | 담당의/상담사 |
 | start_at | timestamptz | |
 | end_at | timestamptz | |
-| status | text | `open`(예약가능) \| `held`(임시선점) \| `booked`(예약완료) \| `blocked`(휴진 등) |
+| status | text | `open`(예약가능) \| `held`(결제 대기 중 임시선점) \| `booked`(결제완료·예약확정) \| `blocked`(휴진 등) |
 | created_by | uuid FK → staff | 슬롯 등록자(관리자) |
 
 ### 2.9 `reservations` (예약)
@@ -189,9 +176,13 @@ erDiagram
 | slot_id | uuid FK → reservation_slots, unique | 슬롯 1:1 매칭 (이중예약 방지) |
 | consultation_id | uuid FK → consultations | |
 | patient_id | uuid FK → patients | |
-| status | text | `confirmed` \| `changed` \| `cancelled` \| `completed` \| `no_show` |
+| status | text | `pending_payment`(결제대기) \| `confirmed`(확정) \| `changed` \| `cancelled` \| `completed` \| `no_show` |
+| payment_deadline | timestamptz | 결제 대기 만료 시각 (예: 슬롯 선택 + 10분) |
 | cancel_reason | text | nullable |
 | created_at | timestamptz | |
+| confirmed_at | timestamptz | 결제 성공으로 확정된 시각 |
+
+> **상태 전이**: 슬롯 선택 → `pending_payment` 생성(슬롯 `held`) → 결제 성공 → `confirmed`(슬롯 `booked`) / 결제 실패·타임아웃 → `cancelled`(슬롯 `open` 복귀).
 
 ### 2.10 `payments` (결제)
 | 컬럼 | 타입 | 설명 |
@@ -207,13 +198,9 @@ erDiagram
 | paid_at | timestamptz | |
 | created_at | timestamptz | |
 
-### 2.11 `chat_rooms` / `chat_messages`
-| 테이블 | 컬럼 | 설명 |
-|---|---|---|
-| chat_rooms | id, consultation_id FK (unique), created_at | 상담 신청 건당 1개 채팅방 |
-| chat_messages | id, chat_room_id FK, sender_type(`patient`\|`staff`\|`system`), sender_id, content, attachment_url, created_at, read_at | 메시지 |
+> `payments.status`가 `paid`로 전환되는 PG 웹훅/콜백을 수신하면, 애플리케이션(Edge Function)이 연결된 `reservations.status`를 `confirmed`로, `reservation_slots.status`를 `booked`로 함께 갱신한다.
 
-### 2.12 `notifications` (알림 발송 로그)
+### 2.11 `notifications` (알림 발송 로그)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -322,9 +309,11 @@ create table reservations (
   slot_id uuid not null unique references reservation_slots(id),
   consultation_id uuid not null references consultations(id),
   patient_id uuid not null references patients(id),
-  status text not null default 'confirmed' check (status in ('confirmed', 'changed', 'cancelled', 'completed', 'no_show')),
+  status text not null default 'pending_payment' check (status in ('pending_payment', 'confirmed', 'changed', 'cancelled', 'completed', 'no_show')),
+  payment_deadline timestamptz,
   cancel_reason text,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  confirmed_at timestamptz
 );
 
 create table payments (
@@ -338,23 +327,6 @@ create table payments (
   refundable boolean not null default false,
   paid_at timestamptz,
   created_at timestamptz not null default now()
-);
-
-create table chat_rooms (
-  id uuid primary key default uuid_generate_v4(),
-  consultation_id uuid not null unique references consultations(id),
-  created_at timestamptz not null default now()
-);
-
-create table chat_messages (
-  id uuid primary key default uuid_generate_v4(),
-  chat_room_id uuid not null references chat_rooms(id) on delete cascade,
-  sender_type text not null check (sender_type in ('patient', 'staff', 'system')),
-  sender_id uuid,
-  content text,
-  attachment_url text,
-  created_at timestamptz not null default now(),
-  read_at timestamptz
 );
 
 create table notifications (
@@ -373,9 +345,10 @@ create table notifications (
 
 ## 4. 주요 설계 원칙
 
-- **이중 예약 방지**: `reservations.slot_id`를 `unique`로 걸어 동일 슬롯이 두 번 예약되지 않도록 DB 레벨에서 강제. 슬롯 선점(`held`) 상태는 짧은 TTL로 관리(예: 결제 진행 중 5분 잠금 → 애플리케이션/Edge Function에서 처리).
+- **이중 예약 방지**: `reservations.slot_id`를 `unique`로 걸어 동일 슬롯이 두 번 예약되지 않도록 DB 레벨에서 강제.
+- **결제가 예약을 확정한다**: 슬롯 선택 시점에는 `reservations.status = 'pending_payment'`, `reservation_slots.status = 'held'`로만 잠그고, PG 결제 승인 웹훅을 받은 뒤에야 `confirmed`/`booked`로 전환한다. `payment_deadline`을 지난 미결제 건은 배치/Edge Function이 주기적으로 `cancelled` 처리하고 슬롯을 `open`으로 되돌린다.
 - **예약금 정책 반영**: `procedures.deposit_amount` 기본값 50,000원 고정, `payments.refundable` 기본 `false`로 [prd.md](../prd.md)의 환불 불가 정책 반영.
-- **문진표 동적 구성**: `questionnaire_templates` + `questionnaire_fields`로 시술 카테고리별 질문을 관리자가 코드 수정 없이 편집 가능하도록 설계.
+- **문진표 동적 구성**: `questionnaire_templates` + `questionnaire_fields`로 시술별 질문을 관리자가 코드 수정 없이 편집 가능하도록 설계.
 - **민감정보 분리**: 사진(`consultation_photos`)은 Storage 경로만 DB에 저장하고 실제 파일은 비공개 버킷 + RLS로 접근 제어.
 - **RLS(Row Level Security)**: Supabase 사용 시 `patients`는 본인 행만, `staff`는 역할에 따라 담당 상담/전체 상담에 접근하도록 정책 정의 필요 (별도 마이그레이션에서 작성).
 
@@ -383,3 +356,4 @@ create table notifications (
 
 - 다지점(멀티 병원) 확장 시 `clinics` 테이블을 최상위에 추가하고 전 테이블에 `clinic_id` 붙이는 구조로 확장 가능하도록 현재부터 FK 네이밍을 일관되게 유지.
 - 리뷰/후기 기능 추가 시 `reviews` 테이블을 `reservations`에 연결.
+- 채팅 상담을 재도입할 경우 `chat_rooms`(consultation_id 1:1) / `chat_messages`(sender_type: patient\|staff\|system) 테이블을 이전 설계대로 다시 추가.
