@@ -38,8 +38,8 @@ export default function Home() {
       <div className="mx-auto max-w-[460px] px-5 py-8 pb-16">
         {/* 상단 로고 */}
         <div className="mb-6 flex items-center justify-between">
-          <div className="font-[family-name:var(--font-display)] text-[1.15rem] font-bold">
-            카운슬
+          <div className="font-[family-name:var(--font-display)] text-[1.15rem] font-bold text-[var(--brand-green)]">
+            PDMPS
           </div>
           <div className="relative flex h-[30px] w-[30px] items-center justify-center rounded-full border-[1.4px] border-[var(--line)] text-[var(--ink-soft)] text-xs">
             ●

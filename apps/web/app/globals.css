@@ -16,6 +16,7 @@
   --warn-soft: #faf0e2;
   --danger: #b3392c;
   --danger-soft: #fbeae7;
+  --brand-green: #2f7d52;
 
   /* 관리자 화면 전용 */
   --sidebar-bg: #241d20;
@@ -51,6 +52,7 @@
     --warn-soft: #332a1c;
     --danger: #f0897a;
     --danger-soft: #3a2321;
+    --brand-green: #6fd39f;
 
     --sidebar-bg: #0f0c0d;
     --sidebar-ink: #efe6e8;

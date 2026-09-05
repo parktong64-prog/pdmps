@@ -21,7 +21,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "카운슬 | Face Lift 전문",
+  title: "PDMPS | Face Lift 전문",
   description: "Face Lift 전문 · 박동만 원장 상담·예약 서비스",
 };
 

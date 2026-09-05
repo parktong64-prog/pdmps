@@ -280,7 +280,7 @@ function CheckoutForm() {
                 카카오 알림톡 자동 발송
               </div>
               <div className="mb-1.5 rounded-[4px_14px_14px_14px] bg-[#fee500] px-3.5 py-3 text-left text-[0.78rem] leading-[1.6] text-[#3c1e1e]">
-                <b className="mb-1 block">[카운슬] 예약이 확정되었습니다</b>
+                <b className="mb-1 block">[PDMPS] 예약이 확정되었습니다</b>
                 {confirmed.name}님, Face Lift 상담 예약이 확정되었습니다.
                 <br />· 일시: {scheduleLabel}
                 <br />· 담당: 박동만 원장

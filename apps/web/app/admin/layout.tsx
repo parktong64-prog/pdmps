@@ -19,8 +19,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   return (
     <div className="flex min-h-screen flex-col bg-[var(--page-bg)] text-[var(--ink)] md:flex-row">
       <nav className="flex flex-none flex-col gap-0.5 overflow-x-auto bg-[var(--sidebar-bg)] p-3.5 text-[var(--sidebar-ink)] md:w-[220px] md:overflow-visible md:p-5">
-        <div className="mb-5 hidden font-[family-name:var(--font-display)] text-[1.1rem] font-bold md:block">
-          카운슬
+        <div className="mb-5 hidden font-[family-name:var(--font-display)] text-[1.1rem] font-bold text-[var(--brand-green)] md:block">
+          PDMPS
           <span className="mt-0.5 block font-[family-name:var(--font-body)] text-[0.66rem] font-normal text-[var(--sidebar-muted)]">
             관리자 · Face Lift
           </span>

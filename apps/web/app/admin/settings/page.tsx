@@ -137,8 +137,8 @@ type Template = { key: string; name: string; channel: string; text: string };
 function TemplatesTab() {
   const [templates, setTemplates] = useState<Template[]>([
     { key: "consult_received", name: "상담 신청 접수확인", channel: "푸시", text: "상담 신청이 접수되었습니다. AI 분석 결과를 확인해보세요." },
-    { key: "reservation_confirmed", name: "예약 확정", channel: "알림톡", text: "[카운슬] {날짜} {시간} Face Lift 상담 예약이 확정되었습니다." },
-    { key: "reminder_d1", name: "예약 리마인드 (D-1)", channel: "알림톡", text: "[카운슬] 내일 {시간} 예약이 있습니다. 잊지 말고 방문해주세요!" },
+    { key: "reservation_confirmed", name: "예약 확정", channel: "알림톡", text: "[PDMPS] {날짜} {시간} Face Lift 상담 예약이 확정되었습니다." },
+    { key: "reminder_d1", name: "예약 리마인드 (D-1)", channel: "알림톡", text: "[PDMPS] 내일 {시간} 예약이 있습니다. 잊지 말고 방문해주세요!" },
     { key: "payment_completed", name: "결제 완료", channel: "푸시", text: "예약금 결제가 완료되었습니다." },
     { key: "ai_flag_review", name: "AI 확인 필요 (내부)", channel: "내부", text: "{환자명}님의 AI 분석 결과 확인이 필요합니다." },
   ]);

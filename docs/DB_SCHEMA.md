@@ -2,7 +2,7 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 상태 | Draft v0.3 |
+| 문서 상태 | Draft v0.4 |
 | 작성일 | 2026-09-05 |
 | DB | PostgreSQL 15+ (Supabase) |
 
@@ -10,9 +10,11 @@
 
 > **현재 운영 범위**: `procedures`는 **Face Lift(안면거상술) 단일 행**만 보유하고(세부 프로그램 구분 없음), `staff`의 `role = 'doctor'` 행은 **박동만** 1건만 존재하는 것을 전제로 시드 데이터를 구성한다. 스키마 자체는 시술·원장이 늘어나도 그대로 확장 가능하도록 범용으로 유지한다.
 >
-> **예약 확정 원칙**: 환자-상담사 채팅은 범위에서 제외되었고(전화 응대로 대체), 예약은 **결제가 완료되어야만 확정**된다. `reservations.status`에 `pending_payment`를 두어 이 흐름을 표현한다.
+> **예약 확정 원칙**: 환자-원장 채팅은 범위에서 제외되었고(전화 응대로 대체), 예약은 **결제가 완료되어야만 확정**된다. `reservations.status`에 `pending_payment`를 두어 이 흐름을 표현한다.
 >
-> **AI 기능 원칙**: `ai_photo_analyses`(사진 분석)와 `simulation_images`(가상 시뮬레이션)는 모두 **참고 자료**이며 의료 기록이 아니다. 최종 진단은 방문 상담에서 원장이 내리므로, 이 테이블들의 값은 절대 `consultations`나 `reservations`의 확정 상태를 자동으로 바꾸지 않는다 (단, 신뢰도 낮음/이상 소견 플래그만 상담사 알림으로 연결).
+> **AI 기능 원칙**: `ai_photo_analyses`(사진 분석)와 `simulation_images`(가상 시뮬레이션)는 모두 **참고 자료**이며 의료 기록이 아니다. 최종 진단은 방문 상담에서 원장이 내리므로, 이 테이블들의 값은 절대 `consultations`나 `reservations`의 확정 상태를 자동으로 바꾸지 않는다 (단, 신뢰도 낮음/이상 소견 플래그만 원장 알림으로 연결).
+>
+> **상담사 계정 없음**: `staff.role`은 `admin`(관리자) \| `doctor`(원장) 두 가지만 사용한다. AI 확인 필요 건의 전화 후속 응대를 포함해 모든 임상 대응은 원장 1인이 직접 수행한다.
 
 ---
 
@@ -133,12 +135,12 @@ erDiagram
 | marketing_opt_in | boolean | 마케팅 수신 동의 |
 | created_at | timestamptz | 가입일 |
 
-### 2.2 `staff` (상담사/관리자/원장)
+### 2.2 `staff` (관리자/원장)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | Supabase Auth user id와 연동 |
 | name | text | 이름 |
-| role | text | `admin` \| `counselor` \| `doctor` |
+| role | text | `admin` \| `doctor` |
 | phone | text | 내부 연락처 (전화 응대에 사용) |
 | is_active | boolean | 재직 여부 |
 | created_at | timestamptz | |
@@ -177,7 +179,7 @@ erDiagram
 | id | uuid PK | |
 | patient_id | uuid FK → patients | |
 | procedure_id | uuid FK → procedures | 관심 시술 |
-| assigned_staff_id | uuid FK → staff, nullable | 담당 상담사 |
+| assigned_staff_id | uuid FK → staff, nullable | 담당 직원(관리자/원장) |
 | status | text | `pending`(대기) \| `needs_review`(AI 확인필요) \| `in_progress`(응대중) \| `reserved`(예약완료) \| `cancelled`(취소) |
 | source | text | `web` \| `app` |
 | video_watched_at | timestamptz | 시술 안내 영상 시청 완료 시각 (nullable) |
@@ -200,7 +202,7 @@ erDiagram
 | storage_path | text | Supabase Storage 경로 |
 | uploaded_at | timestamptz | |
 
-> 민감정보이므로 Storage 버킷은 비공개(private) + RLS로 본인/담당 상담사/관리자/원장만 접근하도록 서명 URL 발급.
+> 민감정보이므로 Storage 버킷은 비공개(private) + RLS로 본인/관리자/원장만 접근하도록 서명 URL 발급.
 
 ### 2.9 `ai_photo_analyses` (AI 사진 분석 결과)
 | 컬럼 | 타입 | 설명 |
@@ -211,12 +213,12 @@ erDiagram
 | severity_score | integer | 0~100 처짐 정도 점수 |
 | severity_label | text | 예: `mild` \| `moderate` \| `severe` |
 | confidence | numeric(4,3) | 모델 신뢰도 (0~1) |
-| needs_review | boolean | 신뢰도 낮음/이상 소견 시 `true` → 상담사 플래그 |
+| needs_review | boolean | 신뢰도 낮음/이상 소견 시 `true` → 원장에게 플래그 알림 |
 | model_name | text | 사용된 AI 모델/버전 |
 | raw_result | jsonb | 모델 원본 응답 (감사/재현용) |
 | created_at | timestamptz | |
 
-> `needs_review = true`가 되면 애플리케이션이 `consultations.status`를 `needs_review`로 갱신하고 담당 상담사에게 내부 알림을 발송한다 (PRD FR-2.2).
+> `needs_review = true`가 되면 애플리케이션이 `consultations.status`를 `needs_review`로 갱신하고 원장에게 내부 알림을 발송한다 (PRD FR-2.2).
 
 ### 2.10 `simulation_images` (AI 가상 시뮬레이션)
 | 컬럼 | 타입 | 설명 |
@@ -235,7 +237,7 @@ erDiagram
 |---|---|---|
 | id | uuid PK | |
 | procedure_id | uuid FK → procedures, nullable | 특정 시술 전용 슬롯인 경우 |
-| staff_id | uuid FK → staff | 담당의/상담사 |
+| staff_id | uuid FK → staff | 담당의(원장) |
 | start_at | timestamptz | |
 | end_at | timestamptz | |
 | status | text | `open`(예약가능) \| `held`(결제 대기 중 임시선점) \| `booked`(결제완료·예약확정) \| `blocked`(휴진 등) |
@@ -278,8 +280,8 @@ erDiagram
 | id | uuid PK | |
 | reservation_id | uuid FK → reservations, nullable | 상담 알림인 경우 consultation_id 대신 사용 가능하도록 확장 |
 | consultation_id | uuid FK → consultations, nullable | |
-| recipient_patient_id | uuid FK → patients, nullable | 환자 대상 알림 (내부 상담사 알림은 null) |
-| recipient_staff_id | uuid FK → staff, nullable | 상담사 대상 내부 알림 (AI 플래그 등) |
+| recipient_patient_id | uuid FK → patients, nullable | 환자 대상 알림 (내부 알림은 null) |
+| recipient_staff_id | uuid FK → staff, nullable | 원장/관리자 대상 내부 알림 (AI 플래그 등) |
 | channel | text | `push` \| `alimtalk` \| `sms` \| `internal` |
 | template_key | text | 예: `reservation_confirmed`, `reminder_d1`, `ai_flag_review` |
 | status | text | `queued` \| `sent` \| `failed` |
@@ -306,7 +308,7 @@ create table patients (
 create table staff (
   id uuid primary key default uuid_generate_v4(),
   name text not null,
-  role text not null check (role in ('admin', 'counselor', 'doctor')),
+  role text not null check (role in ('admin', 'doctor')),
   phone text,
   is_active boolean not null default true,
   created_at timestamptz not null default now()
@@ -407,7 +409,7 @@ create table reservation_slots (
   constraint valid_time_range check (end_at > start_at)
 );
 
--- 동일 상담사·시간대 슬롯 중복 방지
+-- 동일 담당의·시간대 슬롯 중복 방지
 create unique index idx_slot_staff_time on reservation_slots(staff_id, start_at);
 
 create table reservations (

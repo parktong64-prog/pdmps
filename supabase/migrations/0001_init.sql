@@ -17,7 +17,7 @@ create table patients (
 create table staff (
   id uuid primary key default uuid_generate_v4(),
   name text not null,
-  role text not null check (role in ('admin', 'counselor', 'doctor')),
+  role text not null check (role in ('admin', 'doctor')),
   phone text,
   is_active boolean not null default true,
   created_at timestamptz not null default now()
@@ -118,7 +118,7 @@ create table reservation_slots (
   constraint valid_time_range check (end_at > start_at)
 );
 
--- 동일 상담사·시간대 슬롯 중복 방지
+-- 동일 담당의·시간대 슬롯 중복 방지
 create unique index idx_slot_staff_time on reservation_slots(staff_id, start_at);
 
 create table reservations (

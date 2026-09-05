@@ -1,10 +1,8 @@
--- 카운슬 초기 시드 데이터
--- 현재 운영 범위: Face Lift 단일 시술, 원장 1인(박동만) — docs/DB_SCHEMA.md 상단 노트 참고
+-- PDMPS 초기 시드 데이터
+-- 현재 운영 범위: Face Lift 단일 시술, 원장 1인(박동만) 체계 — 상담사 계정 없음, docs/DB_SCHEMA.md 상단 노트 참고
 
 insert into staff (id, name, role, phone, is_active) values
-  ('00000000-0000-0000-0000-000000000001', '박동만', 'doctor', '010-1111-2222', true),
-  ('00000000-0000-0000-0000-000000000002', '김민지', 'counselor', '010-3333-4444', true),
-  ('00000000-0000-0000-0000-000000000003', '정하늘', 'counselor', '010-5555-6666', true);
+  ('00000000-0000-0000-0000-000000000001', '박동만', 'doctor', '010-1111-2222', true);
 
 insert into questionnaire_templates (id, name, procedure_category) values
   ('00000000-0000-0000-0000-000000000010', 'Face Lift 기본 문진표', 'Face Lift');
