@@ -190,6 +190,74 @@
   .btn-outline2{color:var(--accent-ink);background:var(--accent-soft);}
   .btn-danger-outline:disabled{opacity:.5;cursor:not-allowed;}
 
+  /* 일정 설정 */
+  .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .month-nav button{
+    width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--panel-bg);
+    color:var(--ink);cursor:pointer;font-size:.85rem;
+  }
+  .month-nav button:disabled{opacity:.3;cursor:not-allowed;}
+  .month-nav button:not(:disabled):hover{border-color:var(--accent);}
+  .month-nav-label{font-family:var(--font-display);font-weight:700;font-size:1rem;}
+
+  .weekday-row2{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+  .weekday-row2 span{text-align:center;font-size:.7rem;color:var(--ink-soft);padding:4px 0;}
+  .weekday-row2 span:first-child{color:#c0605f;}
+
+  .set-day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
+  .set-day-cell{
+    aspect-ratio:1;border-radius:9px;border:1px solid transparent;background:var(--page-bg);color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    font-family:var(--font-mono);font-size:.82rem;cursor:pointer;position:relative;
+  }
+  .set-day-cell.blank{visibility:hidden;cursor:default;}
+  .set-day-cell:not(.blank):hover{border-color:var(--accent);}
+  .set-day-cell.selected{background:var(--accent);color:#fff;}
+  .set-day-cell.closed-fixed{color:var(--ink-faint);cursor:not-allowed;}
+  .set-day-cell .ind{width:16px;height:4px;border-radius:2px;background:var(--line);}
+  .set-day-cell.state-full .ind{background:var(--st-done);}
+  .set-day-cell.state-partial .ind{background:var(--st-pending);}
+  .set-day-cell.selected .ind{background:rgba(255,255,255,.85);}
+
+  .legend3{display:flex;gap:16px;font-size:.7rem;color:var(--ink-soft);margin:14px 0 0;flex-wrap:wrap;}
+  .legend3 span{display:inline-flex;align-items:center;gap:6px;}
+  .legend3 i{width:14px;height:4px;border-radius:2px;display:inline-block;}
+  .legend3 i.full{background:var(--st-done);}
+  .legend3 i.partial{background:var(--st-pending);}
+  .legend3 i.none{background:var(--line);}
+
+  .day-switch{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .switch{position:relative;width:42px;height:24px;flex:0 0 auto;}
+  .switch input{opacity:0;width:100%;height:100%;margin:0;cursor:pointer;position:absolute;z-index:1;}
+  .switch .track{position:absolute;inset:0;background:var(--line);border-radius:100px;transition:background .15s;}
+  .switch .knob{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .15s;}
+  .switch input:checked + .track{background:var(--accent);}
+  .switch input:checked ~ .knob{transform:translateX(18px);}
+
+  .time-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  .time-chip{
+    font:inherit;font-family:var(--font-mono);font-size:.8rem;padding:9px 14px;border-radius:100px;
+    border:1px solid var(--line);background:var(--panel-bg);color:var(--ink-soft);cursor:pointer;
+  }
+  .time-chip.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .time-chip:disabled{opacity:.4;cursor:not-allowed;}
+
+  .quick-actions{display:flex;gap:8px;margin-bottom:18px;}
+  .quick-actions button{
+    font:inherit;font-size:.74rem;font-weight:600;color:var(--ink-soft);background:var(--page-bg);
+    border:1px solid var(--line);border-radius:8px;padding:7px 11px;cursor:pointer;
+  }
+  .quick-actions button:hover{border-color:var(--accent);color:var(--accent-ink);}
+
+  .save-row{display:flex;align-items:center;gap:12px;}
+  .btn-save{
+    font:inherit;font-size:.84rem;font-weight:700;color:#fff;background:var(--accent);border:none;
+    border-radius:9px;padding:11px 18px;cursor:pointer;
+  }
+  .btn-save:hover{filter:brightness(1.06);}
+  .save-toast{font-size:.78rem;color:var(--st-done);font-weight:600;opacity:0;transition:opacity .2s;}
+  .save-toast.show{opacity:1;}
+
   @media (max-width:860px){
     .shell{flex-direction:column;}
     .sidebar{width:100%;flex-direction:row;overflow-x:auto;padding:14px;}
@@ -209,6 +277,7 @@
     <div class="nav-item active" data-view="dashboard"><span class="dot"></span>대시보드 홈</div>
     <div class="nav-item" data-view="consultations"><span class="dot"></span>상담 관리</div>
     <div class="nav-item" data-view="reservations"><span class="dot"></span>예약 관리</div>
+    <div class="nav-item" data-view="schedule"><span class="dot"></span>일정 설정</div>
     <div class="nav-item" data-disabled><span class="dot"></span>환자 관리<span class="soon">준비중</span></div>
     <div class="nav-item" data-disabled><span class="dot"></span>결제·매출<span class="soon">준비중</span></div>
     <div class="nav-item" data-disabled><span class="dot"></span>설정<span class="soon">준비중</span></div>
@@ -319,6 +388,38 @@
       <div class="panel detail-panel">
         <div class="panel-title">슬롯 상세</div>
         <div id="detail-body"></div>
+      </div>
+    </div>
+
+    <!-- 일정 설정 -->
+    <div class="view" id="view-schedule">
+      <div class="topbar">
+        <h1>일정 설정</h1>
+        <div class="date">환자용 예약 캘린더에 그대로 반영돼요</div>
+      </div>
+
+      <div class="panel">
+        <div class="month-nav">
+          <button type="button" id="set-prev-month" aria-label="이전 달">‹</button>
+          <div class="month-nav-label" id="set-month-label"></div>
+          <button type="button" id="set-next-month" aria-label="다음 달">›</button>
+        </div>
+        <div class="weekday-row2">
+          <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+        </div>
+        <div class="set-day-grid" id="set-day-grid"></div>
+        <div class="legend3">
+          <span><i class="full"></i>전체 시간 오픈</span>
+          <span><i class="partial"></i>일부만 오픈</span>
+          <span><i class="none"></i>휴진</span>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-title" id="set-date-label">날짜를 선택해주세요</div>
+        <div id="set-panel-body">
+          <div class="detail-empty">위 달력에서 설정할 날짜를 선택하세요.</div>
+        </div>
       </div>
     </div>
 
@@ -541,6 +642,173 @@
     nextBtn3.addEventListener('click', () => { weekIdx = Math.min(WEEK_STARTS.length - 1, weekIdx + 1); selectedKey = null; renderWeek(); detailBody.innerHTML = '<div class="detail-empty">슬롯을 선택하면 상세 정보가 여기에 표시됩니다.</div>'; });
 
     renderWeek();
+  })();
+
+  // ---------- 일정 설정 ----------
+  (function(){
+    const WEEKDAY_LABEL = ['일','월','화','수','목','금','토'];
+    const ALL_TIMES = ['10:00', '11:00', '13:00', '14:30', '16:00', '17:30'];
+    const MONTHS = [{ y: 2026, m: 8 }, { y: 2026, m: 9 }, { y: 2026, m: 10 }];
+    const TODAY = new Date(2026, 8, 5);
+    // 정기 휴진 외 고정 휴무일 (원장 개인 일정/공휴일) — 설정에서도 변경 불가
+    const FIXED_CLOSED = {
+      '2026-09-24': '추석연휴', '2026-09-25': '추석연휴', '2026-09-26': '추석연휴',
+      '2026-10-09': '한글날',
+    };
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+    function keyOf(y, m, d) { return y + '-' + pad(m + 1) + '-' + pad(d); }
+
+    // 날짜별 설정 상태: { open: boolean, times: Set<string> }
+    // 기본값: 일요일/고정휴무 제외 전부 오픈 + 전체 시간 활성화
+    const SCHEDULE = {};
+    function ensureSchedule(y, m, d) {
+      const key = keyOf(y, m, d);
+      if (SCHEDULE[key]) return SCHEDULE[key];
+      const weekday = new Date(y, m, d).getDay();
+      const fixedClosed = !!FIXED_CLOSED[key];
+      const defaultOpen = weekday !== 0 && !fixedClosed && new Date(y, m, d) >= TODAY;
+      SCHEDULE[key] = { open: defaultOpen, times: new Set(defaultOpen ? ALL_TIMES : []), fixedClosed };
+      return SCHEDULE[key];
+    }
+
+    let monthIdx = 0;
+    let selected = null; // { y, m, d, key }
+
+    const monthLabel = document.getElementById('set-month-label');
+    const dayGrid = document.getElementById('set-day-grid');
+    const prevBtn = document.getElementById('set-prev-month');
+    const nextBtn4 = document.getElementById('set-next-month');
+    const dateLabel = document.getElementById('set-date-label');
+    const panelBody = document.getElementById('set-panel-body');
+
+    function cellState(entry) {
+      if (entry.fixedClosed || !entry.open) return 'none';
+      return entry.times.size >= ALL_TIMES.length ? 'full' : (entry.times.size > 0 ? 'partial' : 'none');
+    }
+
+    function renderMonth() {
+      const { y, m } = MONTHS[monthIdx];
+      monthLabel.textContent = y + '년 ' + (m + 1) + '월';
+      prevBtn.disabled = monthIdx === 0;
+      nextBtn4.disabled = monthIdx === MONTHS.length - 1;
+
+      dayGrid.innerHTML = '';
+      const firstWeekday = new Date(y, m, 1).getDay();
+      const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+      for (let i = 0; i < firstWeekday; i++) {
+        const blank = document.createElement('div');
+        blank.className = 'set-day-cell blank';
+        dayGrid.appendChild(blank);
+      }
+
+      for (let d = 1; d <= daysInMonth; d++) {
+        const entry = ensureSchedule(y, m, d);
+        const key = keyOf(y, m, d);
+        const isPast = new Date(y, m, d) < TODAY;
+        const cell = document.createElement('button');
+        cell.type = 'button';
+        cell.className = 'set-day-cell state-' + cellState(entry) + (isPast || entry.fixedClosed ? ' closed-fixed' : '') + (selected && selected.key === key ? ' selected' : '');
+        cell.innerHTML = '<span>' + d + '</span><span class="ind"></span>';
+        if (entry.fixedClosed) cell.title = FIXED_CLOSED[key] || '';
+        if (!isPast && !entry.fixedClosed) {
+          cell.addEventListener('click', () => selectDate(y, m, d));
+        } else {
+          cell.disabled = true;
+        }
+        dayGrid.appendChild(cell);
+      }
+    }
+
+    function selectDate(y, m, d) {
+      selected = { y, m, d, key: keyOf(y, m, d) };
+      renderMonth();
+      renderPanel();
+    }
+
+    function renderPanel() {
+      const entry = SCHEDULE[selected.key];
+      const weekday = WEEKDAY_LABEL[new Date(selected.y, selected.m, selected.d).getDay()];
+      dateLabel.textContent = (selected.m + 1) + '월 ' + selected.d + '일(' + weekday + ') 설정';
+
+      const chipsHtml = ALL_TIMES.map((t) => {
+        const on = entry.open && entry.times.has(t);
+        return '<button type="button" class="time-chip' + (on ? ' on' : '') + '" data-time="' + t + '"' + (entry.open ? '' : ' disabled') + '>' + t + '</button>';
+      }).join('');
+
+      panelBody.innerHTML =
+        '<div class="day-switch"><span>이 날 진료 여부</span>' +
+        '<label class="switch"><input type="checkbox" id="day-open-toggle"' + (entry.open ? ' checked' : '') + '><span class="track"></span><span class="knob"></span></label>' +
+        '</div>' +
+        '<div class="time-chip-row" id="time-chip-row">' + chipsHtml + '</div>' +
+        '<div class="quick-actions">' +
+          '<button type="button" id="all-on">전체 시간 켜기</button>' +
+          '<button type="button" id="all-off">전체 시간 끄기</button>' +
+          '<button type="button" id="apply-weekday">이 요일 전체에 적용</button>' +
+        '</div>' +
+        '<div class="save-row"><button type="button" class="btn-save" id="save-schedule">변경사항 저장</button><span class="save-toast" id="save-toast">저장되었습니다 · 환자용 캘린더에 반영됩니다</span></div>';
+
+      document.getElementById('day-open-toggle').addEventListener('change', (e) => {
+        entry.open = e.target.checked;
+        if (entry.open && entry.times.size === 0) ALL_TIMES.forEach((t) => entry.times.add(t));
+        if (!entry.open) entry.times.clear();
+        renderMonth();
+        renderPanel();
+      });
+
+      panelBody.querySelectorAll('.time-chip').forEach((chip) => {
+        chip.addEventListener('click', () => {
+          const t = chip.dataset.time;
+          if (entry.times.has(t)) entry.times.delete(t); else entry.times.add(t);
+          renderMonth();
+          renderPanel();
+        });
+      });
+
+      document.getElementById('all-on').addEventListener('click', () => {
+        ALL_TIMES.forEach((t) => entry.times.add(t));
+        renderMonth(); renderPanel();
+      });
+      document.getElementById('all-off').addEventListener('click', () => {
+        entry.times.clear();
+        renderMonth(); renderPanel();
+      });
+      document.getElementById('apply-weekday').addEventListener('click', () => {
+        const { y, m } = MONTHS[monthIdx];
+        const targetWeekday = new Date(selected.y, selected.m, selected.d).getDay();
+        const daysInMonth = new Date(y, m + 1, 0).getDate();
+        let applied = 0;
+        for (let d = 1; d <= daysInMonth; d++) {
+          if (new Date(y, m, d).getDay() !== targetWeekday) continue;
+          const targetEntry = ensureSchedule(y, m, d);
+          if (targetEntry.fixedClosed || new Date(y, m, d) < TODAY) continue;
+          targetEntry.open = entry.open;
+          targetEntry.times = new Set(entry.times);
+          applied++;
+        }
+        renderMonth();
+        showToast('이 달의 ' + WEEKDAY_LABEL[targetWeekday] + '요일 ' + applied + '일에 동일하게 적용했어요');
+      });
+
+      document.getElementById('save-schedule').addEventListener('click', () => {
+        showToast('저장되었습니다 · 환자용 캘린더에 반영됩니다');
+      });
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('save-toast');
+      if (!toast) return;
+      toast.textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => toast.classList.remove('show'), 2400);
+    }
+
+    prevBtn.addEventListener('click', () => { monthIdx = Math.max(0, monthIdx - 1); selected = null; renderMonth(); panelBody.innerHTML = '<div class="detail-empty">위 달력에서 설정할 날짜를 선택하세요.</div>'; dateLabel.textContent = '날짜를 선택해주세요'; });
+    nextBtn4.addEventListener('click', () => { monthIdx = Math.min(MONTHS.length - 1, monthIdx + 1); selected = null; renderMonth(); panelBody.innerHTML = '<div class="detail-empty">위 달력에서 설정할 날짜를 선택하세요.</div>'; dateLabel.textContent = '날짜를 선택해주세요'; });
+
+    renderMonth();
   })();
 })();
 </script>
