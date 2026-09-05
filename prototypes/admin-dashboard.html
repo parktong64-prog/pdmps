@@ -519,7 +519,7 @@
     function dateKey(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
     function isNaturallyBooked(key, time) { return hash(key + '_' + time) % 100 < 30; }
     function nameFor(key, time) { return NAMES[hash(key + time + 'name') % NAMES.length]; }
-    function isClosedDay(d) { return d.getDay() === 0 || !!BLOCKED[dateKey(d)]; }
+    function isClosedDay(d) { return d.getDay() === 0 || d.getDay() === 6 || !!BLOCKED[dateKey(d)]; }
 
     let weekIdx = 0;
     let selectedKey = null; // "YYYY-MM-DD_HH:MM"
@@ -667,7 +667,7 @@
       if (SCHEDULE[key]) return SCHEDULE[key];
       const weekday = new Date(y, m, d).getDay();
       const fixedClosed = !!FIXED_CLOSED[key];
-      const defaultOpen = weekday !== 0 && !fixedClosed && new Date(y, m, d) >= TODAY;
+      const defaultOpen = weekday !== 0 && weekday !== 6 && !fixedClosed && new Date(y, m, d) >= TODAY;
       SCHEDULE[key] = { open: defaultOpen, times: new Set(defaultOpen ? ALL_TIMES : []), fixedClosed };
       return SCHEDULE[key];
     }

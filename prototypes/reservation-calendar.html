@@ -199,7 +199,7 @@
     const date = new Date(y, m, d);
     const weekday = date.getDay();
     if (date < TODAY) return { open: false, reason: null };
-    if (weekday === 0) return { open: false, reason: '휴' };
+    if (weekday === 0 || weekday === 6) return { open: false, reason: '휴' };
     if (BLOCKED[key]) return { open: false, reason: '휴', title: BLOCKED[key] };
     if (availableTimes(key).length === 0) return { open: false, reason: '마감' };
     return { open: true, reason: null };
