@@ -1,0 +1,232 @@
+<title>AI 시뮬레이션</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+  :root{
+    --page-bg:#f6f1ee;
+    --card-bg:#ffffff;
+    --ink:#2a1f22;
+    --ink-soft:#6f6265;
+    --line:#e8e0dd;
+    --accent:#a1546a;
+    --accent-soft:#f4e6ea;
+    --accent-ink:#7d3f52;
+    --warn-ink:#8a5a24;
+    --warn-soft:#faf0e2;
+    --focus-ring:rgba(161,84,106,.28);
+    --font-display:'Noto Serif KR',ui-serif,'Nanum Myeongjo',serif;
+    --font-body:'Noto Sans KR',-apple-system,'Malgun Gothic',sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --page-bg:#1b1517; --card-bg:#241d20; --ink:#f3ebe9; --ink-soft:#b6a8ac;
+      --line:#3a2f33; --accent:#e08aa1; --accent-soft:#3a2530; --accent-ink:#f0aabb;
+      --warn-ink:#e8b978; --warn-soft:#332a1c; --focus-ring:rgba(224,138,161,.28);
+    }
+  }
+  :root[data-theme="dark"]{
+    --page-bg:#1b1517; --card-bg:#241d20; --ink:#f3ebe9; --ink-soft:#b6a8ac;
+    --line:#3a2f33; --accent:#e08aa1; --accent-soft:#3a2530; --accent-ink:#f0aabb;
+    --warn-ink:#e8b978; --warn-soft:#332a1c; --focus-ring:rgba(224,138,161,.28);
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--page-bg);color:var(--ink);font-family:var(--font-body);}
+  h1,h2,p{text-wrap:balance;margin:0;}
+
+  .wrap{max-width:520px;margin:0 auto;padding:48px 20px 72px;}
+
+  .eyebrow{
+    font-size:.72rem;letter-spacing:.14em;color:var(--accent-ink);font-weight:700;
+    text-transform:uppercase;margin-bottom:10px;
+  }
+  .hero h1{font-family:var(--font-display);font-size:1.6rem;font-weight:700;margin-bottom:10px;}
+  .hero p{font-size:.88rem;color:var(--ink-soft);line-height:1.65;margin-bottom:28px;}
+
+  /* 업로드 전 상태 */
+  .dropzone{
+    border:1.6px dashed var(--line);border-radius:16px;background:var(--card-bg);
+    padding:40px 20px;text-align:center;cursor:pointer;transition:border-color .15s, background .15s;
+  }
+  .dropzone:hover, .dropzone:focus-visible{border-color:var(--accent);background:var(--accent-soft);}
+  .dropzone .icon{
+    width:52px;height:52px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);
+    display:flex;align-items:center;justify-content:center;font-size:1.4rem;margin:0 auto 14px;
+  }
+  .dropzone .t1{font-size:.9rem;font-weight:700;margin-bottom:4px;}
+  .dropzone .t2{font-size:.76rem;color:var(--ink-soft);}
+  input[type="file"]{display:none;}
+
+  /* 처리 중 상태 */
+  .processing{
+    background:var(--card-bg);border:1px solid var(--line);border-radius:16px;
+    padding:44px 20px;text-align:center;
+  }
+  .spinner{
+    width:34px;height:34px;border-radius:50%;border:3px solid var(--accent-soft);
+    border-top-color:var(--accent);margin:0 auto 16px;animation:spin .8s linear infinite;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .processing p{font-size:.84rem;color:var(--ink-soft);}
+
+  /* 결과 카드 */
+  .result-card{
+    background:var(--card-bg);border:1px solid var(--line);border-radius:16px;padding:18px;
+  }
+  .compare-wrap{
+    position:relative;border-radius:12px;overflow:hidden;aspect-ratio:3/4;background:var(--line);
+  }
+  .cmp-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;}
+  #img-after{filter:brightness(1.05) contrast(1.05) saturate(1.08);}
+  .cmp-after-clip{position:absolute;inset:0;overflow:hidden;}
+  .cmp-divider{
+    position:absolute;top:0;bottom:0;width:2px;background:#fff;left:50%;
+    box-shadow:0 0 0 1px rgba(0,0,0,.15);pointer-events:none;
+  }
+  .cmp-divider::after{
+    content:"↔";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:30px;height:30px;border-radius:50%;background:#fff;color:var(--ink);
+    display:flex;align-items:center;justify-content:center;font-size:.85rem;box-shadow:0 2px 8px rgba(0,0,0,.25);
+  }
+  .cmp-tag{
+    position:absolute;top:10px;font-family:var(--font-mono);font-size:.64rem;font-weight:600;
+    padding:3px 9px;border-radius:100px;background:rgba(0,0,0,.55);color:#fff;pointer-events:none;
+  }
+  .cmp-tag.before{left:10px;}
+  .cmp-tag.after{right:10px;}
+  .cmp-range{
+    width:100%;margin:14px 0 4px;accent-color:var(--accent);cursor:ew-resize;
+  }
+  .cmp-hint{text-align:center;font-size:.7rem;color:var(--ink-soft);margin-bottom:4px;}
+
+  .filter-note{font-size:.7rem;color:var(--ink-soft);line-height:1.55;margin-top:12px;}
+
+  .disclaimer{
+    display:flex;gap:10px;background:var(--warn-soft);color:var(--warn-ink);
+    border-radius:12px;padding:14px 16px;font-size:.78rem;line-height:1.65;margin:22px 0 28px;
+  }
+  .disclaimer b{color:var(--ink);}
+
+  .cta-row{display:flex;flex-direction:column;gap:10px;}
+  .btn-primary{
+    font:inherit;font-size:.92rem;font-weight:700;color:#fff;background:var(--accent);
+    border:none;border-radius:10px;padding:14px 0;cursor:pointer;text-align:center;
+    transition:filter .15s, transform .05s, opacity .15s;
+  }
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed;}
+  .btn-primary:not(:disabled):hover{filter:brightness(1.06);}
+  .btn-primary:not(:disabled):active{transform:scale(.99);}
+  .link-btn{
+    font:inherit;font-size:.78rem;color:var(--ink-soft);background:none;border:none;
+    text-decoration:underline;text-underline-offset:2px;cursor:pointer;text-align:center;
+  }
+
+  [hidden]{display:none!important;}
+</style>
+
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">Face Lift 전문 · 박동만 원장</div>
+    <h1>AI 시뮬레이션</h1>
+    <p>얼굴 사진을 업로드하면 AI가 예상되는 변화를 보여드려요. 실제 시술 결과와는 다를 수 있습니다.</p>
+  </div>
+
+  <div id="view-upload">
+    <button type="button" class="dropzone" id="dropzone">
+      <div class="icon">＋</div>
+      <div class="t1">사진 업로드하기</div>
+      <div class="t2">정면 얼굴 사진 1장을 선택해주세요 (JPG, PNG)</div>
+    </button>
+    <input type="file" id="file-input" accept="image/*">
+  </div>
+
+  <div id="view-processing" class="processing" hidden>
+    <div class="spinner"></div>
+    <p>AI가 시뮬레이션 이미지를 생성하고 있어요…</p>
+  </div>
+
+  <div id="view-result" hidden>
+    <div class="result-card">
+      <div class="compare-wrap">
+        <img id="img-before" class="cmp-img" alt="시술 전 사진">
+        <div class="cmp-after-clip" id="after-clip">
+          <img id="img-after" class="cmp-img" alt="AI 예상 시뮬레이션">
+        </div>
+        <div class="cmp-divider" id="cmp-divider"></div>
+        <span class="cmp-tag before">Before</span>
+        <span class="cmp-tag after">After (AI 예상)</span>
+      </div>
+      <input type="range" class="cmp-range" id="cmp-range" min="0" max="100" value="50" aria-label="시술 전후 비교 슬라이더">
+      <div class="cmp-hint">슬라이더를 움직여 전후를 비교해보세요</div>
+      <p class="filter-note">데모 화면입니다 — 실제 서비스에서는 AI가 처짐 개선을 반영한 이미지를 새로 생성합니다. 지금은 업로드하신 사진에 색 보정만 적용해 보여드려요.</p>
+    </div>
+
+    <div class="disclaimer">
+      <span>⚠</span>
+      <span><b>AI 예상 이미지 안내.</b> 위 시뮬레이션은 AI가 생성한 참고용 이미지로 실제 시술 결과를 보장하지 않으며 의학적 진단을 대체하지 않습니다. 정확한 진단과 예상 결과는 방문 상담에서 원장이 안내합니다.</span>
+    </div>
+
+    <div class="cta-row">
+      <button type="button" class="btn-primary" id="next-btn">다음 · 상담 예약하기</button>
+      <button type="button" class="link-btn" id="retry-btn">다른 사진으로 다시 해보기</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  const dropzone = document.getElementById('dropzone');
+  const fileInput = document.getElementById('file-input');
+  const viewUpload = document.getElementById('view-upload');
+  const viewProcessing = document.getElementById('view-processing');
+  const viewResult = document.getElementById('view-result');
+  const imgBefore = document.getElementById('img-before');
+  const imgAfter = document.getElementById('img-after');
+  const afterClip = document.getElementById('after-clip');
+  const cmpDivider = document.getElementById('cmp-divider');
+  const cmpRange = document.getElementById('cmp-range');
+  const retryBtn = document.getElementById('retry-btn');
+
+  dropzone.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files && fileInput.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target.result;
+      imgBefore.src = dataUrl;
+      imgAfter.src = dataUrl;
+
+      viewUpload.hidden = true;
+      viewProcessing.hidden = false;
+
+      // AI 생성 처리 시간을 흉내 (실제로는 서버의 AI 이미지 생성 호출)
+      setTimeout(() => {
+        viewProcessing.hidden = true;
+        viewResult.hidden = false;
+        setSliderPos(50);
+      }, 1400);
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function setSliderPos(pos) {
+    afterClip.style.clipPath = `inset(0 0 0 ${pos}%)`;
+    cmpDivider.style.left = pos + '%';
+    cmpRange.value = pos;
+  }
+
+  cmpRange.addEventListener('input', () => setSliderPos(cmpRange.value));
+
+  retryBtn.addEventListener('click', () => {
+    fileInput.value = '';
+    viewResult.hidden = true;
+    viewUpload.hidden = false;
+  });
+})();
+</script>
