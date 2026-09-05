@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "대시보드 홈" },
@@ -15,6 +16,14 @@ const NAV_ITEMS = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleLogout() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--page-bg)] text-[var(--ink)] md:flex-row">
@@ -48,9 +57,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </div>
 
-        <div className="mt-auto hidden border-t border-white/10 pt-3 text-[0.76rem] text-[var(--sidebar-muted)] md:block">
-          <b className="block font-semibold text-[var(--sidebar-ink)]">박동만</b>
-          원장 · 로그아웃
+        <div className="mt-auto flex items-center justify-between gap-2 border-t border-white/10 pt-3 text-[0.76rem] text-[var(--sidebar-muted)]">
+          <span className="hidden md:inline">
+            <b className="font-semibold text-[var(--sidebar-ink)]">박동만</b> 원장
+          </span>
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="rounded-md px-2 py-1 underline underline-offset-2 hover:text-[var(--sidebar-ink)]"
+          >
+            로그아웃
+          </button>
         </div>
       </nav>
 
