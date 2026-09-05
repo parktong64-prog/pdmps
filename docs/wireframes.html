@@ -161,6 +161,25 @@
   .result-title{text-align:center;font-size:.92rem;font-weight:700;margin-bottom:2px;}
   .result-sub{text-align:center;font-size:.66rem;color:var(--paper-muted);margin-bottom:16px;}
 
+  .analysis-photo{width:100%;aspect-ratio:4/3;background:var(--paper-line);border-radius:10px;position:relative;margin-bottom:10px;}
+  .analysis-tag{position:absolute;font-family:var(--font-mono);font-size:.56rem;background:var(--blue-deep);color:var(--line-bright);padding:2px 6px;border-radius:100px;white-space:nowrap;}
+  .analysis-tag::before{content:"";position:absolute;width:5px;height:5px;border-radius:50%;background:var(--redline);top:50%;left:-9px;transform:translateY(-50%);}
+  .gauge-track{height:8px;border-radius:4px;background:var(--paper-line);overflow:hidden;margin:8px 0 4px;}
+  .gauge-fill{height:100%;background:var(--app-accent);}
+  .gauge-label{display:flex;justify-content:space-between;font-size:.62rem;color:var(--paper-muted);}
+  .gauge-label b{color:var(--paper-ink);font-family:var(--font-mono);}
+  .disclaimer{font-size:.58rem;line-height:1.55;color:var(--paper-muted);background:#f2f3f4;border-radius:8px;padding:8px 9px;margin-top:10px;}
+
+  .video-box{background:#0d1622;border-radius:10px;aspect-ratio:16/10;display:flex;align-items:center;justify-content:center;position:relative;margin-bottom:8px;}
+  .video-play{width:0;height:0;border-top:9px solid transparent;border-bottom:9px solid transparent;border-left:14px solid #fff;margin-left:3px;}
+  .video-caption{position:absolute;left:8px;bottom:8px;color:#fff;font-size:.6rem;}
+  .video-progress{height:4px;background:var(--paper-line);border-radius:2px;overflow:hidden;margin-bottom:10px;}
+  .video-progress i{display:block;height:100%;width:62%;background:var(--app-accent);}
+
+  .ba-compare{display:flex;gap:6px;margin:4px 0 4px;}
+  .ba-box{flex:1;aspect-ratio:3/4;background:var(--paper-line);border-radius:8px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font-size:.62rem;color:var(--paper-muted);font-weight:600;}
+  .ba-box.after{background:var(--app-accent-soft);color:var(--app-accent);}
+
   .date-strip{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;}
   .date-pill{flex:0 0 auto;width:38px;text-align:center;padding:6px 0;border-radius:9px;border:1px solid var(--paper-line);}
   .date-pill .d{font-size:.6rem;color:var(--paper-muted);}
@@ -256,7 +275,7 @@
     </div>
     <dl class="tb-meta">
       <div><dt>DRAWN</dt><dd>2026.09.05</dd></div>
-      <div><dt>REV</dt><dd>v0.2</dd></div>
+      <div><dt>REV</dt><dd>v0.3</dd></div>
       <div><dt>SCALE</dt><dd>NTS *</dd></div>
       <div><dt>REF</dt><dd>prd.md · DB_SCHEMA.md</dd></div>
     </dl>
@@ -271,7 +290,7 @@
 
   <!-- ============ PATIENT FLOW ============ -->
   <section class="flow-section">
-    <h2 class="section-label">01 — 환자 앱<span>PATIENT · 상담 신청 → 예약 선택 → 결제(예약 확정)</span></h2>
+    <h2 class="section-label">01 — 환자 앱<span>PATIENT · 상담 신청 → AI 분석/영상/시뮬레이션 → 예약 → 결제(확정) → 방문 상담</span></h2>
 
     <div class="flow-row">
 
@@ -323,16 +342,78 @@
 
       <div class="connector">→</div>
 
-      <!-- P-03 나의 상담 -->
+      <!-- P-03 AI 사진 분석 -->
       <div class="frame-wrap">
-        <span class="sheet-id">P-03 · 나의 상담</span>
+        <span class="sheet-id">P-03 · AI 사진 분석</span>
+        <div class="phone"><div class="phone-screen">
+          <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
+          <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">AI 사진 분석</span><span></span></div>
+          <div class="scroll">
+            <div class="analysis-photo">
+              <span class="analysis-tag" style="top:32%;left:62%;">턱선 처짐</span>
+              <span class="analysis-tag" style="top:58%;left:18%;">목주름</span>
+            </div>
+            <div class="field-label">처짐 정도</div>
+            <div class="gauge-track"><div class="gauge-fill" style="width:68%;"></div></div>
+            <div class="gauge-label"><span>경미</span><b>중등도 · 68/100</b><span>심함</span></div>
+            <div class="disclaimer">AI 분석은 참고 소견이며, 정확한 진단은 방문 시 원장 상담에서 확인합니다.</div>
+          </div>
+          <div style="padding:0 14px 14px;"><div class="btn-primary">시술 안내 영상 보기</div></div>
+        </div></div>
+        <div class="note"><b>consultation_photos</b> → <b>ai_photo_analyses</b><br>(concern_area, severity_score 저장)</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <!-- P-04 시술 안내 영상 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">P-04 · 시술 안내 영상</span>
+        <div class="phone"><div class="phone-screen">
+          <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
+          <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">시술 안내 영상</span><span></span></div>
+          <div class="scroll">
+            <div class="video-box"><div class="video-play"></div><span class="video-caption">Face Lift 과정 안내 · 3:24</span></div>
+            <div class="video-progress"><i></i></div>
+            <div class="field-label">영상을 끝까지 시청하면 다음 단계로 진행돼요</div>
+          </div>
+          <div style="padding:0 14px 14px;"><div class="btn-primary">AI 시뮬레이션 보기</div></div>
+        </div></div>
+        <div class="note"><b>procedure_videos</b> 재생/시청완료 여부를<br><b>consultations.video_watched_at</b>에 기록</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <!-- P-05 AI 시뮬레이션 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">P-05 · AI 시뮬레이션</span>
+        <div class="phone"><div class="phone-screen">
+          <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
+          <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">AI 시뮬레이션</span><span></span></div>
+          <div class="scroll">
+            <div class="field-label">업로드 사진 기반 예상 결과</div>
+            <div class="ba-compare">
+              <div class="ba-box">Before</div>
+              <div class="ba-box after">After (AI 예상)</div>
+            </div>
+            <div class="disclaimer">AI가 생성한 예상 이미지이며 실제 시술 결과와 다를 수 있습니다. 의학적 진단을 대체하지 않습니다.</div>
+          </div>
+          <div style="padding:0 14px 14px;"><div class="btn-primary">상담 예약하기</div></div>
+        </div></div>
+        <div class="note"><b>simulation_images</b>에 저장 → 방문 상담 시<br>원장이 원본 사진과 함께 검토</div>
+      </div>
+
+      <div class="connector">→</div>
+
+      <!-- P-06 나의 상담 -->
+      <div class="frame-wrap">
+        <span class="sheet-id">P-06 · 나의 상담</span>
         <div class="phone"><div class="phone-screen">
           <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
           <div class="appbar"><span class="logo" style="font-size:.85rem">나의 상담</span><span></span></div>
           <div class="scroll">
             <div class="consult-card">
-              <div class="top"><span class="proc">Face Lift</span><span class="status-pill status-progress"><i></i>응대중</span></div>
-              <div class="meta">신청일 2026.09.03 · 담당 김민지 실장이 곧 전화드려요</div>
+              <div class="top"><span class="proc">Face Lift</span><span class="status-pill status-progress"><i></i>확인중</span></div>
+              <div class="meta">AI 분석 결과 확인 필요 · 상담사가 전화드려요</div>
             </div>
             <div class="consult-card">
               <div class="top"><span class="proc">Face Lift</span><span class="status-pill status-done"><i></i>예약완료</span></div>
@@ -346,14 +427,14 @@
             <div class="nav-item"><div class="nav-shape tri"></div><span>마이</span></div>
           </div>
         </div></div>
-        <div class="note">상태 배지는 <b>consultations.status</b><br>(대기/응대중/예약완료/취소)</div>
+        <div class="note">AI 분석 신뢰도 낮음/이상 소견 시에만<br>상담사 전화 개입 (그 외엔 바로 예약 진행)</div>
       </div>
 
       <div class="connector">→</div>
 
-      <!-- P-04 예약 캘린더 -->
+      <!-- P-07 예약 캘린더 -->
       <div class="frame-wrap">
-        <span class="sheet-id">P-04 · 예약 캘린더</span>
+        <span class="sheet-id">P-07 · 예약 캘린더</span>
         <div class="phone"><div class="phone-screen">
           <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
           <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">예약 일정 선택</span><span></span></div>
@@ -377,9 +458,9 @@
 
       <div class="connector">→</div>
 
-      <!-- P-05 결제 -->
+      <!-- P-08 결제 -->
       <div class="frame-wrap">
-        <span class="sheet-id">P-05 · 예약금 결제</span>
+        <span class="sheet-id">P-08 · 예약금 결제</span>
         <div class="phone"><div class="phone-screen">
           <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
           <div class="appbar"><span class="icon-back"></span><span class="logo" style="font-size:.78rem">예약금 결제</span><span></span></div>
@@ -402,16 +483,16 @@
 
       <div class="connector">→</div>
 
-      <!-- P-06 예약 확정 완료 -->
+      <!-- P-09 예약 확정 완료 -->
       <div class="frame-wrap">
-        <span class="sheet-id">P-06 · 예약 확정 완료</span>
+        <span class="sheet-id">P-09 · 예약 확정 완료</span>
         <div class="phone"><div class="phone-screen">
           <div class="statusbar"><span>9:41</span><span class="sb-icons"><i></i><i></i><i></i></span></div>
           <div class="appbar"><span></span><span class="logo" style="font-size:.78rem">결제 완료</span><span></span></div>
           <div class="scroll">
             <div class="result-check">✓</div>
             <div class="result-title">예약이 확정되었습니다</div>
-            <div class="result-sub">결제가 완료되어 예약이 바로 확정됐어요</div>
+            <div class="result-sub">예약일에 방문하시면 박동만 원장님과 상담해요</div>
             <div class="pay-card">
               <div class="pay-row"><span>시술</span><b>Face Lift</b></div>
               <div class="pay-row"><span>담당</span><b>박동만 원장</b></div>
@@ -421,7 +502,7 @@
             <div class="btn-primary">홈으로</div>
           </div>
         </div></div>
-        <div class="note">PG 결제승인 웹훅 수신 →<br><b>reservations.status = confirmed</b>, <b>slot.status = booked</b><br><b>payments.status = paid</b></div>
+        <div class="note">PG 결제승인 웹훅 수신 →<br><b>reservations.status = confirmed</b>, <b>slot.status = booked</b><br>AI 분석·시뮬레이션 결과는 방문 상담 시 원장에게 함께 전달</div>
       </div>
 
     </div>
@@ -521,6 +602,7 @@
                 <dl class="qa-list">
                   <dt>고민 부위</dt><dd>팔자주름, 턱선 처짐</dd>
                   <dt>희망 사항</dt><dd>자연스러운 갸름한 라인, 흉터 최소화</dd>
+                  <dt>AI 분석</dt><dd>중등도 (68/100) · 턱선/목주름</dd>
                 </dl>
               </div>
               <div>
@@ -540,7 +622,7 @@
             </div>
           </div>
         </div>
-        <div class="note"><b>consultation_photos</b>는 비공개 Storage + 서명 URL로만 열람</div>
+        <div class="note"><b>consultation_photos</b>는 비공개 Storage + 서명 URL로만 열람<br><b>ai_photo_analyses / simulation_images</b>도 동일 정책 적용</div>
       </div>
 
     </div>
