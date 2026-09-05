@@ -7,6 +7,7 @@
     --card-bg:#ffffff;
     --ink:#2a1f22;
     --ink-soft:#6f6265;
+    --ink-faint:#a99d9f;
     --line:#e8e0dd;
     --accent:#a1546a;
     --accent-soft:#f4e6ea;
@@ -18,13 +19,13 @@
   }
   @media (prefers-color-scheme: dark){
     :root:not([data-theme="light"]){
-      --page-bg:#1b1517; --card-bg:#241d20; --ink:#f3ebe9; --ink-soft:#b6a8ac;
+      --page-bg:#1b1517; --card-bg:#241d20; --ink:#f3ebe9; --ink-soft:#b6a8ac; --ink-faint:#6e6062;
       --line:#3a2f33; --accent:#e08aa1; --accent-soft:#3a2530; --accent-ink:#f0aabb;
       --focus-ring:rgba(224,138,161,.28);
     }
   }
   :root[data-theme="dark"]{
-    --page-bg:#1b1517; --card-bg:#241d20; --ink:#f3ebe9; --ink-soft:#b6a8ac;
+    --page-bg:#1b1517; --card-bg:#241d20; --ink:#f3ebe9; --ink-soft:#b6a8ac; --ink-faint:#6e6062;
     --line:#3a2f33; --accent:#e08aa1; --accent-soft:#3a2530; --accent-ink:#f0aabb;
     --focus-ring:rgba(224,138,161,.28);
   }
@@ -33,68 +34,83 @@
   body{margin:0;background:var(--page-bg);color:var(--ink);font-family:var(--font-body);}
   h1,h2,p{text-wrap:balance;margin:0;}
 
-  .wrap{max-width:560px;margin:0 auto;padding:48px 20px 96px;}
+  .wrap{max-width:520px;margin:0 auto;padding:48px 20px 96px;}
 
   .eyebrow{
     font-size:.72rem;letter-spacing:.14em;color:var(--accent-ink);font-weight:700;
     text-transform:uppercase;margin-bottom:10px;
   }
   .hero h1{font-family:var(--font-display);font-size:1.6rem;font-weight:700;margin-bottom:10px;}
-  .hero p{font-size:.88rem;color:var(--ink-soft);line-height:1.65;margin-bottom:28px;}
+  .hero p{font-size:.88rem;color:var(--ink-soft);line-height:1.65;margin-bottom:26px;}
 
   .card{background:var(--card-bg);border:1px solid var(--line);border-radius:16px;padding:20px;}
-  .card + .card{margin-top:16px;}
 
-  .card-title{font-size:.84rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px;}
-  .card-title .step{
-    width:20px;height:20px;border-radius:50%;background:var(--accent-soft);color:var(--accent-ink);
-    font-family:var(--font-mono);font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;
+  /* ---------- 월 달력 ---------- */
+  .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .month-nav button{
+    width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--card-bg);
+    color:var(--ink);font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;
   }
+  .month-nav button:disabled{opacity:.3;cursor:not-allowed;}
+  .month-nav button:not(:disabled):hover{border-color:var(--accent);}
+  .month-label{font-family:var(--font-display);font-size:1.05rem;font-weight:700;}
 
-  /* 날짜 스트립 */
-  .date-strip{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px;margin:0 -2px;}
-  .date-pill{
-    flex:0 0 auto;width:52px;padding:10px 0;border-radius:11px;border:1px solid var(--line);
-    background:var(--card-bg);text-align:center;cursor:pointer;transition:border-color .15s, background .15s;
+  .legend{display:flex;gap:16px;font-size:.68rem;color:var(--ink-soft);margin-bottom:14px;}
+  .legend span{display:inline-flex;align-items:center;gap:5px;}
+  .legend i{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;}
+  .legend i.off{background:var(--ink-faint);}
+
+  .weekday-row{display:grid;grid-template-columns:repeat(7,1fr);margin-bottom:4px;}
+  .weekday-row span{text-align:center;font-size:.68rem;color:var(--ink-soft);padding:4px 0;}
+  .weekday-row span:first-child{color:#c0605f;}
+
+  .day-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+  .day-cell{
+    aspect-ratio:1;border-radius:9px;border:none;background:transparent;color:var(--ink);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    font-family:var(--font-mono);font-size:.8rem;cursor:pointer;position:relative;
   }
-  .date-pill .d{font-size:.66rem;color:var(--ink-soft);}
-  .date-pill .n{font-family:var(--font-mono);font-size:1rem;font-weight:600;color:var(--ink);margin-top:2px;}
-  .date-pill:hover:not(.closed){border-color:var(--accent);}
-  .date-pill.active{background:var(--accent);border-color:var(--accent);}
-  .date-pill.active .d, .date-pill.active .n{color:#fff;}
-  .date-pill.closed{opacity:.4;cursor:not-allowed;}
-  .date-pill.closed .n{text-decoration:line-through;}
+  .day-cell.blank{cursor:default;}
+  .day-cell:not(.blank):not(:disabled):hover{background:var(--accent-soft);}
+  .day-cell:disabled{color:var(--ink-faint);cursor:not-allowed;}
+  .day-cell .dot{width:4px;height:4px;border-radius:50%;background:var(--accent);}
+  .day-cell .tag{font-family:var(--font-body);font-size:.52rem;color:var(--ink-faint);}
+  .day-cell.today{box-shadow:inset 0 0 0 1.4px var(--accent-ink);}
 
-  /* 시간 슬롯 */
-  .slot-label{font-size:.8rem;font-weight:600;margin-bottom:12px;color:var(--ink);}
-  .slot-label span{color:var(--ink-soft);font-weight:400;}
+  /* ---------- 시간 선택 ---------- */
+  .back-link{
+    font:inherit;font-size:.78rem;color:var(--ink-soft);background:none;border:none;
+    cursor:pointer;padding:0;margin-bottom:16px;text-decoration:underline;text-underline-offset:2px;
+  }
+  .slot-label{font-size:.88rem;font-weight:700;margin-bottom:14px;color:var(--ink);}
+  .slot-label span{color:var(--ink-soft);font-weight:400;font-size:.78rem;display:block;margin-top:2px;}
   .slot-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
   .slot{
-    font:inherit;font-family:var(--font-mono);font-size:.82rem;padding:11px 0;border-radius:9px;
+    font:inherit;font-family:var(--font-mono);font-size:.82rem;padding:12px 0;border-radius:9px;
     border:1px solid var(--line);background:var(--card-bg);color:var(--ink);cursor:pointer;
     transition:border-color .15s, background .15s, color .15s;
   }
   .slot:hover:not(:disabled){border-color:var(--accent);}
   .slot.selected{background:var(--accent);border-color:var(--accent);color:#fff;}
   .slot:disabled{color:var(--line);text-decoration:line-through;cursor:not-allowed;background:var(--page-bg);}
-  .closed-note{font-size:.8rem;color:var(--ink-soft);text-align:center;padding:18px 0;}
 
-  /* 요약 & CTA */
+  /* ---------- 요약 & CTA ---------- */
   .summary{
     position:sticky;bottom:16px;background:var(--card-bg);border:1px solid var(--line);
-    border-radius:14px;padding:16px 18px;margin-top:24px;box-shadow:0 18px 40px -24px rgba(42,31,34,.35);
+    border-radius:14px;padding:16px 18px;margin-top:20px;box-shadow:0 18px 40px -24px rgba(42,31,34,.35);
   }
   .summary-row{display:flex;justify-content:space-between;font-size:.82rem;color:var(--ink-soft);padding:3px 0;}
   .summary-row b{color:var(--ink);font-weight:600;}
-  .summary-empty{font-size:.82rem;color:var(--ink-soft);text-align:center;padding:4px 0;}
   .btn-primary{
     display:block;width:100%;font:inherit;font-size:.9rem;font-weight:700;color:#fff;background:var(--accent);
     border:none;border-radius:10px;padding:13px 0;cursor:pointer;text-align:center;margin-top:12px;
-    text-decoration:none;transition:filter .15s, transform .05s, opacity .15s;
+    transition:filter .15s, transform .05s, opacity .15s;
   }
   .btn-primary:disabled{opacity:.4;cursor:not-allowed;}
   .btn-primary:not(:disabled):hover{filter:brightness(1.06);}
   .summary-note{font-size:.68rem;color:var(--ink-soft);text-align:center;margin-top:9px;}
+
+  .source-note{font-size:.7rem;color:var(--ink-soft);text-align:center;margin-top:14px;line-height:1.6;}
 
   [hidden]{display:none!important;}
 </style>
@@ -104,27 +120,38 @@
   <div class="hero">
     <div class="eyebrow">Face Lift 전문 · 박동만 원장</div>
     <h1>예약 캘린더</h1>
-    <p>원하는 날짜와 시간을 선택해주세요. 예약금 결제가 완료되어야 예약이 확정됩니다.</p>
+    <p>병원에서 열어둔 날짜 중 원하는 날을 고르면, 그 날의 예약 가능한 시간을 선택할 수 있어요.</p>
   </div>
 
-  <div class="card">
-    <div class="card-title"><span class="step">1</span>날짜 선택</div>
-    <div class="date-strip" id="date-strip"></div>
+  <!-- 월 달력 화면 -->
+  <div id="view-month" class="card">
+    <div class="month-nav">
+      <button type="button" id="prev-month" aria-label="이전 달">‹</button>
+      <div class="month-label" id="month-label"></div>
+      <button type="button" id="next-month" aria-label="다음 달">›</button>
+    </div>
+    <div class="legend">
+      <span><i></i>예약 가능</span>
+      <span><i class="off"></i>휴진 · 마감</span>
+    </div>
+    <div class="weekday-row">
+      <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+    </div>
+    <div class="day-grid" id="day-grid"></div>
+    <p class="source-note">병원 관리자가 등록한 진료 가능 일정 기준입니다. 이후 일정은 순차적으로 열립니다.</p>
   </div>
 
-  <div class="card">
-    <div class="card-title"><span class="step">2</span>시간 선택</div>
+  <!-- 시간 선택 화면 -->
+  <div id="view-time" class="card" hidden>
+    <button type="button" class="back-link" id="back-to-month">‹ 다른 날짜 선택</button>
     <div class="slot-label" id="slot-label"></div>
     <div class="slot-grid" id="slot-grid"></div>
   </div>
 
-  <div class="summary">
-    <div id="summary-empty" class="summary-empty">날짜와 시간을 선택하면 예약 내용이 여기에 표시돼요</div>
-    <div id="summary-filled" hidden>
-      <div class="summary-row"><span>시술</span><b>Face Lift</b></div>
-      <div class="summary-row"><span>담당</span><b>박동만 원장</b></div>
-      <div class="summary-row"><span>일시</span><b id="summary-when"></b></div>
-    </div>
+  <div class="summary" id="summary" hidden>
+    <div class="summary-row"><span>시술</span><b>Face Lift</b></div>
+    <div class="summary-row"><span>담당</span><b>박동만 원장</b></div>
+    <div class="summary-row"><span>일시</span><b id="summary-when"></b></div>
     <button type="button" class="btn-primary" id="next-btn" disabled>다음 · 예약자 정보 입력</button>
     <div class="summary-note">선택한 시간은 결제 전까지 10분간 임시로 잡아드려요</div>
   </div>
@@ -133,14 +160,23 @@
 
 <script>
 (function(){
-  const WEEKDAYS = ['일','월','화','수','목','금','토'];
-  const MONTH = 9;
-  // 2026-09-18이 목요일이 되도록 맞춘 날짜 시퀀스 (16일=수 ~ 29일=화)
-  const DAYS = [];
-  for (let day = 16; day <= 29; day++) {
-    const weekdayIndex = (day - 18 + 4 + 700) % 7; // 18일 = 목(4)
-    DAYS.push({ day, weekday: WEEKDAYS[weekdayIndex], closed: weekdayIndex === 0 }); // 일요일 휴진
-  }
+  const WEEKDAY_LABEL = ['일','월','화','수','목','금','토'];
+
+  // 병원이 예약을 열어둔 기간 (실제로는 관리자 대시보드에서 설정 -> API로 조회)
+  const MONTHS = [
+    { y: 2026, m: 8 },  // 2026년 9월
+    { y: 2026, m: 9 },  // 2026년 10월
+    { y: 2026, m: 10 }, // 2026년 11월
+  ];
+  const TODAY = new Date(2026, 8, 5); // 프로토타입 기준 "오늘"
+
+  // 정기 휴진 외에 병원이 별도로 막아둔 날짜 (공휴일/원장 학회 등)
+  const BLOCKED = {
+    '2026-09-24': '추석연휴',
+    '2026-09-25': '추석연휴',
+    '2026-09-26': '추석연휴',
+    '2026-10-09': '한글날',
+  };
 
   const TIMES = ['10:00', '11:00', '13:00', '14:30', '16:00', '17:30'];
 
@@ -149,62 +185,106 @@
     for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
     return h;
   }
-  function isBooked(day, time) {
-    if (day === 18 && time === '14:30') return false; // 대표 예시 슬롯은 항상 비워둠
-    return hash(day + '-' + time) % 100 < 30;
+  function dateKey(y, m, d) {
+    return y + '-' + String(m + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+  }
+  function isBooked(key, time) {
+    return hash(key + '_' + time) % 100 < 30;
+  }
+  function availableTimes(key) {
+    return TIMES.filter((t) => !isBooked(key, t));
+  }
+  function dayStatus(y, m, d) {
+    const key = dateKey(y, m, d);
+    const date = new Date(y, m, d);
+    const weekday = date.getDay();
+    if (date < TODAY) return { open: false, reason: null };
+    if (weekday === 0) return { open: false, reason: '휴' };
+    if (BLOCKED[key]) return { open: false, reason: '휴', title: BLOCKED[key] };
+    if (availableTimes(key).length === 0) return { open: false, reason: '마감' };
+    return { open: true, reason: null };
   }
 
-  const dateStrip = document.getElementById('date-strip');
+  let monthIndex = 0; // MONTHS 배열 인덱스
+  let selected = null; // { y, m, d, key, weekday, time }
+
+  const monthLabel = document.getElementById('month-label');
+  const dayGrid = document.getElementById('day-grid');
+  const prevBtn = document.getElementById('prev-month');
+  const nextBtn2 = document.getElementById('next-month');
+  const viewMonth = document.getElementById('view-month');
+  const viewTime = document.getElementById('view-time');
   const slotLabel = document.getElementById('slot-label');
   const slotGrid = document.getElementById('slot-grid');
-  const summaryEmpty = document.getElementById('summary-empty');
-  const summaryFilled = document.getElementById('summary-filled');
+  const backBtn = document.getElementById('back-to-month');
+  const summary = document.getElementById('summary');
   const summaryWhen = document.getElementById('summary-when');
   const nextBtn = document.getElementById('next-btn');
 
-  let selectedDay = 18;
-  let selectedTime = '14:30';
+  function renderMonth() {
+    const { y, m } = MONTHS[monthIndex];
+    monthLabel.textContent = y + '년 ' + (m + 1) + '월';
+    prevBtn.disabled = monthIndex === 0;
+    nextBtn2.disabled = monthIndex === MONTHS.length - 1;
 
-  function renderDates() {
-    dateStrip.innerHTML = '';
-    DAYS.forEach((d) => {
-      const pill = document.createElement('button');
-      pill.type = 'button';
-      pill.className = 'date-pill' + (d.closed ? ' closed' : '') + (d.day === selectedDay ? ' active' : '');
-      pill.innerHTML = '<div class="d">' + d.weekday + '</div><div class="n">' + d.day + '</div>';
-      if (!d.closed) {
-        pill.addEventListener('click', () => {
-          selectedDay = d.day;
-          selectedTime = null;
-          renderDates();
-          renderSlots();
-          updateSummary();
-        });
+    dayGrid.innerHTML = '';
+    const firstWeekday = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+    for (let i = 0; i < firstWeekday; i++) {
+      const blank = document.createElement('div');
+      blank.className = 'day-cell blank';
+      dayGrid.appendChild(blank);
+    }
+
+    for (let d = 1; d <= daysInMonth; d++) {
+      const status = dayStatus(y, m, d);
+      const cell = document.createElement('button');
+      cell.type = 'button';
+      cell.className = 'day-cell';
+      const isToday = y === TODAY.getFullYear() && m === TODAY.getMonth() && d === TODAY.getDate();
+      if (isToday) cell.classList.add('today');
+      if (status.title) cell.title = status.title;
+
+      let inner = '<span>' + d + '</span>';
+      if (status.open) inner += '<span class="dot"></span>';
+      else if (status.reason) inner += '<span class="tag">' + status.reason + '</span>';
+      cell.innerHTML = inner;
+
+      cell.disabled = !status.open;
+      if (status.open) {
+        cell.addEventListener('click', () => openTimeView(y, m, d));
       }
-      dateStrip.appendChild(pill);
-    });
+      dayGrid.appendChild(cell);
+    }
+  }
+
+  function openTimeView(y, m, d) {
+    const key = dateKey(y, m, d);
+    const weekday = WEEKDAY_LABEL[new Date(y, m, d).getDay()];
+    selected = { y, m, d, key, weekday, time: null };
+
+    slotLabel.innerHTML = (m + 1) + '월 ' + d + '일(' + weekday + ')<span>박동만 원장 · 예약 가능 시간</span>';
+    renderSlots();
+
+    viewMonth.hidden = true;
+    viewTime.hidden = false;
+    summary.hidden = false;
+    updateSummary();
   }
 
   function renderSlots() {
-    const dayInfo = DAYS.find((d) => d.day === selectedDay);
-    slotLabel.innerHTML = '9월 ' + selectedDay + '일(' + dayInfo.weekday + ') <span>· 박동만 원장</span>';
-
-    if (dayInfo.closed) {
-      slotGrid.innerHTML = '<div class="closed-note">이 날은 휴진일입니다. 다른 날짜를 선택해주세요.</div>';
-      return;
-    }
-
     slotGrid.innerHTML = '';
     TIMES.forEach((time) => {
-      const booked = isBooked(selectedDay, time);
+      const booked = isBooked(selected.key, time);
       const btn = document.createElement('button');
       btn.type = 'button';
-      btn.className = 'slot' + (time === selectedTime ? ' selected' : '');
+      btn.className = 'slot' + (time === selected.time ? ' selected' : '');
       btn.textContent = booked ? time + ' 마감' : time;
       btn.disabled = booked;
       if (!booked) {
         btn.addEventListener('click', () => {
-          selectedTime = time;
+          selected.time = time;
           renderSlots();
           updateSummary();
         });
@@ -214,20 +294,26 @@
   }
 
   function updateSummary() {
-    const dayInfo = DAYS.find((d) => d.day === selectedDay);
-    if (selectedTime && dayInfo && !dayInfo.closed) {
-      const when = MONTH + '월 ' + selectedDay + '일(' + dayInfo.weekday + ') ' + selectedTime;
+    if (selected && selected.time) {
+      const when = (selected.m + 1) + '월 ' + selected.d + '일(' + selected.weekday + ') ' + selected.time;
       summaryWhen.textContent = when;
-      summaryEmpty.hidden = true;
-      summaryFilled.hidden = false;
       nextBtn.disabled = false;
       nextBtn.dataset.when = when;
     } else {
-      summaryEmpty.hidden = false;
-      summaryFilled.hidden = true;
+      summaryWhen.textContent = '';
       nextBtn.disabled = true;
     }
   }
+
+  prevBtn.addEventListener('click', () => { monthIndex = Math.max(0, monthIndex - 1); renderMonth(); });
+  nextBtn2.addEventListener('click', () => { monthIndex = Math.min(MONTHS.length - 1, monthIndex + 1); renderMonth(); });
+
+  backBtn.addEventListener('click', () => {
+    viewTime.hidden = true;
+    viewMonth.hidden = false;
+    summary.hidden = true;
+    selected = null;
+  });
 
   nextBtn.addEventListener('click', () => {
     if (nextBtn.disabled) return;
@@ -235,8 +321,6 @@
     window.location.href = 'https://claude.ai/code/artifact/f7f23bf5-cf68-4251-af89-d89063128c8c?when=' + encodeURIComponent(when);
   });
 
-  renderDates();
-  renderSlots();
-  updateSummary();
+  renderMonth();
 })();
 </script>
