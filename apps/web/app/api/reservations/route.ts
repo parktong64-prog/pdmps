@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isClosedDay } from "@/lib/booking";
 
 const PHONE_RE = /^01[016789]-\d{3,4}-\d{4}$/;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -43,6 +44,12 @@ export async function POST(req: Request) {
   }
   const endAt = new Date(startAt.getTime() + SLOT_DURATION_MIN * 60 * 1000);
 
+  // date 문자열을 로컬 날짜로 해석해 휴진일(주말·공휴일) 여부를 확인
+  const [dy, dm, dd] = date.split("-").map(Number);
+  if (isClosedDay(new Date(dy, dm - 1, dd))) {
+    return NextResponse.json({ error: "휴진일에는 예약할 수 없습니다." }, { status: 409 });
+  }
+
   const supabase = createAdminClient();
 
   // 현재는 Face Lift 단일 시술 · 박동만 원장 단일 체계
@@ -65,6 +72,22 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (doctorErr || !doctor) {
     return NextResponse.json({ error: "담당의 정보를 찾을 수 없습니다." }, { status: 500 });
+  }
+
+  // 관리자가 미리 열어둔(또는 아직 아무 기록이 없는=기본 오픈) 슬롯인지 먼저 확인한다.
+  // 환자/상담 레코드를 만들기 전에 걸러야 거부되는 요청마다 고아 레코드가 남지 않는다.
+  const { data: existingSlot } = await supabase
+    .from("reservation_slots")
+    .select("id, status")
+    .eq("staff_id", doctor.id)
+    .eq("start_at", startAt.toISOString())
+    .maybeSingle();
+
+  if (existingSlot && (existingSlot.status === "booked" || existingSlot.status === "held")) {
+    return NextResponse.json({ error: "이미 예약이 마감된 시간입니다. 다른 시간을 선택해주세요." }, { status: 409 });
+  }
+  if (existingSlot && existingSlot.status === "blocked") {
+    return NextResponse.json({ error: "예약할 수 없는 시간입니다. 다른 시간을 선택해주세요." }, { status: 409 });
   }
 
   // 환자 upsert (전화번호 unique)
@@ -91,23 +114,43 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "상담 정보 저장에 실패했습니다." }, { status: 500 });
   }
 
-  const { data: slot, error: slotErr } = await supabase
-    .from("reservation_slots")
-    .insert({
-      procedure_id: procedure.id,
-      staff_id: doctor.id,
-      start_at: startAt.toISOString(),
-      end_at: endAt.toISOString(),
-      status: "booked",
-    })
-    .select("id")
-    .single();
-  if (slotErr) {
-    // 동일 담당의·시간대 슬롯 중복 (unique 제약 위반)
-    if (slotErr.code === "23505") {
+  // 슬롯 확보 시도. 위에서 통과했더라도 그 사이 다른 요청이 먼저 선점했을 수 있으므로
+  // 최종 확정은 update/insert의 조건절(WHERE status='open' / unique 제약)로 한 번 더 검증한다.
+  let slot: { id: string };
+  if (existingSlot) {
+    const { data: updated, error: updateErr } = await supabase
+      .from("reservation_slots")
+      .update({ status: "booked" })
+      .eq("id", existingSlot.id)
+      .eq("status", "open") // 그 사이 다른 요청이 선점했다면 매칭 실패 -> updated는 null
+      .select("id")
+      .maybeSingle();
+    if (updateErr || !updated) {
+      await supabase.from("consultations").delete().eq("id", consultation.id);
       return NextResponse.json({ error: "이미 예약이 마감된 시간입니다. 다른 시간을 선택해주세요." }, { status: 409 });
     }
-    return NextResponse.json({ error: "예약 시간 등록에 실패했습니다." }, { status: 500 });
+    slot = updated;
+  } else {
+    const { data: inserted, error: insertErr } = await supabase
+      .from("reservation_slots")
+      .insert({
+        procedure_id: procedure.id,
+        staff_id: doctor.id,
+        start_at: startAt.toISOString(),
+        end_at: endAt.toISOString(),
+        status: "booked",
+      })
+      .select("id")
+      .single();
+    if (insertErr || !inserted) {
+      await supabase.from("consultations").delete().eq("id", consultation.id);
+      // 동일 담당의·시간대 슬롯 중복 (unique 제약 위반 등 — 동시 요청 경합)
+      if (insertErr?.code === "23505") {
+        return NextResponse.json({ error: "이미 예약이 마감된 시간입니다. 다른 시간을 선택해주세요." }, { status: 409 });
+      }
+      return NextResponse.json({ error: "예약 시간 등록에 실패했습니다." }, { status: 500 });
+    }
+    slot = inserted;
   }
 
   const { data: reservation, error: reservationErr } = await supabase

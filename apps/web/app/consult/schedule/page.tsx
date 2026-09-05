@@ -1,50 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay } from "@/lib/booking";
+import { getMonthSlotStates, type TimeState } from "@/lib/schedule/actions";
 
-const WEEKDAY_LABEL = ["일", "월", "화", "수", "목", "금", "토"];
+const now = new Date();
+// 병원이 예약을 열어둔 기간: 이번 달부터 2개월 뒤까지
+const MONTHS = [0, 1, 2].map((i) => {
+  const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+  return { y: d.getFullYear(), m: d.getMonth() };
+});
+const TODAY = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-// 병원이 예약을 열어둔 기간 (실제로는 관리자 대시보드에서 설정 -> API로 조회)
-const MONTHS = [
-  { y: 2026, m: 8 }, // 2026년 9월
-  { y: 2026, m: 9 }, // 2026년 10월
-  { y: 2026, m: 10 }, // 2026년 11월
-];
-const TODAY = new Date(2026, 8, 5); // 프로토타입 기준 "오늘"
-
-// 정기 휴진 외에 병원이 별도로 막아둔 날짜 (공휴일/원장 학회 등)
-const BLOCKED: Record<string, string> = {
-  "2026-09-24": "추석연휴",
-  "2026-09-25": "추석연휴",
-  "2026-09-26": "추석연휴",
-  "2026-10-09": "한글날",
-};
-
-const TIMES = ["10:00", "11:00", "13:00", "14:30", "16:00", "17:30"];
-
-function hash(str: string) {
-  let h = 0;
-  for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0;
-  return h;
-}
-function dateKey(y: number, m: number, d: number) {
-  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-}
-function isBooked(key: string, time: string) {
-  return hash(`${key}_${time}`) % 100 < 30;
-}
-function availableTimes(key: string) {
-  return TIMES.filter((t) => !isBooked(key, t));
-}
-function dayStatus(y: number, m: number, d: number) {
+function dayStatus(y: number, m: number, d: number, slotStates: Record<string, TimeState>) {
   const key = dateKey(y, m, d);
   const date = new Date(y, m, d);
-  const weekday = date.getDay();
   if (date < TODAY) return { open: false, reason: null as string | null, title: undefined as string | undefined };
-  if (weekday === 0 || weekday === 6) return { open: false, reason: "휴", title: undefined };
-  if (BLOCKED[key]) return { open: false, reason: "휴", title: BLOCKED[key] };
-  if (availableTimes(key).length === 0) return { open: false, reason: "마감", title: undefined };
+  if (isClosedDay(date)) return { open: false, reason: "휴", title: BLOCKED[key] };
+  const hasOpenTime = TIMES.some((t) => !slotStates[`${key}_${t}`]);
+  if (!hasOpenTime) return { open: false, reason: "마감", title: undefined };
   return { open: true, reason: null, title: undefined };
 }
 
@@ -54,22 +29,32 @@ export default function SchedulePage() {
   const router = useRouter();
   const [monthIndex, setMonthIndex] = useState(0);
   const [selected, setSelected] = useState<Selected | null>(null);
+  const [slotStates, setSlotStates] = useState<Record<string, TimeState> | null>(null);
 
   const { y, m } = MONTHS[monthIndex];
   const firstWeekday = new Date(y, m, 1).getDay();
   const daysInMonth = new Date(y, m + 1, 0).getDate();
 
+  const reload = useCallback(() => {
+    getMonthSlotStates(y, m).then(setSlotStates);
+  }, [y, m]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
   const days = useMemo(() => {
+    if (!slotStates) return [];
     const arr: { d: number; status: ReturnType<typeof dayStatus>; isToday: boolean }[] = [];
     for (let d = 1; d <= daysInMonth; d++) {
       arr.push({
         d,
-        status: dayStatus(y, m, d),
+        status: dayStatus(y, m, d, slotStates),
         isToday: y === TODAY.getFullYear() && m === TODAY.getMonth() && d === TODAY.getDate(),
       });
     }
     return arr;
-  }, [y, m, daysInMonth]);
+  }, [y, m, daysInMonth, slotStates]);
 
   function openTimeView(d: number) {
     const key = dateKey(y, m, d);
@@ -159,34 +144,38 @@ export default function SchedulePage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-7 gap-[3px]">
-              {Array.from({ length: firstWeekday }).map((_, i) => (
-                <div key={`blank-${i}`} />
-              ))}
-              {days.map(({ d, status, isToday }) => (
-                <button
-                  key={d}
-                  type="button"
-                  disabled={!status.open}
-                  title={status.title}
-                  onClick={() => status.open && openTimeView(d)}
-                  className={`relative flex aspect-square flex-col items-center justify-center gap-[3px] rounded-lg font-[family-name:var(--font-mono-kr)] text-[0.8rem] ${
-                    status.open
-                      ? "cursor-pointer text-[var(--ink)] hover:bg-[var(--accent-soft)]"
-                      : "cursor-not-allowed text-[var(--ink-faint)]"
-                  } ${isToday ? "shadow-[inset_0_0_0_1.4px_var(--accent-ink)]" : ""}`}
-                >
-                  <span>{d}</span>
-                  {status.open ? (
-                    <span className="h-1 w-1 rounded-full bg-[var(--accent)]" />
-                  ) : status.reason ? (
-                    <span className="font-[family-name:var(--font-body)] text-[0.52rem] text-[var(--ink-faint)]">
-                      {status.reason}
-                    </span>
-                  ) : null}
-                </button>
-              ))}
-            </div>
+            {slotStates === null ? (
+              <div className="py-10 text-center text-[0.82rem] text-[var(--ink-soft)]">불러오는 중…</div>
+            ) : (
+              <div className="grid grid-cols-7 gap-[3px]">
+                {Array.from({ length: firstWeekday }).map((_, i) => (
+                  <div key={`blank-${i}`} />
+                ))}
+                {days.map(({ d, status, isToday }) => (
+                  <button
+                    key={d}
+                    type="button"
+                    disabled={!status.open}
+                    title={status.title}
+                    onClick={() => status.open && openTimeView(d)}
+                    className={`relative flex aspect-square flex-col items-center justify-center gap-[3px] rounded-lg font-[family-name:var(--font-mono-kr)] text-[0.8rem] ${
+                      status.open
+                        ? "cursor-pointer text-[var(--ink)] hover:bg-[var(--accent-soft)]"
+                        : "cursor-not-allowed text-[var(--ink-faint)]"
+                    } ${isToday ? "shadow-[inset_0_0_0_1.4px_var(--accent-ink)]" : ""}`}
+                  >
+                    <span>{d}</span>
+                    {status.open ? (
+                      <span className="h-1 w-1 rounded-full bg-[var(--accent)]" />
+                    ) : status.reason ? (
+                      <span className="font-[family-name:var(--font-body)] text-[0.52rem] text-[var(--ink-faint)]">
+                        {status.reason}
+                      </span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            )}
 
             <p className="mt-3.5 text-center text-[0.7rem] leading-[1.6] text-[var(--ink-soft)]">
               병원 관리자가 등록한 진료 가능 일정 기준입니다. 이후 일정은 순차적으로 열립니다.
@@ -209,23 +198,23 @@ export default function SchedulePage() {
             </div>
             <div className="grid grid-cols-3 gap-2.5">
               {TIMES.map((time) => {
-                const booked = isBooked(selected.key, time);
+                const taken = !!slotStates?.[`${selected.key}_${time}`];
                 const isSelected = selected.time === time;
                 return (
                   <button
                     key={time}
                     type="button"
-                    disabled={booked}
+                    disabled={taken}
                     onClick={() => pickTime(time)}
                     className={`rounded-lg border py-3 font-[family-name:var(--font-mono-kr)] text-[0.82rem] transition-colors ${
-                      booked
+                      taken
                         ? "cursor-not-allowed border-[var(--line)] bg-[var(--page-bg)] text-[var(--line)] line-through"
                         : isSelected
                           ? "border-[var(--accent)] bg-[var(--accent)] text-white"
                           : "border-[var(--line)] bg-[var(--card-bg)] text-[var(--ink)] hover:border-[var(--accent)]"
                     }`}
                   >
-                    {booked ? `${time} 마감` : time}
+                    {taken ? `${time} 마감` : time}
                   </button>
                 );
               })}
