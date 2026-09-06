@@ -20,7 +20,11 @@ export async function GET(request: Request) {
     if (!error) {
       return NextResponse.redirect(`${origin}${next}`);
     }
+    // TODO(diag): 원인 확인 후 제거
+    return NextResponse.redirect(
+      `${origin}/reset-password?error=invalid_link&diag=${encodeURIComponent(`${error.status}:${error.code}:${error.message}`)}`,
+    );
   }
 
-  return NextResponse.redirect(`${origin}/reset-password?error=invalid_link`);
+  return NextResponse.redirect(`${origin}/reset-password?error=invalid_link&diag=missing_params`);
 }
