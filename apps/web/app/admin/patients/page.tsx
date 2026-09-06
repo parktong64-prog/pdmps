@@ -2,7 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { StatusPill, type StatusKey } from "@/lib/admin/status";
-import { getPatientsList, getPatientDetail, type PatientListRow, type PatientDetail } from "@/lib/admin/actions";
+import {
+  getPatientsList,
+  getPatientDetail,
+  archivePatient,
+  restorePatient,
+  type PatientListRow,
+  type PatientDetail,
+} from "@/lib/admin/actions";
 
 function maskPhone(phone: string) {
   const parts = phone.split("-");
@@ -25,19 +32,60 @@ const TABS: { key: Tab; label: string }[] = [
 ];
 
 export default function PatientsPage() {
+  const [showArchived, setShowArchived] = useState(false);
   const [patients, setPatients] = useState<PatientListRow[] | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<PatientDetail | null>(null);
   const [tab, setTab] = useState<Tab>("intake");
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  useEffect(() => {
-    getPatientsList().then(setPatients);
-  }, []);
+  function reloadList() {
+    getPatientsList({ includeArchived: showArchived }).then(setPatients);
+  }
+
+  useEffect(reloadList, [showArchived]);
 
   useEffect(() => {
     if (!selectedId) return;
     getPatientDetail(selectedId).then(setDetail);
   }, [selectedId]);
+
+  function openPatient(id: string) {
+    setSelectedId(id);
+    setTab("intake");
+    setConfirmingDelete(false);
+  }
+
+  function backToList() {
+    setSelectedId(null);
+    setDetail(null);
+    setConfirmingDelete(false);
+  }
+
+  async function handleArchive() {
+    if (!selectedId) return;
+    setBusy(true);
+    try {
+      await archivePatient(selectedId);
+      reloadList();
+      backToList();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRestore() {
+    if (!selectedId) return;
+    setBusy(true);
+    try {
+      await restorePatient(selectedId);
+      reloadList();
+      backToList();
+    } finally {
+      setBusy(false);
+    }
+  }
 
   if (patients === null) {
     return <div className="py-10 text-center text-[0.84rem] text-[var(--ink-soft)]">불러오는 중…</div>;
@@ -48,12 +96,27 @@ export default function PatientsPage() {
       <div>
         <div className="mb-6 flex items-end justify-between">
           <h1 className="font-[family-name:var(--font-display)] text-[1.4rem] font-bold">환자 관리</h1>
-          <div className="text-[0.8rem] text-[var(--ink-soft)]">전체 {patients.length}명</div>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setShowArchived((v) => !v)}
+              className={`rounded-full border px-3 py-1.5 text-[0.74rem] font-semibold transition-colors ${
+                showArchived
+                  ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                  : "border-[var(--line)] bg-[var(--card-bg)] text-[var(--ink-soft)]"
+              }`}
+            >
+              {showArchived ? "삭제한 환자 보는 중" : "삭제한 환자 보기"}
+            </button>
+            <div className="text-[0.8rem] text-[var(--ink-soft)]">전체 {patients.length}명</div>
+          </div>
         </div>
 
         <div className="overflow-x-auto rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-[18px]">
           {patients.length === 0 ? (
-            <div className="py-7 text-center text-[0.82rem] text-[var(--ink-soft)]">등록된 환자가 없습니다.</div>
+            <div className="py-7 text-center text-[0.82rem] text-[var(--ink-soft)]">
+              {showArchived ? "삭제된 환자가 없습니다." : "등록된 환자가 없습니다."}
+            </div>
           ) : (
             <table className="w-full min-w-[480px] border-collapse text-[0.82rem]">
               <thead>
@@ -70,14 +133,7 @@ export default function PatientsPage() {
               </thead>
               <tbody>
                 {patients.map((p) => (
-                  <tr
-                    key={p.id}
-                    onClick={() => {
-                      setSelectedId(p.id);
-                      setTab("intake");
-                    }}
-                    className="cursor-pointer hover:bg-[var(--accent-soft)]"
-                  >
+                  <tr key={p.id} onClick={() => openPatient(p.id)} className="cursor-pointer hover:bg-[var(--accent-soft)]">
                     <td className="border-b border-[var(--line)] px-2.5 py-3 font-semibold">
                       {p.name}
                       {p.needsReview && (
@@ -104,7 +160,7 @@ export default function PatientsPage() {
     <div>
       <button
         type="button"
-        onClick={() => setSelectedId(null)}
+        onClick={backToList}
         className="mb-4 text-[0.8rem] text-[var(--ink-soft)] underline underline-offset-2 hover:text-[var(--accent-ink)]"
       >
         ‹ 환자 목록으로
@@ -114,28 +170,82 @@ export default function PatientsPage() {
         <div className="py-10 text-center text-[0.84rem] text-[var(--ink-soft)]">불러오는 중…</div>
       ) : (
         <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-[18px]">
-          <div className="mb-[22px] flex items-center gap-4">
-            <div className="flex h-[52px] w-[52px] flex-none items-center justify-center rounded-full bg-[var(--accent-soft)] text-[1.05rem] font-bold text-[var(--accent-ink)]">
-              {detail.name.slice(0, 2)}
-            </div>
-            <div>
-              <div className="font-[family-name:var(--font-display)] text-[1.2rem] font-bold">{detail.name}</div>
-              <div className="mt-0.5 text-[0.8rem] text-[var(--ink-soft)]">{maskPhone(detail.phone)}</div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                <span className="rounded-full border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-1 text-[0.68rem] text-[var(--ink-soft)]">
-                  상담 {detail.visits}회
-                </span>
-                <span className="rounded-full border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-1 text-[0.68rem] text-[var(--ink-soft)]">
-                  예약 {detail.reservationsCount}회
-                </span>
-                {detail.ai.needsReview && (
-                  <span className="rounded-full bg-[var(--st-review-soft)] px-2.5 py-1 text-[0.68rem] font-bold text-[var(--st-review)]">
-                    AI 확인 필요
+          <div className="mb-[22px] flex items-start justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="flex h-[52px] w-[52px] flex-none items-center justify-center rounded-full bg-[var(--accent-soft)] text-[1.05rem] font-bold text-[var(--accent-ink)]">
+                {detail.name.slice(0, 2)}
+              </div>
+              <div>
+                <div className="font-[family-name:var(--font-display)] text-[1.2rem] font-bold">{detail.name}</div>
+                <div className="mt-0.5 text-[0.8rem] text-[var(--ink-soft)]">{maskPhone(detail.phone)}</div>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <span className="rounded-full border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-1 text-[0.68rem] text-[var(--ink-soft)]">
+                    상담 {detail.visits}회
                   </span>
-                )}
+                  <span className="rounded-full border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-1 text-[0.68rem] text-[var(--ink-soft)]">
+                    예약 {detail.reservationsCount}회
+                  </span>
+                  {detail.ai.needsReview && (
+                    <span className="rounded-full bg-[var(--st-review-soft)] px-2.5 py-1 text-[0.68rem] font-bold text-[var(--st-review)]">
+                      AI 확인 필요
+                    </span>
+                  )}
+                  {detail.archivedAt && (
+                    <span className="rounded-full bg-[var(--st-cancel-soft)] px-2.5 py-1 text-[0.68rem] font-bold text-[var(--st-cancel)]">
+                      삭제됨
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
+
+            <div className="flex-none">
+              {detail.archivedAt ? (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={handleRestore}
+                  className="rounded-lg border border-[var(--line)] px-3.5 py-2 text-[0.78rem] font-bold text-[var(--ink-soft)] hover:border-[var(--accent)] hover:text-[var(--accent-ink)] disabled:opacity-50"
+                >
+                  복원
+                </button>
+              ) : confirmingDelete ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-[0.74rem] text-[var(--ink-soft)]">목록에서 삭제할까요?</span>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={handleArchive}
+                    className="rounded-lg bg-[var(--danger)] px-3 py-1.5 text-[0.76rem] font-bold text-white disabled:opacity-50"
+                  >
+                    삭제
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setConfirmingDelete(false)}
+                    className="rounded-lg border border-[var(--line)] px-3 py-1.5 text-[0.76rem] font-bold text-[var(--ink-soft)]"
+                  >
+                    취소
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(true)}
+                  className="rounded-lg border border-[var(--line)] px-3.5 py-2 text-[0.78rem] font-bold text-[var(--ink-soft)] hover:border-[var(--danger)] hover:text-[var(--danger)]"
+                >
+                  환자 삭제
+                </button>
+              )}
+            </div>
           </div>
+
+          {detail.archivedAt && (
+            <p className="mb-[18px] rounded-lg bg-[var(--st-cancel-soft)] px-3.5 py-2.5 text-[0.76rem] text-[var(--ink-soft)]">
+              이 환자는 목록에서 삭제(보관) 처리되었습니다. 상담·예약·결제 기록은 그대로 보존되어 있어요.
+            </p>
+          )}
 
           <div className="mb-[18px] flex flex-wrap gap-5 border-b border-[var(--line)]">
             {TABS.map((t) => (

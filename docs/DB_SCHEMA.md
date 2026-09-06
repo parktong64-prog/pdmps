@@ -134,6 +134,7 @@ erDiagram
 | gender | text | 선택 |
 | marketing_opt_in | boolean | 마케팅 수신 동의 |
 | created_at | timestamptz | 가입일 |
+| archived_at | timestamptz, nullable | 관리자가 목록에서 "삭제"(보관) 처리한 시각. 상담·예약·결제 이력은 삭제하지 않고 목록에서만 숨김 |
 
 ### 2.2 `staff` (관리자/원장)
 | 컬럼 | 타입 | 설명 |
@@ -314,7 +315,8 @@ create table patients (
   birth_date date,
   gender text,
   marketing_opt_in boolean not null default false,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  archived_at timestamptz
 );
 
 create table staff (

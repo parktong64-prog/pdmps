@@ -286,10 +286,15 @@ export type PatientListRow = {
   needsReview: boolean;
 };
 
-export async function getPatientsList(): Promise<PatientListRow[]> {
+export async function getPatientsList(options?: { includeArchived?: boolean }): Promise<PatientListRow[]> {
   const supabase = createAdminClient();
+  let patientsQuery = supabase.from("patients").select("id, name, phone, created_at, archived_at");
+  patientsQuery = options?.includeArchived
+    ? patientsQuery.not("archived_at", "is", null)
+    : patientsQuery.is("archived_at", null);
+
   const [{ data: patients }, { data: consultations }, { data: reservations }] = await Promise.all([
-    supabase.from("patients").select("id, name, phone, created_at"),
+    patientsQuery,
     supabase.from("consultations").select("id, patient_id, status, created_at"),
     supabase.from("reservations").select("id, patient_id, created_at"),
   ]);
@@ -320,10 +325,24 @@ export async function getPatientsList(): Promise<PatientListRow[]> {
     });
 }
 
+/** 완전 삭제 대신 목록에서만 숨긴다 — 상담·예약·결제 이력은 보존됨. */
+export async function archivePatient(patientId: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("patients").update({ archived_at: new Date().toISOString() }).eq("id", patientId);
+  return { ok: !error };
+}
+
+export async function restorePatient(patientId: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("patients").update({ archived_at: null }).eq("id", patientId);
+  return { ok: !error };
+}
+
 export type PatientDetail = {
   id: string;
   name: string;
   phone: string;
+  archivedAt: string | null;
   visits: number;
   reservationsCount: number;
   concern: string;
@@ -337,7 +356,7 @@ export type PatientDetail = {
 
 export async function getPatientDetail(patientId: string): Promise<PatientDetail | null> {
   const supabase = createAdminClient();
-  const { data: patient } = await supabase.from("patients").select("id, name, phone").eq("id", patientId).single();
+  const { data: patient } = await supabase.from("patients").select("id, name, phone, archived_at").eq("id", patientId).single();
   if (!patient) return null;
 
   const { data: consultations } = await supabase
@@ -405,6 +424,7 @@ export async function getPatientDetail(patientId: string): Promise<PatientDetail
     id: patient.id as string,
     name: patient.name as string,
     phone: patient.phone as string,
+    archivedAt: patient.archived_at as string | null,
     visits: consultations?.length ?? 0,
     reservationsCount: reservations?.length ?? 0,
     concern: answerFor("고민 부위"),
