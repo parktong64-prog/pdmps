@@ -78,7 +78,7 @@ function LoginForm() {
         </div>
 
         {mode === "login" ? (
-          <form onSubmit={handleSubmit} className="flex flex-col gap-[16px]" noValidate>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-[16px]" autoComplete="off" noValidate>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="email" className="text-[0.8rem] font-bold">
                 이메일
@@ -86,7 +86,7 @@ function LoginForm() {
               <input
                 id="email"
                 type="email"
-                autoComplete="username"
+                autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -98,7 +98,7 @@ function LoginForm() {
               <label htmlFor="password" className="text-[0.8rem] font-bold">
                 비밀번호
               </label>
-              <PasswordInput id="password" value={password} onChange={setPassword} autoComplete="current-password" required />
+              <PasswordInput id="password" value={password} onChange={setPassword} autoComplete="new-password" required />
             </div>
 
             {error && (
@@ -141,7 +141,7 @@ function LoginForm() {
             </button>
           </div>
         ) : (
-          <form onSubmit={handleForgotSubmit} className="flex flex-col gap-[16px]" noValidate>
+          <form onSubmit={handleForgotSubmit} className="flex flex-col gap-[16px]" autoComplete="off" noValidate>
             <div className="flex flex-col gap-1.5">
               <label htmlFor="forgot-email" className="text-[0.8rem] font-bold">
                 이메일
@@ -149,7 +149,7 @@ function LoginForm() {
               <input
                 id="forgot-email"
                 type="email"
-                autoComplete="username"
+                autoComplete="off"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
