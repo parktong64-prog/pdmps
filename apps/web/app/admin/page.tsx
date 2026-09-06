@@ -4,6 +4,9 @@ import { getDashboardData } from "@/lib/admin/actions";
 
 const deltaColor = { up: "text-[var(--st-done)]", down: "text-[var(--danger)]", flat: "text-[var(--ink-soft)]" };
 
+// 실시간 통계 화면이므로 정적 캐싱을 끈다 (요청마다 최신 데이터 조회).
+export const dynamic = "force-dynamic";
+
 export default async function AdminDashboardPage() {
   const data = await getDashboardData();
   const now = new Date();
