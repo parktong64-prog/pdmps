@@ -44,33 +44,20 @@ function LoginForm() {
     setLoading(true);
     setError(null);
 
-    // supabase-js의 resetPasswordForEmail(PKCE 플로우)이 이 앱 번들 환경에서
-    // 간헐적으로 "non ISO-8859-1 code point" 브라우저 에러를 던지는 문제가 있어,
-    // 검증된 방식대로 GoTrue REST 엔드포인트를 직접 호출한다(암묵적 플로우 링크가 발급됨 —
-    // /reset-password의 PASSWORD_RECOVERY 이벤트 처리와 호환됨).
+    // 브라우저에서 직접 supabase-js의 resetPasswordForEmail을 호출하면 이 배포
+    // 환경에서 간헐적으로 "non ISO-8859-1 code point" fetch 에러가 발생하는
+    // 문제가 있어(원인 불명), 서버 라우트를 거쳐 우회한다.
     try {
-      const res = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/recover?redirect_to=${encodeURIComponent(`${window.location.origin}/reset-password`)}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ email: email.trim() }),
-        },
-      );
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
       setLoading(false);
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
-        const isRateLimited = res.status === 429 || data?.error_code === "over_email_send_rate_limit";
-        setError(
-          isRateLimited
-            ? "이메일 발송 한도를 초과했습니다. 1시간 정도 후 다시 시도해주세요."
-            : `재설정 이메일 발송에 실패했습니다. (${data?.msg || data?.message || res.status})`,
-        );
+        setError(data?.error || "재설정 이메일 발송에 실패했습니다.");
         return;
       }
       setForgotSent(true);
