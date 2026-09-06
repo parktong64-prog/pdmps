@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { PasswordInput } from "@/lib/ui/PasswordInput";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -98,30 +99,14 @@ export default function ResetPasswordPage() {
               <label htmlFor="password" className="text-[0.8rem] font-bold">
                 새 비밀번호
               </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="new-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="rounded-[9px] border border-[var(--line)] px-[13px] py-[11px] text-[0.92rem] outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
-              />
+              <PasswordInput id="password" value={password} onChange={setPassword} autoComplete="new-password" required />
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label htmlFor="passwordConfirm" className="text-[0.8rem] font-bold">
                 새 비밀번호 확인
               </label>
-              <input
-                id="passwordConfirm"
-                type="password"
-                autoComplete="new-password"
-                value={passwordConfirm}
-                onChange={(e) => setPasswordConfirm(e.target.value)}
-                required
-                className="rounded-[9px] border border-[var(--line)] px-[13px] py-[11px] text-[0.92rem] outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--focus-ring)]"
-              />
+              <PasswordInput id="passwordConfirm" value={passwordConfirm} onChange={setPasswordConfirm} autoComplete="new-password" required />
             </div>
 
             {error && (
