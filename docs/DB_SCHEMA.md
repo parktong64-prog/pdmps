@@ -168,12 +168,24 @@ erDiagram
 | id | uuid PK | |
 | procedure_id | uuid FK → procedures | |
 | title | text | 예: "Face Lift 과정 안내" |
-| video_url | text | 영상 파일/스트리밍 URL (Storage 또는 외부 CDN) |
+| video_url | text, nullable | 영상 파일 URL (Storage `procedure-media` 버킷). 아직 업로드 전이면 null — 환자 화면은 미리보기 시뮬레이션으로 대체 표시 |
 | duration_sec | integer | 영상 길이(초) |
 | is_active | boolean | 노출 여부 |
 | sort_order | integer | 여러 개 등록 시 노출 순서 |
 
-### 2.6 `consultations` (상담 신청)
+### 2.6 `procedure_steps` (시술 진행 과정 단계)
+| 컬럼 | 타입 | 설명 |
+|---|---|---|
+| id | uuid PK | |
+| procedure_id | uuid FK → procedures | |
+| step_order | integer | 진행 순서 (1~7), `(procedure_id, step_order)` unique |
+| title | text | 단계명 (예: "디자인", "절개") |
+| description | text | 단계 설명 |
+| media_url | text, nullable | 첨부 사진/영상 URL (Storage `procedure-media` 버킷) |
+| media_type | text, nullable | `image` \| `video` |
+| updated_at | timestamptz | |
+
+### 2.7 `consultations` (상담 신청)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -186,7 +198,7 @@ erDiagram
 | created_at | timestamptz | |
 | updated_at | timestamptz | |
 
-### 2.7 `consultation_answers` (문진표 응답)
+### 2.8 `consultation_answers` (문진표 응답)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -194,7 +206,7 @@ erDiagram
 | field_id | uuid FK → questionnaire_fields | |
 | answer_text | text | 응답 값 (선택형은 옵션 라벨 저장) |
 
-### 2.8 `consultation_photos` (첨부 사진)
+### 2.9 `consultation_photos` (첨부 사진)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -204,7 +216,7 @@ erDiagram
 
 > 민감정보이므로 Storage 버킷은 비공개(private) + RLS로 본인/관리자/원장만 접근하도록 서명 URL 발급.
 
-### 2.9 `ai_photo_analyses` (AI 사진 분석 결과)
+### 2.10 `ai_photo_analyses` (AI 사진 분석 결과)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -220,7 +232,7 @@ erDiagram
 
 > `needs_review = true`가 되면 애플리케이션이 `consultations.status`를 `needs_review`로 갱신하고 원장에게 내부 알림을 발송한다 (PRD FR-2.2).
 
-### 2.10 `simulation_images` (AI 가상 시뮬레이션)
+### 2.11 `simulation_images` (AI 가상 시뮬레이션)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -232,7 +244,7 @@ erDiagram
 
 > 생성 이미지는 비공개 Storage에 원본 사진과 동일한 접근 정책으로 저장. 이미지 자체에도 "AI 예상 이미지" 워터마크 삽입을 권장 (PRD FR-2.5).
 
-### 2.11 `reservation_slots` (예약 가능 슬롯)
+### 2.12 `reservation_slots` (예약 가능 슬롯)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -243,7 +255,7 @@ erDiagram
 | status | text | `open`(예약가능) \| `held`(결제 대기 중 임시선점) \| `booked`(결제완료·예약확정) \| `blocked`(휴진 등) |
 | created_by | uuid FK → staff | 슬롯 등록자(관리자) |
 
-### 2.12 `reservations` (예약)
+### 2.13 `reservations` (예약)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -258,7 +270,7 @@ erDiagram
 
 > **상태 전이**: 슬롯 선택 → `pending_payment` 생성(슬롯 `held`) → 결제 성공 → `confirmed`(슬롯 `booked`) / 결제 실패·타임아웃 → `cancelled`(슬롯 `open` 복귀).
 
-### 2.13 `payments` (결제)
+### 2.14 `payments` (결제)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -274,7 +286,7 @@ erDiagram
 
 > `payments.status`가 `paid`로 전환되는 PG 웹훅/콜백을 수신하면, 애플리케이션(Edge Function)이 연결된 `reservations.status`를 `confirmed`로, `reservation_slots.status`를 `booked`로 함께 갱신한다.
 
-### 2.14 `notifications` (알림 발송 로그)
+### 2.15 `notifications` (알림 발송 로그)
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | uuid PK | |
@@ -344,11 +356,24 @@ create table procedure_videos (
   id uuid primary key default uuid_generate_v4(),
   procedure_id uuid not null references procedures(id),
   title text not null,
-  video_url text not null,
+  video_url text,
   duration_sec integer,
   is_active boolean not null default true,
   sort_order integer not null default 0
 );
+
+create table procedure_steps (
+  id uuid primary key default uuid_generate_v4(),
+  procedure_id uuid not null references procedures(id),
+  step_order integer not null,
+  title text not null,
+  description text not null,
+  media_url text,
+  media_type text check (media_type in ('image', 'video')),
+  updated_at timestamptz not null default now()
+);
+
+create unique index idx_step_order on procedure_steps(procedure_id, step_order);
 
 create table consultations (
   id uuid primary key default uuid_generate_v4(),

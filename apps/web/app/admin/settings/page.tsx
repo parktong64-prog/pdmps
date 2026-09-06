@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getProcedureSettings, updateProcedureSettings, getActiveVideo, updateVideoTitle } from "@/lib/admin/actions";
+import { getProcedureSettings, updateProcedureSettings, getActiveVideo } from "@/lib/admin/actions";
+import { getProcedureSteps, uploadStepMedia, removeStepMedia, uploadMainVideo, type ProcedureStep } from "@/lib/admin/media";
 
-type Stab = "procedure" | "templates" | "videos";
+type Stab = "procedure" | "templates" | "videos" | "steps";
 const TABS: { key: Stab; label: string }[] = [
   { key: "procedure", label: "시술 항목" },
   { key: "templates", label: "알림 템플릿" },
   { key: "videos", label: "시술 안내 영상" },
+  { key: "steps", label: "진행 과정" },
 ];
 
 export default function SettingsPage() {
@@ -39,6 +41,7 @@ export default function SettingsPage() {
         {stab === "procedure" && <ProcedureTab />}
         {stab === "templates" && <TemplatesTab />}
         {stab === "videos" && <VideosTab />}
+        {stab === "steps" && <StepsTab />}
       </div>
     </div>
   );
@@ -257,36 +260,44 @@ function VideosTab() {
   const [title, setTitle] = useState("");
   const [durationSec, setDurationSec] = useState<number | null>(null);
   const [isActive, setIsActive] = useState(false);
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [progress, setProgress] = useState<number | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
+  function reload() {
     getActiveVideo().then((v) => {
       if (v) {
         setId(v.id);
         setTitle(v.title);
         setDurationSec(v.duration_sec);
         setIsActive(v.is_active);
+        setVideoUrl(v.video_url);
       }
       setLoading(false);
     });
-  }, []);
+  }
 
-  function handleFile(file: File | null) {
-    if (!file || !id) return;
-    setProgress(0);
-    let pct = 0;
-    const timer = setInterval(() => {
-      pct += 10;
-      setProgress(Math.min(pct, 100));
-      if (pct >= 100) {
-        clearInterval(timer);
-        const newTitle = file.name.replace(/\.[^.]+$/, "");
-        updateVideoTitle(id, newTitle).then(() => setTitle(newTitle));
-        setProgress(null);
+  useEffect(reload, []);
+
+  async function handleFile(file: File | null) {
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const result = await uploadMainVideo(fd);
+      if (!result.ok) {
+        setError(result.error ?? "업로드에 실패했습니다.");
+        return;
       }
-    }, 150);
+      reload();
+    } finally {
+      setUploading(false);
+      if (fileInput.current) fileInput.current.value = "";
+    }
   }
 
   if (loading) {
@@ -303,26 +314,23 @@ function VideosTab() {
         <div>
           <div className="text-[0.88rem] font-bold">{title}</div>
           <div className="mt-1 text-[0.76rem] text-[var(--ink-soft)]">
-            {progress !== null ? (
-              <>
-                업로드 중…
-                <div className="mt-1.5 h-[5px] w-[160px] overflow-hidden rounded-full bg-[var(--line)]">
-                  <div className="h-full bg-[var(--accent)] transition-[width] duration-100" style={{ width: `${progress}%` }} />
-                </div>
-              </>
+            {uploading ? (
+              "업로드 중…"
             ) : (
               <>
-                재생시간 {formatDuration(durationSec)} · {isActive ? "노출중" : "비노출"}
+                재생시간 {formatDuration(durationSec)} · {isActive ? "노출중" : "비노출"} ·{" "}
+                {videoUrl ? "영상 등록됨" : "영상 미등록"}
               </>
             )}
           </div>
         </div>
         <button
           type="button"
+          disabled={uploading}
           onClick={() => fileInput.current?.click()}
-          className="rounded-lg bg-[var(--accent-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--accent-ink)]"
+          className="rounded-lg bg-[var(--accent-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--accent-ink)] disabled:opacity-50"
         >
-          제목 변경(파일명 반영)
+          {videoUrl ? "새 영상으로 교체" : "영상 업로드"}
         </button>
         <input
           ref={fileInput}
@@ -332,9 +340,136 @@ function VideosTab() {
           onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
         />
       </div>
-      <p className="mt-2.5 text-[0.7rem] text-[var(--ink-soft)]">
-        실제 영상 파일 업로드·재생 시간 교체는 Storage 연동 후 지원됩니다. 지금은 선택한 파일명으로 제목만 갱신합니다.
-      </p>
+      {error && <p className="mt-2.5 text-[0.72rem] text-[var(--danger)]">{error}</p>}
+      {videoUrl && (
+        <video key={videoUrl} src={videoUrl} controls className="mt-3.5 w-full max-w-[420px] rounded-xl bg-black" />
+      )}
     </div>
+  );
+}
+
+function StepsTab() {
+  const [steps, setSteps] = useState<ProcedureStep[] | null>(null);
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  function reload() {
+    getProcedureSteps().then(setSteps);
+  }
+
+  useEffect(reload, []);
+
+  async function handleFile(stepId: string, file: File | null) {
+    if (!file) return;
+    setUploadingId(stepId);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const result = await uploadStepMedia(stepId, fd);
+      if (!result.ok) {
+        setError(result.error ?? "업로드에 실패했습니다.");
+        return;
+      }
+      reload();
+    } finally {
+      setUploadingId(null);
+    }
+  }
+
+  async function handleRemove(stepId: string) {
+    setUploadingId(stepId);
+    try {
+      await removeStepMedia(stepId);
+      reload();
+    } finally {
+      setUploadingId(null);
+    }
+  }
+
+  if (steps === null) {
+    return <div className="py-6 text-center text-[0.82rem] text-[var(--ink-soft)]">불러오는 중…</div>;
+  }
+
+  return (
+    <div>
+      <p className="mb-4 text-[0.76rem] text-[var(--ink-soft)]">
+        환자용 &quot;수술 방법 안내&quot; 화면의 7단계 진행 과정마다 사진 또는 동영상을 하나씩 첨부할 수 있어요.
+      </p>
+      {error && (
+        <div className="mb-3.5 rounded-lg bg-[var(--danger-soft)] px-3 py-2.5 text-[0.76rem] text-[var(--danger)]">{error}</div>
+      )}
+      <div className="flex flex-col gap-3">
+        {steps.map((step) => (
+          <div key={step.id} className="flex flex-wrap items-center gap-3.5 rounded-xl border border-[var(--line)] p-4">
+            <span className="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-[var(--accent-soft)] font-[family-name:var(--font-mono-kr)] text-[0.82rem] font-semibold text-[var(--accent-ink)]">
+              {step.step_order}
+            </span>
+            <div className="min-w-[140px] flex-1">
+              <div className="text-[0.86rem] font-bold">{step.title}</div>
+              <div className="mt-0.5 text-[0.72rem] text-[var(--ink-soft)]">
+                {uploadingId === step.id ? "처리 중…" : step.media_url ? `${step.media_type === "video" ? "동영상" : "사진"} 등록됨` : "미등록"}
+              </div>
+            </div>
+
+            {step.media_url &&
+              (step.media_type === "video" ? (
+                <video src={step.media_url} controls className="h-16 w-24 flex-none rounded-lg bg-black object-cover" />
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={step.media_url} alt={step.title} className="h-16 w-24 flex-none rounded-lg object-cover" />
+              ))}
+
+            <div className="flex flex-none gap-2">
+              <StepUploadButton stepId={step.id} disabled={uploadingId === step.id} onFile={handleFile} />
+              {step.media_url && (
+                <button
+                  type="button"
+                  disabled={uploadingId === step.id}
+                  onClick={() => handleRemove(step.id)}
+                  className="rounded-lg border border-[var(--line)] px-3 py-2 text-[0.78rem] font-bold text-[var(--ink-soft)] hover:border-[var(--danger)] hover:text-[var(--danger)] disabled:opacity-50"
+                >
+                  삭제
+                </button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StepUploadButton({
+  stepId,
+  disabled,
+  onFile,
+}: {
+  stepId: string;
+  disabled: boolean;
+  onFile: (stepId: string, file: File | null) => void;
+}) {
+  const fileInput = useRef<HTMLInputElement>(null);
+  return (
+    <>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => fileInput.current?.click()}
+        className="rounded-lg bg-[var(--accent-soft)] px-3 py-2 text-[0.78rem] font-bold text-[var(--accent-ink)] disabled:opacity-50"
+      >
+        사진/영상 업로드
+      </button>
+      <input
+        ref={fileInput}
+        type="file"
+        accept="image/*,video/*"
+        hidden
+        onChange={(e) => {
+          onFile(stepId, e.target.files?.[0] ?? null);
+          e.target.value = "";
+        }}
+      />
+    </>
   );
 }

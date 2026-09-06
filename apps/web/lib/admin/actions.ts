@@ -535,7 +535,7 @@ export async function getActiveVideo() {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("procedure_videos")
-    .select("id, title, duration_sec, is_active")
+    .select("id, title, duration_sec, is_active, video_url")
     .eq("is_active", true)
     .order("sort_order", { ascending: true })
     .limit(1)

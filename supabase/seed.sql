@@ -16,5 +16,6 @@ insert into procedures (id, category, name, base_price, deposit_amount, question
   ('00000000-0000-0000-0000-000000000020', 'Face Lift', 'Face Lift (안면거상술)', 27500000, 50000,
    '00000000-0000-0000-0000-000000000010', true);
 
+-- video_url은 관리자가 실제 영상을 업로드하기 전까지 null (환자 화면은 미리보기로 대체)
 insert into procedure_videos (procedure_id, title, video_url, duration_sec, is_active, sort_order) values
-  ('00000000-0000-0000-0000-000000000020', 'Face Lift 과정 안내', 'https://example.com/videos/face-lift-intro.mp4', 204, true, 1);
+  ('00000000-0000-0000-0000-000000000020', 'Face Lift 과정 안내', null, 204, true, 1);
