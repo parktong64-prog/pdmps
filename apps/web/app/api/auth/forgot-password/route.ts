@@ -26,7 +26,7 @@ export async function POST(req: Request) {
   const origin = req.headers.get("origin") || new URL(req.url).origin;
   const supabase = createAdminClient();
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${origin}/reset-password`,
+    redirectTo: `${origin}/auth/confirm?next=/reset-password`,
   });
 
   if (error) {

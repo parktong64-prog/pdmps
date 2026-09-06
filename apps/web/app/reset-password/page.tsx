@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PasswordInput } from "@/lib/ui/PasswordInput";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
-  const [ready, setReady] = useState(false);
-  const [invalidLink, setInvalidLink] = useState(false);
+  const searchParams = useSearchParams();
+  const linkError = searchParams.get("error") === "invalid_link";
+
+  const [checking, setChecking] = useState(!linkError);
+  const [hasSession, setHasSession] = useState(false);
   const [password, setPassword] = useState("");
   const [passwordConfirm, setPasswordConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -16,34 +19,15 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    if (linkError) return;
+    // /auth/confirm 라우트가 서버에서 이미 세션(쿠키)을 확립해두었으므로,
+    // 여기서는 그 세션이 실제로 존재하는지만 확인하면 된다.
     const supabase = createClient();
-
-    // 재설정 링크의 토큰을 세션으로 교환하는 이벤트를 기다린다.
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
-        setReady(true);
-      }
-    });
-
-    // 이미 처리된 뒤 마운트된 경우를 대비해 현재 세션도 한 번 확인
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) setReady(true);
+      setHasSession(!!data.session);
+      setChecking(false);
     });
-
-    const timer = setTimeout(() => {
-      setReady((r) => {
-        if (!r) setInvalidLink(true);
-        return r;
-      });
-    }, 4000);
-
-    return () => {
-      subscription.unsubscribe();
-      clearTimeout(timer);
-    };
-  }, []);
+  }, [linkError]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -81,7 +65,9 @@ export default function ResetPasswordPage() {
           <div className="text-[0.8rem] text-[var(--ink-soft)]">새 비밀번호 설정</div>
         </div>
 
-        {invalidLink && !ready ? (
+        {checking ? (
+          <div className="py-4 text-center text-[0.84rem] text-[var(--ink-soft)]">확인 중…</div>
+        ) : linkError || !hasSession ? (
           <div className="text-center">
             <p className="mb-4 text-[0.84rem] leading-[1.6] text-[var(--ink-soft)]">
               링크가 만료되었거나 올바르지 않습니다. 관리자 로그인 화면에서 비밀번호 재설정을 다시 요청해주세요.
@@ -91,8 +77,6 @@ export default function ResetPasswordPage() {
           <div className="text-center text-[0.86rem] text-[var(--success)] font-semibold">
             비밀번호가 변경되었습니다. 이동 중…
           </div>
-        ) : !ready ? (
-          <div className="py-4 text-center text-[0.84rem] text-[var(--ink-soft)]">확인 중…</div>
         ) : (
           <form onSubmit={handleSubmit} className="flex flex-col gap-[16px]" noValidate>
             <div className="flex flex-col gap-1.5">
@@ -126,5 +110,13 @@ export default function ResetPasswordPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
