@@ -51,10 +51,14 @@ function LoginForm() {
     setLoading(false);
 
     if (resetError) {
+      const isRateLimited =
+        resetError.status === 429 ||
+        resetError.code === "over_email_send_rate_limit" ||
+        resetError.message?.toLowerCase().includes("rate limit");
       setError(
-        resetError.message.includes("rate limit")
-          ? "이메일 발송 한도를 초과했습니다. 잠시 후 다시 시도해주세요."
-          : "재설정 이메일 발송에 실패했습니다.",
+        isRateLimited
+          ? "이메일 발송 한도를 초과했습니다. 1시간 정도 후 다시 시도해주세요."
+          : `재설정 이메일 발송에 실패했습니다. (${resetError.message})`,
       );
       return;
     }
