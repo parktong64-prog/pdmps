@@ -44,25 +44,40 @@ function LoginForm() {
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: `${window.location.origin}/reset-password`,
-    });
-    setLoading(false);
-
-    if (resetError) {
-      const isRateLimited =
-        resetError.status === 429 ||
-        resetError.code === "over_email_send_rate_limit" ||
-        resetError.message?.toLowerCase().includes("rate limit");
-      setError(
-        isRateLimited
-          ? "이메일 발송 한도를 초과했습니다. 1시간 정도 후 다시 시도해주세요."
-          : `재설정 이메일 발송에 실패했습니다. (${resetError.message})`,
+    // supabase-js의 resetPasswordForEmail(PKCE 플로우)이 이 앱 번들 환경에서
+    // 간헐적으로 "non ISO-8859-1 code point" 브라우저 에러를 던지는 문제가 있어,
+    // 검증된 방식대로 GoTrue REST 엔드포인트를 직접 호출한다(암묵적 플로우 링크가 발급됨 —
+    // /reset-password의 PASSWORD_RECOVERY 이벤트 처리와 호환됨).
+    try {
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/recover?redirect_to=${encodeURIComponent(`${window.location.origin}/reset-password`)}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ email: email.trim() }),
+        },
       );
-      return;
+      setLoading(false);
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        const isRateLimited = res.status === 429 || data?.error_code === "over_email_send_rate_limit";
+        setError(
+          isRateLimited
+            ? "이메일 발송 한도를 초과했습니다. 1시간 정도 후 다시 시도해주세요."
+            : `재설정 이메일 발송에 실패했습니다. (${data?.msg || data?.message || res.status})`,
+        );
+        return;
+      }
+      setForgotSent(true);
+    } catch (err) {
+      setLoading(false);
+      setError(err instanceof Error ? `재설정 이메일 발송에 실패했습니다. (${err.message})` : "재설정 이메일 발송에 실패했습니다.");
     }
-    setForgotSent(true);
   }
 
   return (
