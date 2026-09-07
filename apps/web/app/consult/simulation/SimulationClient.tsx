@@ -154,7 +154,6 @@ export default function SimulationClient() {
                 }}
                 type="file"
                 accept="image/*"
-                capture="user"
                 hidden
                 onChange={(e) => handleFileChange(a.key, e.target.files?.[0] ?? null)}
               />
