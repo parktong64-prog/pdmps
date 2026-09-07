@@ -30,11 +30,19 @@ export default function SimulationClient() {
     front: null,
     right: null,
   });
-  const fileInputs = useRef<Record<Angle, HTMLInputElement | null>>({
+  const cameraInputs = useRef<Record<Angle, HTMLInputElement | null>>({
     left: null,
     front: null,
     right: null,
   });
+  const galleryInputs = useRef<Record<Angle, HTMLInputElement | null>>({
+    left: null,
+    front: null,
+    right: null,
+  });
+  // 갤럭시 등 일부 기기는 accept="image/*"만으로는 선택창에 "카메라" 항목이 안 뜨는 경우가 있어,
+  // 카메라용/앨범용 입력을 따로 두고 직접 고르게 한다.
+  const [pickerFor, setPickerFor] = useState<Angle | null>(null);
 
   const uploadedCount = ANGLES.filter((a) => photos[a.key]).length;
   const allUploaded = uploadedCount === 3;
@@ -48,6 +56,7 @@ export default function SimulationClient() {
       setPhotos((prev) => ({ ...prev, [angle]: dataUrl }));
     };
     reader.readAsDataURL(file);
+    setPickerFor(null);
   }
 
   async function handleMake() {
@@ -79,8 +88,10 @@ export default function SimulationClient() {
     setAfterPhotos({ left: null, front: null, right: null });
     setAfterErrors({ left: null, front: null, right: null });
     ANGLES.forEach((a) => {
-      const input = fileInputs.current[a.key];
-      if (input) input.value = "";
+      const camera = cameraInputs.current[a.key];
+      if (camera) camera.value = "";
+      const gallery = galleryInputs.current[a.key];
+      if (gallery) gallery.value = "";
     });
     setView("upload");
   }
@@ -110,7 +121,7 @@ export default function SimulationClient() {
                   <button
                     key={a.key}
                     type="button"
-                    onClick={() => fileInputs.current[a.key]?.click()}
+                    onClick={() => setPickerFor(a.key)}
                     className={`relative aspect-[3/4] overflow-hidden rounded-xl border-[1.6px] bg-[var(--card-bg)] p-2.5 text-center transition-colors hover:border-[var(--accent)] hover:bg-[var(--accent-soft)] ${
                       photo
                         ? "border-solid border-[var(--success)] p-0"
@@ -148,9 +159,22 @@ export default function SimulationClient() {
 
             {ANGLES.map((a) => (
               <input
-                key={a.key}
+                key={`${a.key}-camera`}
                 ref={(el) => {
-                  fileInputs.current[a.key] = el;
+                  cameraInputs.current[a.key] = el;
+                }}
+                type="file"
+                accept="image/*"
+                capture="user"
+                hidden
+                onChange={(e) => handleFileChange(a.key, e.target.files?.[0] ?? null)}
+              />
+            ))}
+            {ANGLES.map((a) => (
+              <input
+                key={`${a.key}-gallery`}
+                ref={(el) => {
+                  galleryInputs.current[a.key] = el;
                 }}
                 type="file"
                 accept="image/*"
@@ -158,6 +182,43 @@ export default function SimulationClient() {
                 onChange={(e) => handleFileChange(a.key, e.target.files?.[0] ?? null)}
               />
             ))}
+
+            {pickerFor && (
+              <div
+                className="fixed inset-0 z-50 flex items-end justify-center bg-black/45 sm:items-center"
+                onClick={() => setPickerFor(null)}
+              >
+                <div
+                  className="w-full max-w-[360px] rounded-t-2xl bg-[var(--card-bg)] p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:rounded-2xl"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <p className="mb-3 text-center text-[0.8rem] font-bold">
+                    {ANGLES.find((a) => a.key === pickerFor)?.label} 사진 추가
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => cameraInputs.current[pickerFor]?.click()}
+                    className="mb-2 block w-full rounded-[10px] bg-[var(--accent)] py-3 text-center text-[0.88rem] font-bold text-white transition-[filter] hover:brightness-[1.06]"
+                  >
+                    카메라로 촬영
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => galleryInputs.current[pickerFor]?.click()}
+                    className="mb-2 block w-full rounded-[10px] border border-[var(--line)] bg-[var(--card-bg)] py-3 text-center text-[0.88rem] font-bold text-[var(--ink)] transition-colors hover:bg-[var(--accent-soft)]"
+                  >
+                    앨범에서 선택
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPickerFor(null)}
+                    className="block w-full py-2 text-center text-[0.8rem] text-[var(--ink-soft)]"
+                  >
+                    취소
+                  </button>
+                </div>
+              </div>
+            )}
 
             <p className="mt-3.5 text-center text-[0.76rem] text-[var(--ink-soft)]">
               {allUploaded
