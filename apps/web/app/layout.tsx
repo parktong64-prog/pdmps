@@ -20,9 +20,28 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["500"],
 });
 
+const SITE_URL = "https://pdmps-hazel.vercel.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: "PDMPS | Face Lift 전문",
   description: "Face Lift 전문 · 박동만 원장 상담·예약 서비스",
+  // 카카오톡 등에 링크를 보낼 때 썸네일이 있는 카드로 표시되도록 Open Graph 메타를 채운다.
+  openGraph: {
+    title: "PDMPS | Face Lift 전문",
+    description: "AI 시뮬레이션으로 미리 확인하고, 지금 바로 상담 예약하세요.",
+    url: SITE_URL,
+    siteName: "PDMPS",
+    images: [{ url: "/og-image.jpg", width: 1200, height: 630, alt: "PDMPS Face Lift 전문" }],
+    locale: "ko_KR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PDMPS | Face Lift 전문",
+    description: "AI 시뮬레이션으로 미리 확인하고, 지금 바로 상담 예약하세요.",
+    images: ["/og-image.jpg"],
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
