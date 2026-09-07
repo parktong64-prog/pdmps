@@ -249,6 +249,13 @@ export default function ConsultClient({ video, steps }: { video: VideoInfo; step
           <span className="text-center text-[0.72rem] text-[var(--ink-soft)]">
             {watched ? "시청이 완료되었습니다" : "영상을 재생하면 다음 단계로 진행할 수 있어요"}
           </span>
+          <button
+            type="button"
+            onClick={() => router.push("/consult/schedule")}
+            className="text-center text-[0.78rem] text-[var(--ink-soft)] underline underline-offset-2 hover:text-[var(--accent-ink)]"
+          >
+            AI 시뮬레이션 생략하고 상담 예약하기
+          </button>
         </div>
       </div>
     </div>

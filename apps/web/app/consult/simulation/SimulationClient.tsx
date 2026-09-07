@@ -173,6 +173,13 @@ export default function SimulationClient() {
             >
               AI 시뮬레이션 만들기
             </button>
+            <button
+              type="button"
+              onClick={() => router.push("/consult/schedule")}
+              className="mt-3.5 block w-full text-center text-[0.78rem] text-[var(--ink-soft)] underline underline-offset-2 hover:text-[var(--accent-ink)]"
+            >
+              AI 시뮬레이션 생략하고 상담 예약하기
+            </button>
           </div>
         )}
 
