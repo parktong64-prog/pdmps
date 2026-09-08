@@ -75,28 +75,28 @@ export default function ReservationsPage() {
 
   return (
     <div>
-      <div className="mb-6 flex items-end justify-between">
-        <h1 className="font-[family-name:var(--font-display)] text-[1.4rem] font-bold">예약 관리</h1>
-        <div className="text-[0.8rem] text-[var(--ink-soft)]">박동만 원장</div>
+      <div className="mb-2.5 flex items-end justify-between">
+        <h1 className="font-[family-name:var(--font-display)] text-[1.2rem] font-bold">예약 관리</h1>
+        <div className="text-[0.76rem] text-[var(--ink-soft)]">박동만 원장</div>
       </div>
 
-      <div className="mb-4 rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-[18px]">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="mb-2 rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-2.5">
+        <div className="mb-2 flex items-center justify-between">
           <button
             type="button"
             aria-label="이전 2주"
             onClick={() => changeBlock(blockIdx - 1)}
-            className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-[var(--line)] text-[0.85rem]"
+            className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[var(--line)] text-[0.8rem]"
           >
             ‹
           </button>
-          <div className="flex items-center gap-2.5">
-            <div className="font-[family-name:var(--font-display)] text-[1rem] font-bold">{rangeLabel}</div>
+          <div className="flex items-center gap-2">
+            <div className="font-[family-name:var(--font-display)] text-[0.9rem] font-bold">{rangeLabel}</div>
             {blockIdx !== 0 && (
               <button
                 type="button"
                 onClick={() => changeBlock(0)}
-                className="rounded-full border border-[var(--line)] px-2.5 py-0.5 text-[0.68rem] text-[var(--ink-soft)] hover:bg-[var(--accent-soft)]"
+                className="rounded-full border border-[var(--line)] px-2 py-0.5 text-[0.64rem] text-[var(--ink-soft)] hover:bg-[var(--accent-soft)]"
               >
                 이번 주로
               </button>
@@ -106,16 +106,16 @@ export default function ReservationsPage() {
             type="button"
             aria-label="다음 2주"
             onClick={() => changeBlock(blockIdx + 1)}
-            className="flex h-[30px] w-[30px] items-center justify-center rounded-full border border-[var(--line)] text-[0.85rem]"
+            className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[var(--line)] text-[0.8rem]"
           >
             ›
           </button>
         </div>
 
         {slots === null ? (
-          <div className="py-10 text-center text-[0.82rem] text-[var(--ink-soft)]">불러오는 중…</div>
+          <div className="py-6 text-center text-[0.82rem] text-[var(--ink-soft)]">불러오는 중…</div>
         ) : (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
             {weeks.map((week) => (
               <WeekGrid
                 key={week[0].toISOString()}
@@ -128,26 +128,26 @@ export default function ReservationsPage() {
           </div>
         )}
 
-        <div className="mt-3.5 flex flex-wrap gap-4 text-[0.7rem] text-[var(--ink-soft)]">
+        <div className="mt-2 flex flex-wrap gap-3 text-[0.66rem] text-[var(--ink-soft)]">
           <span className="inline-flex items-center gap-1.5">
-            <i className="inline-block h-2.5 w-2.5 rounded-[3px] border border-[var(--line)] bg-[var(--card-bg)]" />
+            <i className="inline-block h-2 w-2 rounded-[3px] border border-[var(--line)] bg-[var(--card-bg)]" />
             예약 가능
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <i className="inline-block h-2.5 w-2.5 rounded-[3px] bg-[var(--accent-soft)]" />
+            <i className="inline-block h-2 w-2 rounded-[3px] bg-[var(--accent-soft)]" />
             예약됨 (클릭 시 상세)
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <i className="inline-block h-2.5 w-2.5 rounded-[3px] bg-[repeating-linear-gradient(45deg,var(--page-bg),var(--page-bg)_3px,var(--line)_3px,var(--line)_6px)]" />
+            <i className="inline-block h-2 w-2 rounded-[3px] bg-[repeating-linear-gradient(45deg,var(--page-bg),var(--page-bg)_3px,var(--line)_3px,var(--line)_6px)]" />
             휴진 · 차단
           </span>
         </div>
       </div>
 
-      <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-[18px]">
-        <div className="mb-3.5 text-[0.82rem] font-bold">슬롯 상세</div>
+      <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-2.5">
+        <div className="mb-2 text-[0.8rem] font-bold">슬롯 상세</div>
         {!selected ? (
-          <div className="py-6 text-center text-[0.82rem] text-[var(--ink-soft)]">
+          <div className="py-3 text-center text-[0.8rem] text-[var(--ink-soft)]">
             슬롯을 선택하면 상세 정보가 여기에 표시됩니다.
           </div>
         ) : (
@@ -184,11 +184,11 @@ function WeekGrid({
         {days.map((d) => {
           const closed = isClosedDay(d);
           return (
-            <div key={d.toISOString()} className="bg-[var(--page-bg)] px-1 pt-2.5 text-center">
-              <div className={`text-[0.64rem] ${closed ? "text-[var(--ink-faint)]" : "text-[var(--ink-soft)]"}`}>
+            <div key={d.toISOString()} className="bg-[var(--page-bg)] px-1 pt-1 text-center">
+              <div className={`text-[0.58rem] leading-tight ${closed ? "text-[var(--ink-faint)]" : "text-[var(--ink-soft)]"}`}>
                 {WEEKDAY_LABEL[d.getDay()]}
               </div>
-              <div className={`font-[family-name:var(--font-mono-kr)] text-[0.92rem] font-semibold ${closed ? "text-[var(--ink-faint)]" : ""}`}>
+              <div className={`font-[family-name:var(--font-mono-kr)] text-[0.78rem] leading-tight font-semibold ${closed ? "text-[var(--ink-faint)]" : ""}`}>
                 {d.getDate()}
               </div>
             </div>
@@ -197,7 +197,7 @@ function WeekGrid({
 
         {TIMES.map((time) => (
           <Fragment key={time}>
-            <div className="flex items-center justify-center bg-[var(--card-bg)] font-[family-name:var(--font-mono-kr)] text-[var(--ink-soft)]">
+            <div className="flex items-center justify-center bg-[var(--card-bg)] font-[family-name:var(--font-mono-kr)] text-[0.68rem] text-[var(--ink-soft)]">
               {time}
             </div>
             {days.map((d) => {
@@ -224,7 +224,7 @@ function WeekGrid({
                   type="button"
                   disabled={status === "closed"}
                   onClick={() => status !== "closed" && onSelect(d, time)}
-                  className={`min-h-[46px] px-1 py-2 text-center leading-[1.25] ${stripe} ${
+                  className={`min-h-[30px] px-1 py-1 text-[0.68rem] text-center leading-[1.15] ${stripe} ${
                     status === "booked" ? "bg-[var(--accent-soft)] font-bold text-[var(--accent-ink)]" : ""
                   } ${status === "pending" ? "bg-[var(--st-pending-soft)] font-bold text-[var(--st-pending)]" : ""} ${
                     status === "open" ? "text-[var(--ink-faint)] hover:bg-[var(--accent-soft)]" : ""
@@ -267,11 +267,11 @@ function SlotDetail({
         <Row label="연락처" value={cell.patientPhone ?? "-"} />
         <Row label="시술" value="Face Lift" />
         <Row label="일시" value={when} />
-        <div className="flex justify-between border-b border-[var(--line)] py-1.5 text-[0.84rem]">
+        <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
           <span className="text-[var(--ink-soft)]">상태</span>
           <StatusPill status="done" label="확정" />
         </div>
-        <div className="mt-3.5">
+        <div className="mt-2">
           <button
             type="button"
             disabled={pending}
@@ -292,14 +292,14 @@ function SlotDetail({
         <Row label="연락처" value={cell.patientPhone ?? "-"} />
         <Row label="시술" value="Face Lift" />
         <Row label="일시" value={when} />
-        <div className="flex justify-between border-b border-[var(--line)] py-1.5 text-[0.84rem]">
+        <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
           <span className="text-[var(--ink-soft)]">상태</span>
           <StatusPill status="pending" label="결제 대기중" />
         </div>
         <p className="mt-2.5 text-[0.72rem] text-[var(--ink-soft)]">
           결제창으로 이동했지만 아직 승인되지 않았습니다. 오래 방치된 경우 취소해서 슬롯을 다시 열 수 있어요.
         </p>
-        <div className="mt-3.5">
+        <div className="mt-2">
           <button
             type="button"
             disabled={pending}
@@ -317,11 +317,11 @@ function SlotDetail({
     return (
       <div>
         <Row label="일시" value={when} />
-        <div className="flex justify-between border-b border-[var(--line)] py-1.5 text-[0.84rem]">
+        <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
           <span className="text-[var(--ink-soft)]">상태</span>
           <StatusPill status="cancel" label="관리자 차단" />
         </div>
-        <div className="mt-3.5">
+        <div className="mt-2">
           <button
             type="button"
             disabled={pending}
@@ -338,11 +338,11 @@ function SlotDetail({
   return (
     <div>
       <Row label="일시" value={when} />
-      <div className="flex justify-between border-b border-[var(--line)] py-1.5 text-[0.84rem]">
+      <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
         <span className="text-[var(--ink-soft)]">상태</span>
         <StatusPill status="progress" label="예약 가능" />
       </div>
-      <div className="mt-3.5">
+      <div className="mt-2">
         <button
           type="button"
           disabled={pending}
@@ -358,7 +358,7 @@ function SlotDetail({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between border-b border-[var(--line)] py-1.5 text-[0.84rem]">
+    <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
       <span className="text-[var(--ink-soft)]">{label}</span>
       <b className="font-semibold">{value}</b>
     </div>
