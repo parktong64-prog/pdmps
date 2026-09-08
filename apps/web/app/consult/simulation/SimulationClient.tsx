@@ -12,6 +12,54 @@ const ANGLES: { key: Angle; label: string; hint: string }[] = [
 
 type View = "upload" | "processing" | "result";
 
+// 핸드폰 카메라 원본 사진은 수 MB~십수 MB에 달해 업로드/AI 처리 시간이 길어지므로,
+// 긴 변 기준 1280px로 축소 + JPEG로 압축해서 전송한다.
+async function downscaleImage(file: File, maxSize = 1280, quality = 0.85): Promise<string> {
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => resolve(e.target?.result as string);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error("이미지를 불러올 수 없습니다."));
+    el.src = dataUrl;
+  });
+
+  const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
+  const w = Math.round(img.width * scale);
+  const h = Math.round(img.height * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("캔버스를 사용할 수 없습니다.");
+  ctx.drawImage(img, 0, 0, w, h);
+
+  return canvas.toDataURL("image/jpeg", quality);
+}
+
+// 서버(AI 생성)가 응답 없이 멈추는 경우를 대비해, 일정 시간 뒤 클라이언트에서 강제로 실패 처리한다.
+function withTimeout<T>(promise: Promise<T>, ms: number, timeoutError: string): Promise<T | { ok: false; error: string }> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => resolve({ ok: false, error: timeoutError }), ms);
+    promise.then(
+      (r) => {
+        clearTimeout(timer);
+        resolve(r);
+      },
+      (err) => {
+        clearTimeout(timer);
+        resolve({ ok: false, error: err instanceof Error ? err.message : timeoutError });
+      },
+    );
+  });
+}
+
 export default function SimulationClient() {
   const router = useRouter();
   const [view, setView] = useState<View>("upload");
@@ -50,12 +98,17 @@ export default function SimulationClient() {
 
   function handleFileChange(angle: Angle, file: File | null) {
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      setPhotos((prev) => ({ ...prev, [angle]: dataUrl }));
-    };
-    reader.readAsDataURL(file);
+    downscaleImage(file)
+      .then((dataUrl) => setPhotos((prev) => ({ ...prev, [angle]: dataUrl })))
+      .catch(() => {
+        // 리사이즈 실패 시(브라우저 미지원 등) 원본을 그대로 사용
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const dataUrl = e.target?.result as string;
+          setPhotos((prev) => ({ ...prev, [angle]: dataUrl }));
+        };
+        reader.readAsDataURL(file);
+      });
     setPickerFor(null);
   }
 
@@ -66,7 +119,11 @@ export default function SimulationClient() {
       ANGLES.map(async (a) => {
         const src = photos[a.key];
         if (!src) return { key: a.key, image: null, error: "사진이 없습니다." };
-        const result = await generateFaceLiftPreview(src, a.key);
+        const result = await withTimeout(
+          generateFaceLiftPreview(src, a.key),
+          55000,
+          "시간이 너무 오래 걸려 생성을 중단했어요. 다시 시도해주세요.",
+        );
         if (result.ok) return { key: a.key, image: result.image, error: null };
         return { key: a.key, image: null, error: result.error };
       }),
