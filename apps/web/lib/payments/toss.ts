@@ -251,7 +251,12 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
   // 관리자 알림 이메일 — 실패해도 예약 확정 자체에는 영향 없도록 별도로 처리
   if (startAt && patientObj?.name) {
     const { dateLabel, timeLabel } = formatDateTimeKST(startAt);
-    void sendReservationNotificationEmail({ name: patientObj.name, date: dateLabel, time: timeLabel });
+    void sendReservationNotificationEmail({
+      name: patientObj.name,
+      phone: patientObj.phone ?? "-",
+      date: dateLabel,
+      time: timeLabel,
+    });
   }
 
   return {
