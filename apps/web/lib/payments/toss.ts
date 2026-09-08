@@ -1,6 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isClosedDay } from "@/lib/booking";
+import { sendReservationNotificationEmail } from "@/lib/notifications/email";
 
 const SLOT_DURATION_MIN = 60;
 const PAYMENT_HOLD_MIN = 10;
@@ -247,6 +248,12 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
 
   const whenLabel = startAt ? formatWhenKST(startAt) : "-";
 
+  // 관리자 알림 이메일 — 실패해도 예약 확정 자체에는 영향 없도록 별도로 처리
+  if (startAt && patientObj?.name) {
+    const { dateLabel, timeLabel } = formatDateTimeKST(startAt);
+    void sendReservationNotificationEmail({ name: patientObj.name, date: dateLabel, time: timeLabel });
+  }
+
   return {
     ok: true,
     reservation: {
@@ -264,4 +271,16 @@ function formatWhenKST(iso: string) {
   const hh = String(d.getUTCHours()).padStart(2, "0");
   const mm = String(d.getUTCMinutes()).padStart(2, "0");
   return `${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일(${weekday}) ${hh}:${mm}`;
+}
+
+/** 알림 이메일용으로 날짜와 시간을 따로 뽑는다. */
+function formatDateTimeKST(iso: string) {
+  const d = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000);
+  const weekday = ["일", "월", "화", "수", "목", "금", "토"][d.getUTCDay()];
+  const hh = String(d.getUTCHours()).padStart(2, "0");
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return {
+    dateLabel: `${d.getUTCFullYear()}년 ${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일(${weekday})`,
+    timeLabel: `${hh}:${mm}`,
+  };
 }
