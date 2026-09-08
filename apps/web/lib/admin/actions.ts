@@ -12,7 +12,7 @@ import {
 } from "@/lib/admin/time";
 import { dateKey } from "@/lib/booking";
 
-const SLOT_DURATION_MIN = 60;
+const SLOT_DURATION_MIN = 90;
 // 현재 단일 시술 · 단일 원장 체계이므로 seed.sql의 고정 id를 그대로 사용한다.
 const DOCTOR_ID = "00000000-0000-0000-0000-000000000001";
 

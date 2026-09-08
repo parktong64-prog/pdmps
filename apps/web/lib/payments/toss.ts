@@ -3,7 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { isClosedDay } from "@/lib/booking";
 import { sendReservationNotificationEmail } from "@/lib/notifications/email";
 
-const SLOT_DURATION_MIN = 60;
+const SLOT_DURATION_MIN = 90;
 const PAYMENT_HOLD_MIN = 10;
 const DEPOSIT_AMOUNT = 50000;
 

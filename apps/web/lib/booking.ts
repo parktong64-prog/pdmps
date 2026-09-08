@@ -4,7 +4,8 @@
 // 실제 연동 시 이 파일의 로직은 reservation_slots 테이블 조회로 교체된다.
 
 export const WEEKDAY_LABEL = ["일", "월", "화", "수", "목", "금", "토"];
-export const TIMES = ["10:00", "11:00", "13:00", "14:30", "16:00", "17:30"];
+// 상담 소요시간 확대(1시간 → 1시간 30분)에 맞춰 1시간 30분 간격으로 배치.
+export const TIMES = ["10:00", "11:30", "13:00", "14:30", "16:00"];
 
 // 정기 휴진 외에 병원이 별도로 막아둔 날짜 (공휴일/원장 학회 등)
 export const BLOCKED: Record<string, string> = {
