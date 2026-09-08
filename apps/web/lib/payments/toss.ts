@@ -250,8 +250,10 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
 
   // 관리자 알림 이메일 — 실패해도 예약 확정 자체에는 영향 없도록 별도로 처리
   if (startAt && patientObj?.name) {
+    // Vercel 서버리스 환경에서는 응답을 반환한 뒤 실행 컨텍스트가 바로 정리될 수 있어
+    // await 없이 fire-and-forget으로 보내면 fetch가 끝나기 전에 잘릴 수 있다. 반드시 기다린다.
     const { dateLabel, timeLabel } = formatDateTimeKST(startAt);
-    void sendReservationNotificationEmail({
+    await sendReservationNotificationEmail({
       name: patientObj.name,
       phone: patientObj.phone ?? "-",
       date: dateLabel,
