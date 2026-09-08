@@ -134,7 +134,7 @@ export default function ReservationsPage() {
             예약 가능
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <i className="inline-block h-2 w-2 rounded-[3px] bg-[var(--success-soft)]" />
+            <i className="inline-block h-2 w-2 rounded-[3px] border border-[var(--success)] bg-[var(--success-soft)]" />
             예약됨 (클릭 시 상세)
           </span>
           <span className="inline-flex items-center gap-1.5">
@@ -225,7 +225,9 @@ function WeekGrid({
                   disabled={status === "closed"}
                   onClick={() => status !== "closed" && onSelect(d, time)}
                   className={`min-h-[30px] px-1 py-1 text-[0.68rem] text-center leading-[1.15] ${stripe} ${
-                    status === "booked" ? "bg-[var(--success-soft)] font-bold text-[var(--success)]" : ""
+                    status === "booked"
+                      ? "border border-[var(--success)] bg-[var(--success-soft)] font-bold text-[var(--success)]"
+                      : ""
                   } ${status === "pending" ? "bg-[var(--st-pending-soft)] font-bold text-[var(--st-pending)]" : ""} ${
                     status === "open" ? "text-[var(--ink-faint)] hover:bg-[var(--accent-soft)]" : ""
                   } ${status === "closed" ? "cursor-default text-[var(--ink-faint)]" : "cursor-pointer"} ${
