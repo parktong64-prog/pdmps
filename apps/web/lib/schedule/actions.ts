@@ -7,6 +7,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { TIMES, isClosedDay, dateKey, kstMidnightInstant, kstDateTimeKey } from "@/lib/booking";
 import { blockSlot, reopenSlot } from "@/lib/admin/actions";
+import { expireStaleHeldReservations } from "@/lib/payments/toss";
 
 const DOCTOR_ID = "00000000-0000-0000-0000-000000000001";
 
@@ -15,6 +16,10 @@ export type TimeState = "blocked" | "booked" | "pending";
 /** 지정한 년/월(0-indexed month)의 슬롯 상태 맵. key: `${YYYY-MM-DD}_${HH:mm}`.
  *  "open"은 별도 표시하지 않음 — 맵에 없으면 오픈이라는 뜻. */
 export async function getMonthSlotStates(y: number, m: number): Promise<Record<string, TimeState>> {
+  // 환자/관리자 둘 다 이 함수를 거쳐 달력을 보므로, 방치된 결제 대기 홀드를
+  // 여기서 정리해두면 실제로 비어있는 시간이 "마감"으로 잘못 보이는 일이 없어진다.
+  await expireStaleHeldReservations();
+
   const supabase = createAdminClient();
   // y/m은 브라우저(KST)에서 뽑아낸 달력 날짜이므로, 서버(UTC)에서 그대로
   // new Date(y, m, 1)로 만들면 안 되고 KST 자정 기준 절대 시각으로 변환해야 한다.

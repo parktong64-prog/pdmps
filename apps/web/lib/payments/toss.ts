@@ -38,6 +38,10 @@ export async function createPendingReservation(input: PendingReservationInput): 
     return { ok: false, error: "휴진일에는 예약할 수 없습니다.", status: 409 };
   }
 
+  // 방치된 결제 대기 예약을 먼저 정리해서, 이미 만료된 홀드 때문에
+  // "마감된 시간"으로 잘못 표시되는 일이 없도록 한다.
+  await expireStaleHeldReservations();
+
   const supabase = createAdminClient();
 
   const { data: procedure, error: procedureErr } = await supabase
@@ -170,6 +174,30 @@ export async function cancelPendingReservation(orderId: string) {
   await supabase.from("reservation_slots").update({ status: "open" }).eq("id", reservation.slot_id);
   await supabase.from("consultations").delete().eq("id", reservation.consultation_id);
   return { ok: true };
+}
+
+/**
+ * 결제 없이 방치된 pending_payment 예약(payment_deadline 경과)을 일괄 정리한다.
+ * Vercel Hobby 플랜에서는 짧은 주기의 Cron Job을 쓸 수 없어서, 별도 배치 작업 대신
+ * 예약 슬롯을 조회하는 시점(관리자 화면 로드, 새 예약 시도 등)마다 opportunistic하게
+ * 호출해 만료된 홀드를 그때그때 풀어준다.
+ */
+export async function expireStaleHeldReservations(): Promise<{ expired: number }> {
+  const supabase = createAdminClient();
+  const { data: stale } = await supabase
+    .from("reservations")
+    .select("id, slot_id, consultation_id")
+    .eq("status", "pending_payment")
+    .lt("payment_deadline", new Date().toISOString());
+
+  if (!stale || stale.length === 0) return { expired: 0 };
+
+  for (const r of stale) {
+    await supabase.from("reservations").delete().eq("id", r.id);
+    await supabase.from("reservation_slots").update({ status: "open" }).eq("id", r.slot_id);
+    await supabase.from("consultations").delete().eq("id", r.consultation_id);
+  }
+  return { expired: stale.length };
 }
 
 export type ConfirmResult =

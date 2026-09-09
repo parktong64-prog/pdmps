@@ -11,6 +11,7 @@ import {
   formatDateTimeKST,
 } from "@/lib/admin/time";
 import { kstInstant, kstMidnightInstant, kstDateTimeKey } from "@/lib/booking";
+import { expireStaleHeldReservations } from "@/lib/payments/toss";
 
 const SLOT_DURATION_MIN = 90;
 // 현재 단일 시술 · 단일 원장 체계이므로 seed.sql의 고정 id를 그대로 사용한다.
@@ -154,6 +155,9 @@ export type SlotCell = {
 
 /** weekStartISO(그 주 일요일 00:00 KST 기준 로컬 날짜)부터 7일치 슬롯 맵을 반환. key: `${dateKey}_${time}` */
 export async function getWeekSlots(y: number, m: number, d: number): Promise<Record<string, SlotCell>> {
+  // 결제 대기중 표시가 방치된 홀드 때문에 계속 남아있지 않도록, 조회할 때마다 만료분을 정리한다.
+  await expireStaleHeldReservations();
+
   const supabase = createAdminClient();
   // y/m/d는 브라우저(KST)에서 뽑아낸 달력 날짜이므로, 서버(UTC)에서 그대로
   // new Date(y, m, d)로 만들면 안 되고 KST 자정 기준 절대 시각으로 변환해야 한다.
