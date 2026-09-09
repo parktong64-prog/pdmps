@@ -5,7 +5,7 @@
 // 행이 없으면 "기본 오픈"으로 간주한다 (평일 진료가 기본값이라는 병원 운영 방식과 일치).
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { TIMES, isClosedDay, dateKey } from "@/lib/booking";
+import { TIMES, isClosedDay, dateKey, kstMidnightInstant, kstDateTimeKey } from "@/lib/booking";
 import { blockSlot, reopenSlot } from "@/lib/admin/actions";
 
 const DOCTOR_ID = "00000000-0000-0000-0000-000000000001";
@@ -16,8 +16,10 @@ export type TimeState = "blocked" | "booked" | "pending";
  *  "open"은 별도 표시하지 않음 — 맵에 없으면 오픈이라는 뜻. */
 export async function getMonthSlotStates(y: number, m: number): Promise<Record<string, TimeState>> {
   const supabase = createAdminClient();
-  const start = new Date(y, m, 1);
-  const end = new Date(y, m + 1, 1);
+  // y/m은 브라우저(KST)에서 뽑아낸 달력 날짜이므로, 서버(UTC)에서 그대로
+  // new Date(y, m, 1)로 만들면 안 되고 KST 자정 기준 절대 시각으로 변환해야 한다.
+  const start = kstMidnightInstant(y, m, 1);
+  const end = kstMidnightInstant(y, m + 1, 1);
 
   const { data, error } = await supabase
     .from("reservation_slots")
@@ -31,9 +33,8 @@ export async function getMonthSlotStates(y: number, m: number): Promise<Record<s
   const map: Record<string, TimeState> = {};
   for (const row of data) {
     if (row.status !== "booked" && row.status !== "blocked" && row.status !== "held") continue;
-    const d = new Date(row.start_at as string);
-    const key = `${dateKey(d.getFullYear(), d.getMonth(), d.getDate())}_${d.toTimeString().slice(0, 5)}`;
-    map[key] = (row.status === "held" ? "pending" : row.status) as TimeState;
+    const { dateKey: dk, time } = kstDateTimeKey(row.start_at as string);
+    map[`${dk}_${time}`] = (row.status === "held" ? "pending" : row.status) as TimeState;
   }
   return map;
 }

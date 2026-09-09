@@ -10,7 +10,7 @@ import {
   formatDateDotKST,
   formatDateTimeKST,
 } from "@/lib/admin/time";
-import { dateKey } from "@/lib/booking";
+import { kstInstant, kstMidnightInstant, kstDateTimeKey } from "@/lib/booking";
 
 const SLOT_DURATION_MIN = 90;
 // 현재 단일 시술 · 단일 원장 체계이므로 seed.sql의 고정 id를 그대로 사용한다.
@@ -155,8 +155,10 @@ export type SlotCell = {
 /** weekStartISO(그 주 일요일 00:00 KST 기준 로컬 날짜)부터 7일치 슬롯 맵을 반환. key: `${dateKey}_${time}` */
 export async function getWeekSlots(y: number, m: number, d: number): Promise<Record<string, SlotCell>> {
   const supabase = createAdminClient();
-  const start = new Date(y, m, d, 0, 0, 0);
-  const end = new Date(y, m, d + 7, 0, 0, 0);
+  // y/m/d는 브라우저(KST)에서 뽑아낸 달력 날짜이므로, 서버(UTC)에서 그대로
+  // new Date(y, m, d)로 만들면 안 되고 KST 자정 기준 절대 시각으로 변환해야 한다.
+  const start = kstMidnightInstant(y, m, d);
+  const end = kstMidnightInstant(y, m, d + 7);
 
   const { data, error } = await supabase
     .from("reservation_slots")
@@ -169,10 +171,8 @@ export async function getWeekSlots(y: number, m: number, d: number): Promise<Rec
 
   const map: Record<string, SlotCell> = {};
   for (const row of data) {
-    const localDate = new Date(row.start_at as string);
-    const key = `${dateKey(localDate.getFullYear(), localDate.getMonth(), localDate.getDate())}_${localDate
-      .toTimeString()
-      .slice(0, 5)}`;
+    const { dateKey: dk, time: tk } = kstDateTimeKey(row.start_at as string);
+    const key = `${dk}_${tk}`;
     const resv = row.reservations as unknown as
       | { id: string; status: string; patients: { name: string; phone: string } | { name: string; phone: string }[] | null }
       | { id: string; status: string; patients: { name: string; phone: string } | { name: string; phone: string }[] | null }[]
@@ -205,9 +205,9 @@ export async function getWeekSlots(y: number, m: number, d: number): Promise<Rec
 }
 
 function findSlotDate(dateStr: string, time: string) {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const [hh, mm] = time.split(":").map(Number);
-  const start = new Date(y, m - 1, d, hh, mm, 0);
+  // dateStr/time은 KST 기준 값이므로 kstInstant로 변환한다 — new Date(y, m-1, d, hh, mm)는
+  // 서버(UTC)에서 그 벽시계 값을 UTC로 해석해버려 실제 저장된 시각과 9시간 어긋난다.
+  const start = kstInstant(dateStr, time);
   const end = new Date(start.getTime() + SLOT_DURATION_MIN * 60 * 1000);
   return { start, end };
 }
