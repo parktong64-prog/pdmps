@@ -2,7 +2,38 @@
 
 import { useEffect, useRef, useState } from "react";
 import { getProcedureSettings, updateProcedureSettings, getActiveVideo } from "@/lib/admin/actions";
-import { getProcedureSteps, uploadStepMedia, removeStepMedia, uploadMainVideo, type ProcedureStep } from "@/lib/admin/media";
+import {
+  getProcedureSteps,
+  createUploadTicket,
+  finalizeStepMedia,
+  finalizeMainVideo,
+  removeStepMedia,
+  type ProcedureStep,
+  type StepMediaType,
+} from "@/lib/admin/media";
+import { createClient } from "@/lib/supabase/client";
+
+const MEDIA_BUCKET = "procedure-media";
+
+/** 영상처럼 큰 파일은 서버 함수(약 4.5MB 제한)를 거치지 않고 브라우저 → Supabase Storage로 바로 올린다. */
+async function uploadDirect(
+  file: File,
+  pathPrefix: string,
+): Promise<{ ok: true; path: string; mediaType: StepMediaType } | { ok: false; error: string }> {
+  const ticket = await createUploadTicket({
+    pathPrefix,
+    fileName: file.name,
+    contentType: file.type,
+    size: file.size,
+  });
+  if (!ticket.ok) return { ok: false, error: ticket.error };
+
+  const supabase = createClient();
+  const { error } = await supabase.storage.from(MEDIA_BUCKET).uploadToSignedUrl(ticket.path, ticket.token, file);
+  if (error) return { ok: false, error: "업로드에 실패했습니다." };
+
+  return { ok: true, path: ticket.path, mediaType: ticket.mediaType };
+}
 
 type Stab = "procedure" | "templates" | "videos" | "steps";
 const TABS: { key: Stab; label: string }[] = [
@@ -286,11 +317,14 @@ function VideosTab() {
     setUploading(true);
     setError(null);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const result = await uploadMainVideo(fd);
+      const uploaded = await uploadDirect(file, "intro/main-video");
+      if (!uploaded.ok) {
+        setError(uploaded.error);
+        return;
+      }
+      const result = await finalizeMainVideo(uploaded.path, file.name);
       if (!result.ok) {
-        setError(result.error ?? "업로드에 실패했습니다.");
+        setError(result.error ?? "저장에 실패했습니다.");
         return;
       }
       reload();
@@ -364,11 +398,14 @@ function StepsTab() {
     setUploadingId(stepId);
     setError(null);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const result = await uploadStepMedia(stepId, fd);
+      const uploaded = await uploadDirect(file, `steps/${stepId}`);
+      if (!uploaded.ok) {
+        setError(uploaded.error);
+        return;
+      }
+      const result = await finalizeStepMedia(stepId, uploaded.path, uploaded.mediaType);
       if (!result.ok) {
-        setError(result.error ?? "업로드에 실패했습니다.");
+        setError(result.error ?? "저장에 실패했습니다.");
         return;
       }
       reload();
