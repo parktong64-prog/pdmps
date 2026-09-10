@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { loadTossPayments } from "@tosspayments/payment-sdk";
 
-type FieldErrors = { name?: string; phone?: string; email?: string; consent?: string };
+type FieldErrors = { name?: string; phone?: string; consent?: string };
 type Step = "form" | "payment";
 
 function formatPhone(value: string) {
@@ -23,7 +23,6 @@ function CheckoutForm() {
   const [step, setStep] = useState<Step>("form");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
   const [consent, setConsent] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -34,9 +33,6 @@ function CheckoutForm() {
     if (!name.trim()) next.name = "이름을 입력해주세요.";
     if (!/^01[016789]-\d{3,4}-\d{4}$/.test(phone.trim())) {
       next.phone = "010-1234-5678 형식으로 입력해주세요.";
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
-      next.email = "올바른 이메일 주소를 입력해주세요.";
     }
     if (!consent) next.consent = "개인정보 수집·이용에 동의해주세요.";
     setErrors(next);
@@ -58,7 +54,7 @@ function CheckoutForm() {
       const res = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: name.trim(), phone: phone.trim(), email: email.trim(), date, time }),
+        body: JSON.stringify({ name: name.trim(), phone: phone.trim(), date, time }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data?.error || "예약 처리 중 문제가 발생했습니다.");
@@ -142,27 +138,6 @@ function CheckoutForm() {
                   />
                   <div className="flex min-h-[1.1em] items-center gap-1.5 text-[0.74rem] text-[var(--danger)]">
                     {errors.phone}
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label htmlFor="f-email" className="text-[0.8rem] font-bold">
-                    이메일<span className="ml-0.5 text-[var(--accent)]">*</span>
-                  </label>
-                  <input
-                    id="f-email"
-                    type="email"
-                    placeholder="name@example.com"
-                    autoComplete="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    aria-invalid={!!errors.email}
-                    className={`rounded-[9px] border px-[13px] py-[11px] text-[0.92rem] outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--focus-ring)] ${
-                      errors.email ? "border-[var(--danger)]" : "border-[var(--line)]"
-                    }`}
-                  />
-                  <div className="flex min-h-[1.1em] items-center gap-1.5 text-[0.74rem] text-[var(--danger)]">
-                    {errors.email}
                   </div>
                 </div>
 

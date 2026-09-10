@@ -43,9 +43,6 @@ export default async function CheckoutSuccessPage({
                 <b className="font-semibold text-[var(--ink)]">전화번호</b> · {reservation.phone}
               </div>
               <div>
-                <b className="font-semibold text-[var(--ink)]">이메일</b> · {reservation.email}
-              </div>
-              <div>
                 <b className="font-semibold text-[var(--ink)]">일시</b> · {reservation.when} · Face Lift
               </div>
             </div>

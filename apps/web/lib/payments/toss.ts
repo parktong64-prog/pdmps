@@ -10,7 +10,6 @@ const DEPOSIT_AMOUNT = 50000;
 export type PendingReservationInput = {
   name: string;
   phone: string;
-  email: string;
   date: string; // YYYY-MM-DD
   time: string; // HH:mm
 };
@@ -25,7 +24,7 @@ export type PendingReservationResult =
  * 결제 실패/이탈 시 cancelPendingReservation으로 되돌린다.
  */
 export async function createPendingReservation(input: PendingReservationInput): Promise<PendingReservationResult> {
-  const { name, phone, email, date, time } = input;
+  const { name, phone, date, time } = input;
 
   const startAt = new Date(`${date}T${time}:00+09:00`);
   if (Number.isNaN(startAt.getTime())) {
@@ -79,9 +78,10 @@ export async function createPendingReservation(input: PendingReservationInput): 
     return { ok: false, error: "예약할 수 없는 시간입니다. 다른 시간을 선택해주세요.", status: 409 };
   }
 
+  // email은 더 이상 입력받지 않는다 — upsert 대상에서 빼서 기존 환자의 이메일 기록은 그대로 둔다.
   const { data: patient, error: patientErr } = await supabase
     .from("patients")
-    .upsert({ name, phone, email }, { onConflict: "phone" })
+    .upsert({ name, phone }, { onConflict: "phone" })
     .select("id")
     .single();
   if (patientErr || !patient) {
@@ -203,7 +203,7 @@ export async function expireStaleHeldReservations(): Promise<{ expired: number }
 export type ConfirmResult =
   | {
       ok: true;
-      reservation: { name: string; phone: string; email: string; when: string };
+      reservation: { name: string; phone: string; when: string };
     }
   | { ok: false; error: string };
 
@@ -216,7 +216,7 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
 
   const { data: reservation } = await supabase
     .from("reservations")
-    .select("id, slot_id, consultation_id, patient_id, status, reservation_slots(start_at), patients(name, phone, email)")
+    .select("id, slot_id, consultation_id, patient_id, status, reservation_slots(start_at), patients(name, phone)")
     .eq("id", params.orderId)
     .maybeSingle();
 
@@ -271,7 +271,7 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
 
   const slot = reservation.reservation_slots as unknown as { start_at: string } | { start_at: string }[] | null;
   const startAt = Array.isArray(slot) ? slot[0]?.start_at : slot?.start_at;
-  const patient = reservation.patients as unknown as { name: string; phone: string; email: string } | { name: string; phone: string; email: string }[] | null;
+  const patient = reservation.patients as unknown as { name: string; phone: string } | { name: string; phone: string }[] | null;
   const patientObj = Array.isArray(patient) ? patient[0] : patient;
 
   const whenLabel = startAt ? formatWhenKST(startAt) : "-";
@@ -294,7 +294,6 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
     reservation: {
       name: patientObj?.name ?? "-",
       phone: patientObj?.phone ?? "-",
-      email: patientObj?.email ?? "-",
       when: whenLabel,
     },
   };
