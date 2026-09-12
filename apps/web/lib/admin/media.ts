@@ -3,7 +3,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const BUCKET = "procedure-media";
-const MAX_SIZE = 50 * 1024 * 1024; // 50MB (버킷 설정과 동일)
+const MAX_SIZE = 100 * 1024 * 1024; // 100MB (버킷 설정과 동일)
 
 const EXT_BY_TYPE: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -60,7 +60,7 @@ export async function createUploadTicket(params: {
 }) {
   const { pathPrefix, fileName, contentType, size } = params;
   if (!size || size <= 0) return { ok: false as const, error: "파일을 선택해주세요." };
-  if (size > MAX_SIZE) return { ok: false as const, error: "파일 용량은 50MB 이하만 가능합니다." };
+  if (size > MAX_SIZE) return { ok: false as const, error: "파일 용량은 100MB 이하만 가능합니다." };
 
   const mediaType = mediaTypeFromContentType(contentType);
   if (!mediaType) return { ok: false as const, error: "이미지 또는 동영상 파일만 업로드할 수 있습니다." };
