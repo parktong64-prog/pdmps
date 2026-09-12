@@ -2,6 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isClosedDay } from "@/lib/booking";
 import { sendReservationNotificationEmail } from "@/lib/notifications/email";
+import { sendReservationConfirmedAlimtalk } from "@/lib/notifications/alimtalk";
 
 const SLOT_DURATION_MIN = 90;
 const PAYMENT_HOLD_MIN = 10;
@@ -259,14 +260,6 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
       paid_at: new Date().toISOString(),
     });
 
-    await supabase.from("notifications").insert({
-      reservation_id: reservation.id,
-      consultation_id: reservation.consultation_id,
-      recipient_patient_id: reservation.patient_id,
-      channel: "alimtalk",
-      template_key: "reservation_confirmed",
-      status: "queued",
-    });
   }
 
   const slot = reservation.reservation_slots as unknown as { start_at: string } | { start_at: string }[] | null;
@@ -276,7 +269,7 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
 
   const whenLabel = startAt ? formatWhenKST(startAt) : "-";
 
-  // 관리자 알림 이메일 — 실패해도 예약 확정 자체에는 영향 없도록 별도로 처리
+  // 관리자 알림 이메일 · 환자 알림톡 — 실패해도 예약 확정 자체에는 영향 없도록 별도로 처리
   if (startAt && patientObj?.name) {
     // Vercel 서버리스 환경에서는 응답을 반환한 뒤 실행 컨텍스트가 바로 정리될 수 있어
     // await 없이 fire-and-forget으로 보내면 fetch가 끝나기 전에 잘릴 수 있다. 반드시 기다린다.
@@ -287,6 +280,26 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
       date: dateLabel,
       time: timeLabel,
     });
+
+    if (patientObj.phone) {
+      const alimtalkResult = await sendReservationConfirmedAlimtalk({
+        phone: patientObj.phone,
+        date: dateLabel,
+        time: timeLabel,
+      });
+      await supabase.from("notifications").insert({
+        reservation_id: reservation.id,
+        consultation_id: reservation.consultation_id,
+        recipient_patient_id: reservation.patient_id,
+        channel: "alimtalk",
+        template_key: "reservation_confirmed",
+        status: alimtalkResult.ok ? "sent" : "failed",
+        sent_at: alimtalkResult.ok ? new Date().toISOString() : null,
+      });
+      if (!alimtalkResult.ok) {
+        console.error("알림톡 발송 실패:", alimtalkResult.error);
+      }
+    }
   }
 
   return {
