@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { ProcedureStep } from "@/lib/admin/media";
 
 const STORAGE_KEY = "faceLiftVideoWatched";
 
@@ -12,7 +11,7 @@ type VideoInfo = {
   video_url: string | null;
 } | null;
 
-export default function ConsultClient({ video, steps }: { video: VideoInfo; steps: ProcedureStep[] }) {
+export default function ConsultClient({ video }: { video: VideoInfo }) {
   const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(false);
@@ -192,70 +191,19 @@ export default function ConsultClient({ video, steps }: { video: VideoInfo; step
           )}
         </div>
 
-        {/* 진행 과정 */}
-        <h2 className="mb-[18px] font-[family-name:var(--font-display)] text-[1.15rem] font-bold">
-          진행 과정
-        </h2>
-        <ol className="mb-9 list-none p-0">
-          {steps.map((step, i) => (
-            <li
-              key={step.id}
-              className={`grid grid-cols-[34px_1fr] gap-3.5 py-4 ${
-                i < steps.length - 1 ? "border-b border-[var(--line)]" : ""
-              }`}
-            >
-              <span className="flex h-[30px] w-[30px] items-center justify-center rounded-full bg-[var(--accent-soft)] font-[family-name:var(--font-mono-kr)] text-[0.82rem] font-semibold text-[var(--accent-ink)]">
-                {step.step_order}
-              </span>
-              <div>
-                <h3 className="mb-1 text-[0.92rem] font-bold">{step.title}</h3>
-                <p className="text-[0.82rem] leading-[1.65] text-[var(--ink-soft)]">{step.description}</p>
-                {step.media_url &&
-                  (step.media_type === "video" ? (
-                    <video src={step.media_url} controls playsInline className="mt-2.5 w-full max-w-[280px] rounded-lg bg-black" />
-                  ) : (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={step.media_url}
-                      alt={step.title}
-                      className="mt-2.5 w-full max-w-[280px] rounded-lg object-cover"
-                    />
-                  ))}
-              </div>
-            </li>
-          ))}
-        </ol>
-
-        {/* 안내 사항 */}
-        <div className="mb-8 flex gap-2.5 rounded-xl bg-[var(--warn-soft)] px-4 py-3.5 text-[0.78rem] leading-[1.65] text-[var(--warn-ink)]">
-          <span>⚠</span>
-          <span>
-            <b className="text-[var(--ink)]">안내 사항.</b> 위 내용은 Face Lift(안면거상술)의
-            일반적인 진행 과정을 설명한 것으로, 실제 절개 범위·마취 방법·회복 기간은 개인의 얼굴
-            구조와 상태에 따라 달라지며 방문 상담을 통해 원장이 최종 결정합니다.
-          </span>
-        </div>
-
         {/* CTA */}
         <div className="flex flex-col gap-2.5">
           <button
             type="button"
             disabled={!watched}
-            onClick={() => router.push("/consult/simulation")}
+            onClick={() => router.push("/consult/steps")}
             className="rounded-[10px] bg-[var(--accent)] py-3.5 text-center text-[0.92rem] font-bold text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-45"
           >
-            다음 · AI 시뮬레이션 보기
+            다음 · 진행 과정 보기
           </button>
           <span className="text-center text-[0.72rem] text-[var(--ink-soft)]">
             {watched ? "시청이 완료되었습니다" : "영상을 재생하면 다음 단계로 진행할 수 있어요"}
           </span>
-          <button
-            type="button"
-            onClick={() => router.push("/consult/schedule")}
-            className="text-center text-[0.78rem] text-[var(--ink-soft)] underline underline-offset-2 hover:text-[var(--accent-ink)]"
-          >
-            AI 시뮬레이션 생략하고 상담 예약하기
-          </button>
         </div>
       </div>
     </div>
