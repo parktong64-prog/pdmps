@@ -89,6 +89,7 @@ function ProcedureTab() {
   const [priceInput, setPriceInput] = useState("");
   const [depositInput, setDepositInput] = useState("");
   const [showToast, setShowToast] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -109,10 +110,15 @@ function ProcedureTab() {
   async function handleSave() {
     if (!id) return;
     setSaving(true);
+    setErrorMsg(null);
     try {
       const base_price = Number(priceInput.replace(/\D/g, "")) || 0;
       const deposit_amount = Number(depositInput.replace(/\D/g, "")) || 0;
-      await updateProcedureSettings({ id, name, base_price, deposit_amount, is_active: active });
+      const result = await updateProcedureSettings({ id, name, base_price, deposit_amount, is_active: active });
+      if (!result.ok) {
+        setErrorMsg(result.error ?? "저장에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        return;
+      }
       setPriceInput(fmt(base_price));
       setDepositInput(fmt(deposit_amount));
       setShowToast(true);
@@ -181,6 +187,11 @@ function ProcedureTab() {
           저장되었습니다
         </span>
       </div>
+      {errorMsg && (
+        <div className="rounded-lg bg-[var(--warn-soft)] px-3 py-2.5 text-[0.78rem] font-semibold text-[var(--warn-ink)]">
+          저장 실패: {errorMsg}
+        </div>
+      )}
     </div>
   );
 }
