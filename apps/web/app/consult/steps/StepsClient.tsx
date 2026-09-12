@@ -71,13 +71,19 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
           </p>
         </div>
 
-        {/* 진행 표시 */}
+        {/* 진행 표시 — 각 막대를 눌러 해당 단계로 바로 이동 */}
         <div className="mb-6 flex items-center justify-center gap-2">
           {steps.map((s, i) => (
-            <span
+            <button
               key={s.id}
+              type="button"
+              aria-label={`${i + 1}단계 · ${s.title}`}
+              onClick={() => {
+                setIndex(i);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              }}
               className={`h-1.5 flex-1 rounded-full transition-colors ${
-                i <= index ? "bg-[var(--accent)]" : "bg-[var(--line)]"
+                i <= index ? "bg-[var(--accent)]" : "bg-[var(--line)] hover:bg-[var(--accent-soft)]"
               }`}
             />
           ))}
