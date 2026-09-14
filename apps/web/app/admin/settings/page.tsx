@@ -30,7 +30,7 @@ async function uploadDirect(
 
   const supabase = createClient();
   const { error } = await supabase.storage.from(MEDIA_BUCKET).uploadToSignedUrl(ticket.path, ticket.token, file);
-  if (error) return { ok: false, error: "업로드에 실패했습니다." };
+  if (error) return { ok: false, error: `업로드에 실패했습니다: ${error.message}` };
 
   return { ok: true, path: ticket.path, mediaType: ticket.mediaType };
 }
