@@ -13,6 +13,7 @@
     "@supabase/supabase-js": "^2.115.0",
     "@tosspayments/payment-sdk": "^1.9.3",
     "next": "16.3.4",
+    "posthog-js": "^1.433.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "server-only": "^0.0.1"

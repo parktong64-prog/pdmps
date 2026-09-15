@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR, Noto_Serif_KR, IBM_Plex_Mono } from "next/font/google";
+import { PostHogInit } from "@/lib/posthog/PostHogInit";
 import "./globals.css";
 
 const notoSansKR = Noto_Sans_KR({
@@ -50,7 +51,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="ko"
       className={`${notoSansKR.variable} ${notoSerifKR.variable} ${ibmPlexMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <PostHogInit />
+        {children}
+      </body>
     </html>
   );
 }

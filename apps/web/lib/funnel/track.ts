@@ -1,5 +1,7 @@
 "use client";
 
+import { trackPostHogEvent } from "@/lib/posthog/client";
+
 const VISITOR_KEY = "pdmpsVisitorId";
 
 /** 이 브라우저(방문자)를 구분하는 익명 ID. 개인정보는 담지 않는다. */
@@ -34,6 +36,11 @@ export function trackFunnelEvent(event: string) {
     sessionStorage.setItem(dedupeKey, "1");
 
     const sessionId = getVisitorId();
+
+    // PostHog에도 같은 이름으로 남겨서 나중에 Funnel 인사이트를 그대로 만들 수 있게 한다.
+    // (개발 환경에서는 posthog가 초기화되지 않아 여기서 조용히 무시된다.)
+    trackPostHogEvent(event, { session_id: sessionId });
+
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     if (!url || !key) return;
