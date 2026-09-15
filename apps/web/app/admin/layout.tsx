@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { markAdminBrowserAndOptOut } from "@/lib/posthog/client";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "대시보드 홈" },
@@ -18,6 +20,13 @@ const NAV_ITEMS = [
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+
+  // 환자 화면을 보다가 관리자 페이지로 들어온 경우 — 지금부터 이 브라우저의
+  // PostHog 추적을 끄고, 다음 방문부터는 아예 초기화되지 않게 표시해둔다.
+  // (환자 방문 통계에 원장님 본인의 관리자 사용이 섞이지 않도록.)
+  useEffect(() => {
+    markAdminBrowserAndOptOut();
+  }, []);
 
   async function handleLogout() {
     const supabase = createClient();
