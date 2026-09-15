@@ -78,8 +78,11 @@ export async function sendAlimtalk(input: {
     // 형식을 확신할 수 없는 응답은(필드 없음/파싱 실패) 기존처럼 성공으로 처리한다 —
     // 여기서 잘못 실패 처리하면 정상 발송건까지 재시도/오탐 처리될 수 있어서다.
     try {
-      const body = JSON.parse(bodyText) as { statusCode?: string };
-      if (body.statusCode && !body.statusCode.startsWith("2")) {
+      const body = JSON.parse(bodyText) as { statusCode?: string | number };
+      // statusCode가 문자열("2000")인지 숫자(2000)인지 문서상 확신할 수 없어 String()으로
+      // 통일한다 — 타입을 잘못 가정해 .startsWith에서 예외가 나면 catch에 조용히 삼켜져
+      // 이 실패 감지 자체가 무력화되므로, 어떤 타입이 와도 죽지 않게 만든다.
+      if (body.statusCode !== undefined && !String(body.statusCode).startsWith("2")) {
         return { ok: false, error: `알림톡 발송 실패 (statusCode ${body.statusCode}) ${bodyText.slice(0, 300)}` };
       }
     } catch {

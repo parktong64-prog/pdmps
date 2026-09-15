@@ -246,26 +246,36 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
     }
     const payment = await res.json();
 
-    const { error: updateErr } = await supabase
+    // status='pending_payment' 조건을 업데이트 자체에 걸어 원자적으로(compare-and-swap)
+    // 처리한다. 토스 웹훅과 브라우저 리다이렉트가 거의 동시에 들어와도 실제로 행을
+    // pending_payment→confirmed로 바꾼 요청만 아래 부수효과(슬롯 예약·결제 기록·알림)를
+    // 수행하게 되어, 경쟁 상태에서 알림톡이 중복 발송되는 걸 막는다.
+    const { data: updated, error: updateErr } = await supabase
       .from("reservations")
       .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
-      .eq("id", reservation.id);
+      .eq("id", reservation.id)
+      .eq("status", "pending_payment")
+      .select("id");
     if (updateErr) return { ok: false, error: "예약 확정 처리에 실패했습니다." };
 
-    await supabase.from("reservation_slots").update({ status: "booked" }).eq("id", reservation.slot_id);
+    if (updated && updated.length > 0) {
+      await supabase.from("reservation_slots").update({ status: "booked" }).eq("id", reservation.slot_id);
 
-    await supabase.from("payments").insert({
-      reservation_id: reservation.id,
-      type: "deposit",
-      amount: params.amount,
-      pg_provider: "toss",
-      pg_transaction_id: payment.paymentKey ?? params.paymentKey,
-      status: "paid",
-      refundable: false,
-      paid_at: new Date().toISOString(),
-    });
+      await supabase.from("payments").insert({
+        reservation_id: reservation.id,
+        type: "deposit",
+        amount: params.amount,
+        pg_provider: "toss",
+        pg_transaction_id: payment.paymentKey ?? params.paymentKey,
+        status: "paid",
+        refundable: false,
+        paid_at: new Date().toISOString(),
+      });
 
-    justConfirmed = true;
+      justConfirmed = true;
+    }
+    // updated가 비어 있으면 동시에 들어온 다른 요청이 먼저 확정 처리를 마친 것 —
+    // 이미 확정된 요청과 동일하게 취급하고(justConfirmed=false) 성공으로 응답한다.
   }
 
   const slot = reservation.reservation_slots as unknown as { start_at: string } | { start_at: string }[] | null;
