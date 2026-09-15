@@ -21,7 +21,7 @@ const ibmPlexMono = IBM_Plex_Mono({
   weight: ["500"],
 });
 
-const SITE_URL = "https://pdmps-hazel.vercel.app";
+const SITE_URL = "https://booking.parkdongman.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
