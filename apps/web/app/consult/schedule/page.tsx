@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay } from "@/lib/booking";
 import { getMonthSlotStates, type TimeState } from "@/lib/schedule/actions";
+import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
 
 const now = new Date();
 // 병원이 예약을 열어둔 기간: 이번 달부터 2개월 뒤까지
@@ -26,6 +27,7 @@ function dayStatus(y: number, m: number, d: number, slotStates: Record<string, T
 type Selected = { y: number; m: number; d: number; key: string; weekday: string; time: string | null };
 
 export default function SchedulePage() {
+  useFunnelTrack("schedule");
   const router = useRouter();
   const [monthIndex, setMonthIndex] = useState(0);
   const [selected, setSelected] = useState<Selected | null>(null);

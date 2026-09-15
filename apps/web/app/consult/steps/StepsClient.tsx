@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProcedureStep } from "@/lib/admin/media";
+import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
 
 export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
+  useFunnelTrack("steps");
   const router = useRouter();
   const [index, setIndex] = useState(0);
 

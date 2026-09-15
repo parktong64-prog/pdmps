@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "대시보드 홈" },
+  { href: "/admin/stats", label: "통계" },
   { href: "/admin/consultations", label: "상담 관리" },
   { href: "/admin/reservations", label: "예약 관리" },
   { href: "/admin/schedule", label: "일정 설정" },

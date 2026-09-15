@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
 
 type ConcernKey = "nasolabial" | "jawline" | "neck";
 
@@ -30,6 +31,7 @@ const CHIPS: { key: ConcernKey; label: string }[] = [
 ];
 
 export default function HomeClient({ basePrice }: { basePrice: number }) {
+  useFunnelTrack("home");
   const [active, setActive] = useState<ConcernKey>("nasolabial");
   const concern = CONCERNS[active];
 

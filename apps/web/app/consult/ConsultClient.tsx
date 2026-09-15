@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
 
 const STORAGE_KEY = "faceLiftVideoWatched";
 
@@ -12,6 +13,7 @@ type VideoInfo = {
 } | null;
 
 export default function ConsultClient({ video }: { video: VideoInfo }) {
+  useFunnelTrack("intro_video");
   const router = useRouter();
   const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(false);

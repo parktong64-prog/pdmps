@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { generateFaceLiftPreview, type SimulationAngle as Angle } from "@/lib/simulation/generate";
+import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
 
 const ANGLES: { key: Angle; label: string; hint: string }[] = [
   { key: "left", label: "좌측면", hint: "45˚ 측면" },
@@ -61,6 +62,7 @@ function withTimeout<T>(promise: Promise<T>, ms: number, timeoutError: string): 
 }
 
 export default function SimulationClient() {
+  useFunnelTrack("simulation");
   const router = useRouter();
   const [view, setView] = useState<View>("upload");
   const [photos, setPhotos] = useState<Record<Angle, string | null>>({

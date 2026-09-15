@@ -9,6 +9,7 @@ import {
   currentMonthRangeKST,
   formatDateDotKST,
   formatDateTimeKST,
+  kstMidnightUTC,
 } from "@/lib/admin/time";
 import { kstInstant, kstMidnightInstant, kstDateTimeKey } from "@/lib/booking";
 import { expireStaleHeldReservations } from "@/lib/payments/toss";
@@ -571,4 +572,72 @@ export async function updateVideoTitle(id: string, title: string) {
   const supabase = createAdminClient();
   const { error } = await supabase.from("procedure_videos").update({ title }).eq("id", id);
   return { ok: !error, error: error?.message };
+}
+
+// ───────────────────────── 통계 · 퍼널 ─────────────────────────
+
+const FUNNEL_STAGE_META: { key: string; label: string }[] = [
+  { key: "home", label: "홈 화면 방문" },
+  { key: "intro_video", label: "수술 방법 안내 시청" },
+  { key: "steps", label: "진행 과정 확인" },
+  { key: "simulation", label: "AI 시뮬레이션" },
+  { key: "schedule", label: "예약 일정 선택" },
+  { key: "reservation_created", label: "예약 신청(결제 화면 진입)" },
+  { key: "payment_confirmed", label: "예약금 결제 완료" },
+];
+
+export type FunnelStage = { key: string; label: string; count: number; pct: number };
+
+/**
+ * 주어진 기간(KST 기준, from~to 둘 다 포함) 동안 방문자가 각 단계까지
+ * 얼마나 왔는지 집계한다. home 단계 방문자 수를 100%로 두고 나머지를 비율로 보여준다.
+ * home~schedule은 익명 방문 추적(funnel_events), 예약 신청/결제 완료는 실제 reservations
+ * 테이블 기준이다.
+ */
+export async function getFunnelStats(fromDate: string, toDate: string): Promise<FunnelStage[]> {
+  const supabase = createAdminClient();
+
+  const [fy, fm, fd] = fromDate.split("-").map(Number);
+  const [ty, tm, td] = toDate.split("-").map(Number);
+  const start = kstMidnightUTC(fy, fm - 1, fd);
+  const end = kstMidnightUTC(ty, tm - 1, td + 1); // to일 끝까지 포함(다음날 0시 미만)
+
+  const counts: Record<string, number> = {};
+
+  const { data: events } = await supabase
+    .from("funnel_events")
+    .select("session_id, event")
+    .gte("created_at", start.toISOString())
+    .lt("created_at", end.toISOString());
+
+  const byEvent = new Map<string, Set<string>>();
+  for (const row of events ?? []) {
+    if (!byEvent.has(row.event)) byEvent.set(row.event, new Set());
+    byEvent.get(row.event)!.add(row.session_id);
+  }
+  for (const key of ["home", "intro_video", "steps", "simulation", "schedule"]) {
+    counts[key] = byEvent.get(key)?.size ?? 0;
+  }
+
+  const { data: reservations } = await supabase
+    .from("reservations")
+    .select("patient_id, status")
+    .gte("created_at", start.toISOString())
+    .lt("created_at", end.toISOString());
+
+  const createdPatients = new Set<string>();
+  const confirmedPatients = new Set<string>();
+  for (const r of reservations ?? []) {
+    createdPatients.add(r.patient_id);
+    if (r.status === "confirmed") confirmedPatients.add(r.patient_id);
+  }
+  counts.reservation_created = createdPatients.size;
+  counts.payment_confirmed = confirmedPatients.size;
+
+  const base = counts.home || Math.max(...Object.values(counts), 1);
+
+  return FUNNEL_STAGE_META.map((s) => {
+    const count = counts[s.key] ?? 0;
+    return { key: s.key, label: s.label, count, pct: base > 0 ? Math.round((count / base) * 1000) / 10 : 0 };
+  });
 }
