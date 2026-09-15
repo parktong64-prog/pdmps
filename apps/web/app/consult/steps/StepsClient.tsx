@@ -1,26 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProcedureStep } from "@/lib/admin/media";
-
-const VIDEO_WATCHED_KEY = "faceLiftVideoWatched";
 
 export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
   const router = useRouter();
   const [index, setIndex] = useState(0);
-
-  useEffect(() => {
-    // 영상 시청 전에 이 화면으로 바로 들어온 경우 안내 화면으로 되돌린다.
-    try {
-      if (localStorage.getItem(VIDEO_WATCHED_KEY) !== "1") {
-        router.replace("/consult");
-      }
-    } catch {
-      // localStorage 접근 불가 시에는 그냥 진행하게 둔다.
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   if (steps.length === 0) {
     return (

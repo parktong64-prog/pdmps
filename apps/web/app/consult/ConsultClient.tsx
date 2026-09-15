@@ -195,14 +195,13 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
         <div className="flex flex-col gap-2.5">
           <button
             type="button"
-            disabled={!watched}
             onClick={() => router.push("/consult/steps")}
-            className="rounded-[10px] bg-[var(--accent)] py-3.5 text-center text-[0.92rem] font-bold text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-45"
+            className="rounded-[10px] bg-[var(--accent)] py-3.5 text-center text-[0.92rem] font-bold text-white transition-[filter,opacity] hover:brightness-[1.06]"
           >
             다음 · 진행 과정 보기
           </button>
           <span className="text-center text-[0.72rem] text-[var(--ink-soft)]">
-            {watched ? "시청이 완료되었습니다" : "영상을 재생하면 다음 단계로 진행할 수 있어요"}
+            {watched ? "시청이 완료되었습니다" : "영상을 끝까지 보지 않아도 다음 단계로 진행할 수 있어요"}
           </span>
         </div>
       </div>
