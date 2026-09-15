@@ -64,12 +64,28 @@ export async function sendAlimtalk(input: {
           },
         },
       }),
+      // Solapi가 응답하지 않으면 예약 확정 페이지 자체가 멈춰버리므로 상한을 둔다.
+      signal: AbortSignal.timeout(8000),
     });
 
+    const bodyText = await res.text().catch(() => "");
+
     if (!res.ok) {
-      const detail = await res.text().catch(() => "");
-      return { ok: false, error: `알림톡 발송 실패 (${res.status}) ${detail.slice(0, 300)}` };
+      return { ok: false, error: `알림톡 발송 실패 (${res.status}) ${bodyText.slice(0, 300)}` };
     }
+
+    // HTTP 200이어도 메시지 자체는 거절됐을 수 있어 응답 바디의 statusCode도 확인한다.
+    // 형식을 확신할 수 없는 응답은(필드 없음/파싱 실패) 기존처럼 성공으로 처리한다 —
+    // 여기서 잘못 실패 처리하면 정상 발송건까지 재시도/오탐 처리될 수 있어서다.
+    try {
+      const body = JSON.parse(bodyText) as { statusCode?: string };
+      if (body.statusCode && !body.statusCode.startsWith("2")) {
+        return { ok: false, error: `알림톡 발송 실패 (statusCode ${body.statusCode}) ${bodyText.slice(0, 300)}` };
+      }
+    } catch {
+      // JSON이 아니면 판단할 수 없으니 그냥 성공으로 둔다.
+    }
+
     return { ok: true };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? `알림톡 발송 중 오류: ${err.message}` : "알림톡 발송 중 오류" };

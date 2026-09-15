@@ -223,6 +223,10 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
     .maybeSingle();
 
   if (!reservation) return { ok: false, error: "예약 정보를 찾을 수 없습니다." };
+  // 알림(이메일·알림톡)은 '방금 새로 확정된' 경우에만 보낸다 — 아래에서 이 요청이
+  // 실제로 결제를 승인한 최초 호출인지 표시해둔다. 그렇지 않으면 성공 페이지를
+  // 새로고침하거나 토스 콜백이 중복으로 와도 매번 알림톡이 다시 나간다.
+  let justConfirmed = false;
   if (reservation.status === "confirmed") {
     // 이미 확정 처리된 요청(중복 콜백 등) — 성공으로 응답
   } else if (reservation.status !== "pending_payment") {
@@ -261,6 +265,7 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
       paid_at: new Date().toISOString(),
     });
 
+    justConfirmed = true;
   }
 
   const slot = reservation.reservation_slots as unknown as { start_at: string } | { start_at: string }[] | null;
@@ -270,8 +275,11 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
 
   const whenLabel = startAt ? formatWhenKST(startAt) : "-";
 
-  // 관리자 알림 이메일 · 환자 알림톡 — 실패해도 예약 확정 자체에는 영향 없도록 별도로 처리
-  if (startAt && patientObj?.name) {
+  // 관리자 알림 이메일 · 환자 알림톡 — 이번 호출로 '방금 새로 확정된' 경우에만 보낸다.
+  // (성공 페이지 새로고침, 토스 콜백 중복 등으로 confirmTossPayment가 다시 호출돼도
+  // justConfirmed가 false라 알림이 중복으로 나가지 않는다.) 실패해도 예약 확정
+  // 자체에는 영향 없도록 별도로 처리한다.
+  if (justConfirmed && startAt && patientObj?.name) {
     // Vercel 서버리스 환경에서는 응답을 반환한 뒤 실행 컨텍스트가 바로 정리될 수 있어
     // await 없이 fire-and-forget으로 보내면 fetch가 끝나기 전에 잘릴 수 있다. 반드시 기다린다.
     const { dateLabel, timeLabel } = formatDateTimeKST(startAt);
@@ -283,24 +291,27 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
     //   time: timeLabel,
     // });
 
-    if (patientObj.phone) {
-      const alimtalkResult = await sendReservationConfirmedAlimtalk({
-        phone: patientObj.phone,
-        date: dateLabel,
-        time: timeLabel,
-      });
-      await supabase.from("notifications").insert({
-        reservation_id: reservation.id,
-        consultation_id: reservation.consultation_id,
-        recipient_patient_id: reservation.patient_id,
-        channel: "alimtalk",
-        template_key: "reservation_confirmed",
-        status: alimtalkResult.ok ? "sent" : "failed",
-        sent_at: alimtalkResult.ok ? new Date().toISOString() : null,
-      });
-      if (!alimtalkResult.ok) {
-        console.error("알림톡 발송 실패:", alimtalkResult.error);
-      }
+    const alimtalkResult = patientObj.phone
+      ? await sendReservationConfirmedAlimtalk({
+          phone: patientObj.phone,
+          date: dateLabel,
+          time: timeLabel,
+        })
+      : { ok: false as const, error: "환자 전화번호가 없어 알림톡을 보낼 수 없습니다." };
+
+    // 전화번호가 없어 시도조차 못한 경우도 기록을 남긴다 — 그래야 나중에
+    // '왜 알림톡이 안 갔는지' 이 표만 보고 알 수 있다.
+    await supabase.from("notifications").insert({
+      reservation_id: reservation.id,
+      consultation_id: reservation.consultation_id,
+      recipient_patient_id: reservation.patient_id,
+      channel: "alimtalk",
+      template_key: "reservation_confirmed",
+      status: alimtalkResult.ok ? "sent" : "failed",
+      sent_at: alimtalkResult.ok ? new Date().toISOString() : null,
+    });
+    if (!alimtalkResult.ok) {
+      console.error("알림톡 발송 실패:", alimtalkResult.error);
     }
   }
 
