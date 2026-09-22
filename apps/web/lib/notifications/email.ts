@@ -47,3 +47,41 @@ export async function sendReservationNotificationEmail(params: { name: string; p
     // 알림 발송 실패는 무시 — 예약 확정 자체는 이미 완료된 상태
   }
 }
+
+/**
+ * 화면에서 예상치 못한 에러(에러 바운더리 진입)가 발생하면 관리자에게 알림 이메일을 보낸다.
+ * RESEND_API_KEY가 없으면 조용히 넘어간다. 실패해도 예외를 던지지 않는다.
+ */
+export async function sendErrorNotificationEmail(params: { message: string; digest?: string; url?: string }) {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return;
+
+  const to = process.env.RESERVATION_NOTIFY_EMAIL || DEFAULT_TO;
+
+  try {
+    await fetch(RESEND_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        from: FROM,
+        to: [to],
+        subject: `[PDMPS] 예상치 못한 에러 발생`,
+        html: `
+          <div style="font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-size:15px;line-height:1.7;color:#1c2b3a;">
+            <h2 style="margin-bottom:16px;">화면에서 에러가 발생했습니다</h2>
+            <table style="border-collapse:collapse;">
+              <tr><td style="padding:4px 14px 4px 0;font-weight:bold;">메시지</td><td style="padding:4px 0;">${escapeHtml(params.message)}</td></tr>
+              ${params.url ? `<tr><td style="padding:4px 14px 4px 0;font-weight:bold;">페이지</td><td style="padding:4px 0;">${escapeHtml(params.url)}</td></tr>` : ""}
+              ${params.digest ? `<tr><td style="padding:4px 14px 4px 0;font-weight:bold;">digest</td><td style="padding:4px 0;">${escapeHtml(params.digest)}</td></tr>` : ""}
+            </table>
+          </div>
+        `,
+      }),
+    });
+  } catch {
+    // 알림 발송 실패는 무시
+  }
+}
