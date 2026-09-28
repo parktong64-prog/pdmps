@@ -1,6 +1,7 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { loadTossPayments } from "@tosspayments/payment-sdk";
 
@@ -151,7 +152,14 @@ function CheckoutForm() {
                   <span>
                     <b className="font-semibold text-[var(--ink)]">개인정보 수집·이용에 동의합니다.</b> 입력하신
                     정보는 예약·결제 확인 및 안내 목적으로만 사용되며, 관련 법령에 따른 기간 동안 보관 후
-                    파기됩니다.
+                    파기됩니다.{" "}
+                    <Link href="/privacy" target="_blank" className="underline underline-offset-2">
+                      개인정보처리방침
+                    </Link>
+                    {" · "}
+                    <Link href="/terms" target="_blank" className="underline underline-offset-2">
+                      이용약관
+                    </Link>
                   </span>
                 </label>
                 {errors.consent && (
@@ -211,7 +219,10 @@ function CheckoutForm() {
                   <span className="text-[1.2rem] font-bold">50,000원</span>
                 </div>
                 <div className="mt-3 rounded-[9px] bg-[var(--danger-soft)] px-3 py-2.5 text-[0.74rem] leading-[1.55] text-[var(--danger)]">
-                  예약금은 취소·변경·노쇼 등 사유와 관계없이 환불되지 않습니다.
+                  예약금은 취소·변경·노쇼 등 사유와 관계없이 환불되지 않습니다.{" "}
+                  <Link href="/refund" target="_blank" className="underline underline-offset-2">
+                    환불 규정 보기
+                  </Link>
                 </div>
               </div>
 

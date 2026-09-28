@@ -52,7 +52,7 @@ export default function HomeClient({ basePrice }: { basePrice: number }) {
         {/* 배너 */}
         <div className="mb-6 rounded-2xl bg-[var(--accent-soft)] px-[18px] py-4">
           <b className="mb-1 block text-sm text-[var(--accent-ink)]">가을 Face Lift 상담 주간</b>
-          <span className="text-xs text-[var(--ink-soft)]">9.8 – 9.30 박동만 원장 직접 상담</span>
+          <span className="text-xs text-[var(--ink-soft)]">박동만 원장 직접 상담</span>
         </div>
 
         {/* Face Lift 소개 */}
