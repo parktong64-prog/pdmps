@@ -11,7 +11,7 @@ import {
   formatDateTimeKST,
   kstMidnightUTC,
 } from "@/lib/admin/time";
-import { kstInstant, kstMidnightInstant, kstDateTimeKey } from "@/lib/booking";
+import { kstInstant, kstMidnightInstant, kstDateTimeKey, isClosedDay } from "@/lib/booking";
 import { expireStaleHeldReservations } from "@/lib/payments/toss";
 
 const SLOT_DURATION_MIN = 90;
@@ -74,7 +74,7 @@ export async function getDashboardData() {
     return {
       id: r.id as string,
       name: name ?? "-",
-      meta: `${r.source === "app" ? "앱" : "웹"} · ${formatDateTimeKST(r.created_at as string)}`,
+      meta: `${r.source === "app" ? "앱" : r.source === "admin" ? "관리자" : "웹"} · ${formatDateTimeKST(r.created_at as string)}`,
       status: meta.key,
       label: meta.label,
     };
@@ -114,7 +114,7 @@ export async function getDashboardData() {
 export type ConsultationRow = {
   id: string;
   name: string;
-  channel: "웹" | "앱";
+  channel: "웹" | "앱" | "관리자";
   status: StatusKey;
   statusLabel: string;
   date: string;
@@ -136,7 +136,7 @@ export async function getConsultations(): Promise<ConsultationRow[]> {
     return {
       id: r.id as string,
       name: name ?? "-",
-      channel: r.source === "app" ? "앱" : "웹",
+      channel: r.source === "app" ? "앱" : r.source === "admin" ? "관리자" : "웹",
       status: meta.key,
       statusLabel: meta.label,
       date: formatDateDotKST(r.created_at as string),
@@ -182,7 +182,9 @@ export async function getWeekSlots(y: number, m: number, d: number): Promise<Rec
       | { id: string; status: string; patients: { name: string; phone: string } | { name: string; phone: string }[] | null }
       | { id: string; status: string; patients: { name: string; phone: string } | { name: string; phone: string }[] | null }[]
       | null;
-    const reservation = Array.isArray(resv) ? resv[0] : resv;
+    // 취소 후 다시 예약된 슬롯은 예약 행이 여러 개일 수 있으므로 취소되지 않은 것을 우선한다.
+    const resvList = Array.isArray(resv) ? resv : resv ? [resv] : [];
+    const reservation = resvList.find((r) => r.status !== "cancelled") ?? resvList[0];
     const patient = reservation?.patients;
     const patientObj = Array.isArray(patient) ? patient[0] : patient;
 
@@ -276,6 +278,116 @@ export async function reopenSlot(dateStr: string, time: string) {
     .eq("staff_id", DOCTOR_ID)
     .eq("start_at", start.toISOString())
     .eq("status", "blocked");
+  return { ok: true };
+}
+
+/** 전화번호 숫자만 뽑아 환자 예약 화면과 같은 하이픈 형식(010-1234-5678)으로 맞춘다. 형식이 안 맞으면 null. */
+function normalizeKoreanMobile(raw: string): string | null {
+  const digits = raw.replace(/\D/g, "");
+  const formatted =
+    digits.length === 11 ? `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}` :
+    digits.length === 10 ? `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}` : null;
+  return formatted && /^01[016789]-\d{3,4}-\d{4}$/.test(formatted) ? formatted : null;
+}
+
+/**
+ * 관리자가 전화 등으로 받은 예약을 직접 등록한다. 결제 절차 없이 바로 '확정' 상태로 만든다
+ * (예약금 결제 기록·알림톡은 남기지 않는다).
+ */
+export async function createAdminReservation(input: { dateStr: string; time: string; name: string; phone: string }) {
+  const name = input.name.trim();
+  if (!name) return { ok: false, error: "이름을 입력해주세요." };
+  const phone = normalizeKoreanMobile(input.phone);
+  if (!phone) return { ok: false, error: "전화번호 형식이 올바르지 않습니다. (예: 010-1234-5678)" };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dateStr) || !/^\d{2}:\d{2}$/.test(input.time)) {
+    return { ok: false, error: "예약 일시가 올바르지 않습니다." };
+  }
+
+  const [dy, dm, dd] = input.dateStr.split("-").map(Number);
+  if (isClosedDay(new Date(dy, dm - 1, dd))) return { ok: false, error: "휴진일에는 예약할 수 없습니다." };
+
+  await expireStaleHeldReservations();
+
+  const supabase = createAdminClient();
+  const { start, end } = findSlotDate(input.dateStr, input.time);
+
+  const { data: procedure } = await supabase.from("procedures").select("id").eq("is_active", true).limit(1).maybeSingle();
+  if (!procedure) return { ok: false, error: "시술 정보를 찾을 수 없습니다." };
+
+  const { data: existingSlot } = await supabase
+    .from("reservation_slots")
+    .select("id, status")
+    .eq("staff_id", DOCTOR_ID)
+    .eq("start_at", start.toISOString())
+    .maybeSingle();
+  if (existingSlot && existingSlot.status !== "open") {
+    return { ok: false, error: "이미 예약되었거나 막혀 있는 시간입니다." };
+  }
+
+  const { data: patient, error: patientErr } = await supabase
+    .from("patients")
+    .upsert({ name, phone }, { onConflict: "phone" })
+    .select("id")
+    .single();
+  if (patientErr || !patient) return { ok: false, error: "환자 정보 저장에 실패했습니다." };
+
+  const { data: consultation, error: consultationErr } = await supabase
+    .from("consultations")
+    .insert({ patient_id: patient.id, procedure_id: procedure.id, status: "reserved", source: "admin" })
+    .select("id")
+    .single();
+  if (consultationErr || !consultation) return { ok: false, error: "상담 정보 저장에 실패했습니다." };
+
+  const rollbackConsultation = () => supabase.from("consultations").delete().eq("id", consultation.id);
+
+  let slotId: string;
+  if (existingSlot) {
+    const { data: updated } = await supabase
+      .from("reservation_slots")
+      .update({ status: "booked" })
+      .eq("id", existingSlot.id)
+      .eq("status", "open")
+      .select("id")
+      .maybeSingle();
+    if (!updated) {
+      await rollbackConsultation();
+      return { ok: false, error: "방금 다른 예약이 들어온 시간입니다. 새로고침 후 다시 시도해주세요." };
+    }
+    slotId = updated.id;
+  } else {
+    const { data: inserted, error: insertErr } = await supabase
+      .from("reservation_slots")
+      .insert({
+        procedure_id: procedure.id,
+        staff_id: DOCTOR_ID,
+        start_at: start.toISOString(),
+        end_at: end.toISOString(),
+        status: "booked",
+      })
+      .select("id")
+      .single();
+    if (insertErr || !inserted) {
+      await rollbackConsultation();
+      return {
+        ok: false,
+        error: insertErr?.code === "23505" ? "방금 다른 예약이 들어온 시간입니다. 새로고침 후 다시 시도해주세요." : "예약 시간 등록에 실패했습니다.",
+      };
+    }
+    slotId = inserted.id;
+  }
+
+  const { error: reservationErr } = await supabase.from("reservations").insert({
+    slot_id: slotId,
+    consultation_id: consultation.id,
+    patient_id: patient.id,
+    status: "confirmed",
+    confirmed_at: new Date().toISOString(),
+  });
+  if (reservationErr) {
+    await supabase.from("reservation_slots").update({ status: "open" }).eq("id", slotId);
+    await rollbackConsultation();
+    return { ok: false, error: "예약 생성에 실패했습니다." };
+  }
   return { ok: true };
 }
 

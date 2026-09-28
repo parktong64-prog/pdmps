@@ -10,13 +10,14 @@ import {
   reopenSlot,
   blockSlots,
   reopenSlots,
+  createAdminReservation,
   type SlotCell,
 } from "@/lib/admin/actions";
 
 // 관리자 예약 관리 화면에서는 오전 시간대(10:00, 11:30)를 표시하지 않는다.
 const ADMIN_TIMES = TIMES.filter((t) => t !== "10:00" && t !== "11:30");
 
-// 오늘이 속한 주의 일요일 — 여기서부터 2주(14일)를 기본으로 보여준다.
+// 오늘이 속한 주의 일요일 — 여기서부터 3주(21일)를 기본으로 보여준다.
 function sundayOf(d: Date) {
   const copy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   copy.setDate(copy.getDate() - copy.getDay());
@@ -30,7 +31,7 @@ const BASE_SUNDAY = sundayOf(new Date());
 type Selected = { y: number; m: number; d: number; time: string; key: string };
 
 export default function ReservationsPage() {
-  // blockIdx*14일만큼 오프셋된 2주치를 보여준다 (0 = 이번 주 + 다음 주).
+  // blockIdx*21일만큼 오프셋된 3주치를 보여준다 (0 = 이번 주 + 다음 2주).
   const [blockIdx, setBlockIdx] = useState(0);
   const [slots, setSlots] = useState<Record<string, SlotCell> | null>(null);
   const [selection, setSelection] = useState<Selected[]>([]);
@@ -38,7 +39,7 @@ export default function ReservationsPage() {
   const selected = selection.length === 1 ? selection[0] : null;
 
   const weekStarts = useMemo(
-    () => [addDays(BASE_SUNDAY, blockIdx * 14), addDays(BASE_SUNDAY, blockIdx * 14 + 7)],
+    () => [0, 7, 14].map((n) => addDays(BASE_SUNDAY, blockIdx * 21 + n)),
     [blockIdx],
   );
   const weeks = useMemo(
@@ -50,7 +51,7 @@ export default function ReservationsPage() {
   const reload = useCallback(() => {
     Promise.all(
       weekStarts.map((start) => getWeekSlots(start.getFullYear(), start.getMonth(), start.getDate())),
-    ).then(([a, b]) => setSlots({ ...a, ...b }));
+    ).then((maps) => setSlots(Object.assign({}, ...maps)));
   }, [weekStarts]);
 
   useEffect(() => {
@@ -94,7 +95,7 @@ export default function ReservationsPage() {
 
   const toRefs = (items: Selected[]) => items.map((s) => ({ dateStr: s.key.split("_")[0], time: s.time }));
 
-  const rangeLabel = `${dates[0].getMonth() + 1}.${dates[0].getDate()} ~ ${dates[13].getMonth() + 1}.${dates[13].getDate()}`;
+  const rangeLabel = `${dates[0].getMonth() + 1}.${dates[0].getDate()} ~ ${dates[dates.length - 1].getMonth() + 1}.${dates[dates.length - 1].getDate()}`;
 
   return (
     <div>
@@ -107,7 +108,7 @@ export default function ReservationsPage() {
         <div className="mb-2 flex items-center justify-between">
           <button
             type="button"
-            aria-label="이전 2주"
+            aria-label="이전 3주"
             onClick={() => changeBlock(blockIdx - 1)}
             className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[var(--line)] text-[0.8rem]"
           >
@@ -127,7 +128,7 @@ export default function ReservationsPage() {
           </div>
           <button
             type="button"
-            aria-label="다음 2주"
+            aria-label="다음 3주"
             onClick={() => changeBlock(blockIdx + 1)}
             className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[var(--line)] text-[0.8rem]"
           >
@@ -191,6 +192,9 @@ export default function ReservationsPage() {
             onCancel={() => runAction(() => cancelReservationSlot(selected.key.split("_")[0], selected.time))}
             onBlock={() => runAction(() => blockSlot(selected.key.split("_")[0], selected.time))}
             onReopen={() => runAction(() => reopenSlot(selected.key.split("_")[0], selected.time))}
+            onCreate={(name, phone) =>
+              runAction(() => createAdminReservation({ dateStr: selected.key.split("_")[0], time: selected.time, name, phone }))
+            }
           />
         )}
       </div>
@@ -198,7 +202,7 @@ export default function ReservationsPage() {
   );
 }
 
-/** 한 주(7일) 분량의 시간표 그리드. 2주 표시를 위해 이 블록을 두 번 그린다. */
+/** 한 주(7일) 분량의 시간표 그리드. 3주 표시를 위해 이 블록을 세 번 그린다. */
 function WeekGrid({
   days,
   cellData,
@@ -285,6 +289,7 @@ function SlotDetail({
   onCancel,
   onBlock,
   onReopen,
+  onCreate,
 }: {
   selected: Selected;
   cell: SlotCell;
@@ -292,6 +297,7 @@ function SlotDetail({
   onCancel: () => void;
   onBlock: () => void;
   onReopen: () => void;
+  onCreate: (name: string, phone: string) => void;
 }) {
   const when = `${selected.m + 1}월 ${selected.d}일(${WEEKDAY_LABEL[new Date(selected.y, selected.m, selected.d).getDay()]}) ${selected.time}`;
 
@@ -387,7 +393,56 @@ function SlotDetail({
           슬롯 막기
         </button>
       </div>
+      <ManualBookingForm key={selected.key} pending={pending} onCreate={onCreate} />
     </div>
+  );
+}
+
+/** 전화 등으로 받은 예약을 관리자가 직접 입력해 확정한다. */
+function ManualBookingForm({ pending, onCreate }: { pending: boolean; onCreate: (name: string, phone: string) => void }) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const inputCls =
+    "w-full rounded-lg border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-2 text-[0.8rem] outline-none focus:border-[var(--accent)]";
+
+  return (
+    <form
+      className="mt-3 border-t border-[var(--line)] pt-3"
+      onSubmit={(e) => {
+        e.preventDefault();
+        onCreate(name, phone);
+      }}
+    >
+      <div className="mb-2 text-[0.8rem] font-bold">직접 예약 등록</div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="환자 이름"
+          autoComplete="off"
+          className={inputCls}
+        />
+        <input
+          type="tel"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="전화번호 (010-0000-0000)"
+          autoComplete="off"
+          className={inputCls}
+        />
+      </div>
+      <p className="mt-1.5 text-[0.7rem] text-[var(--ink-soft)]">
+        예약금 결제 없이 바로 확정됩니다. 알림톡은 발송되지 않아요.
+      </p>
+      <button
+        type="submit"
+        disabled={pending || !name.trim() || !phone.trim()}
+        className="mt-2 rounded-lg bg-[var(--accent)] px-3.5 py-2 text-[0.8rem] font-bold text-white disabled:opacity-50"
+      >
+        예약 등록
+      </button>
+    </form>
   );
 }
 
