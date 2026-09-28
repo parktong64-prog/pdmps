@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isClosedDay } from "@/lib/booking";
+import { isClosedDay, TIMES } from "@/lib/booking";
 // 관리자 알림 이메일은 요청으로 잠시 중단해둠 (재개 시 아래 import와 호출부 주석 해제)
 // import { sendReservationNotificationEmail } from "@/lib/notifications/email";
 import { sendReservationConfirmedAlimtalk } from "@/lib/notifications/alimtalk";
@@ -29,7 +29,7 @@ export async function createPendingReservation(input: PendingReservationInput): 
   const { name, phone, date, time } = input;
 
   const startAt = new Date(`${date}T${time}:00+09:00`);
-  if (Number.isNaN(startAt.getTime())) {
+  if (Number.isNaN(startAt.getTime()) || !TIMES.includes(time)) {
     return { ok: false, error: "예약 일시가 올바르지 않습니다.", status: 400 };
   }
   const endAt = new Date(startAt.getTime() + SLOT_DURATION_MIN * 60 * 1000);

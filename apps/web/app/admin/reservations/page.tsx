@@ -14,8 +14,6 @@ import {
   type SlotCell,
 } from "@/lib/admin/actions";
 
-// 관리자 예약 관리 화면에서는 오전 시간대(10:00, 11:30)를 표시하지 않는다.
-const ADMIN_TIMES = TIMES.filter((t) => t !== "10:00" && t !== "11:30");
 
 // 오늘이 속한 주의 일요일 — 여기서부터 3주(21일)를 기본으로 보여준다.
 function sundayOf(d: Date) {
@@ -232,7 +230,7 @@ function WeekGrid({
           );
         })}
 
-        {ADMIN_TIMES.map((time) => (
+        {TIMES.map((time) => (
           <Fragment key={time}>
             <div className="flex items-center justify-center bg-[var(--card-bg)] font-[family-name:var(--font-mono-kr)] text-[0.68rem] text-[var(--ink-soft)]">
               {time}

@@ -68,6 +68,12 @@ export async function applyDayPattern(dateStr: string, openTimes: string[]) {
   return { ok: true };
 }
 
+/** 여러 날짜에 각각의 오픈 시간 패턴을 한 번에 적용한다. */
+export async function applyDayPatterns(items: { dateStr: string; openTimes: string[] }[]) {
+  await Promise.all(items.map((it) => applyDayPattern(it.dateStr, it.openTimes)));
+  return { ok: true };
+}
+
 /** 지정한 월에서 같은 요일(0=일 ... 6=토)에 해당하는 미래 날짜 전체에 동일한 오픈 시간 패턴을 적용. */
 export async function applyWeekdayPattern(y: number, m: number, weekday: number, openTimes: string[]) {
   const daysInMonth = new Date(y, m + 1, 0).getDate();

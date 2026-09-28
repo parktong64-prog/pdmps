@@ -11,7 +11,7 @@ import {
   formatDateTimeKST,
   kstMidnightUTC,
 } from "@/lib/admin/time";
-import { kstInstant, kstMidnightInstant, kstDateTimeKey, isClosedDay } from "@/lib/booking";
+import { kstInstant, kstMidnightInstant, kstDateTimeKey, isClosedDay, TIMES } from "@/lib/booking";
 import { expireStaleHeldReservations } from "@/lib/payments/toss";
 
 const SLOT_DURATION_MIN = 90;
@@ -299,7 +299,7 @@ export async function createAdminReservation(input: { dateStr: string; time: str
   if (!name) return { ok: false, error: "이름을 입력해주세요." };
   const phone = normalizeKoreanMobile(input.phone);
   if (!phone) return { ok: false, error: "전화번호 형식이 올바르지 않습니다. (예: 010-1234-5678)" };
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dateStr) || !/^\d{2}:\d{2}$/.test(input.time)) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dateStr) || !TIMES.includes(input.time)) {
     return { ok: false, error: "예약 일시가 올바르지 않습니다." };
   }
 
