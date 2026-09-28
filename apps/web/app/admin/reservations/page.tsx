@@ -3,7 +3,18 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { StatusPill } from "@/lib/admin/status";
 import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay } from "@/lib/booking";
-import { getWeekSlots, cancelReservationSlot, blockSlot, reopenSlot, type SlotCell } from "@/lib/admin/actions";
+import {
+  getWeekSlots,
+  cancelReservationSlot,
+  blockSlot,
+  reopenSlot,
+  blockSlots,
+  reopenSlots,
+  type SlotCell,
+} from "@/lib/admin/actions";
+
+// 관리자 예약 관리 화면에서는 오전 시간대(10:00, 11:30)를 표시하지 않는다.
+const ADMIN_TIMES = TIMES.filter((t) => t !== "10:00" && t !== "11:30");
 
 // 오늘이 속한 주의 일요일 — 여기서부터 2주(14일)를 기본으로 보여준다.
 function sundayOf(d: Date) {
@@ -22,8 +33,9 @@ export default function ReservationsPage() {
   // blockIdx*14일만큼 오프셋된 2주치를 보여준다 (0 = 이번 주 + 다음 주).
   const [blockIdx, setBlockIdx] = useState(0);
   const [slots, setSlots] = useState<Record<string, SlotCell> | null>(null);
-  const [selected, setSelected] = useState<Selected | null>(null);
+  const [selection, setSelection] = useState<Selected[]>([]);
   const [pending, setPending] = useState(false);
+  const selected = selection.length === 1 ? selection[0] : null;
 
   const weekStarts = useMemo(
     () => [addDays(BASE_SUNDAY, blockIdx * 14), addDays(BASE_SUNDAY, blockIdx * 14 + 7)],
@@ -50,26 +62,37 @@ export default function ReservationsPage() {
     return slots?.[key] ?? { status: "open" };
   }
 
-  function selectCell(d: Date, time: string) {
+  // additive(Ctrl/Cmd/Shift 클릭)이면 선택을 누적·토글한다. 막기/열기가 가능한 슬롯(예약 가능·차단)만 다중 선택 대상이다.
+  function selectCell(d: Date, time: string, additive: boolean) {
     const key = `${dateKey(d.getFullYear(), d.getMonth(), d.getDate())}_${time}`;
-    setSelected({ y: d.getFullYear(), m: d.getMonth(), d: d.getDate(), time, key });
+    const item: Selected = { y: d.getFullYear(), m: d.getMonth(), d: d.getDate(), time, key };
+    const bulkable = (s: SlotCell["status"]) => s === "open" || s === "blocked";
+    if (!additive || !bulkable(cellData(d, time).status)) {
+      setSelection([item]);
+      return;
+    }
+    const base = selection.filter((s) => bulkable(cellData(new Date(s.y, s.m, s.d), s.time).status));
+    setSelection(base.some((s) => s.key === key) ? base.filter((s) => s.key !== key) : [...base, item]);
   }
 
   function changeBlock(next: number) {
     setBlockIdx(next);
-    setSelected(null);
+    setSelection([]);
   }
 
-  async function runAction(fn: () => Promise<{ ok: boolean; error?: string }>) {
+  async function runAction(fn: () => Promise<{ ok: boolean; error?: string }>, clearSelection = false) {
     setPending(true);
     try {
       const res = await fn();
       if (!res.ok && res.error) alert(res.error);
+      if (clearSelection) setSelection([]);
       reload();
     } finally {
       setPending(false);
     }
   }
+
+  const toRefs = (items: Selected[]) => items.map((s) => ({ dateStr: s.key.split("_")[0], time: s.time }));
 
   const rangeLabel = `${dates[0].getMonth() + 1}.${dates[0].getDate()} ~ ${dates[13].getMonth() + 1}.${dates[13].getDate()}`;
 
@@ -121,7 +144,7 @@ export default function ReservationsPage() {
                 key={week[0].toISOString()}
                 days={week}
                 cellData={cellData}
-                selected={selected}
+                selection={selection}
                 onSelect={selectCell}
               />
             ))}
@@ -146,9 +169,19 @@ export default function ReservationsPage() {
 
       <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-2.5">
         <div className="mb-2 text-[0.8rem] font-bold">슬롯 상세</div>
-        {!selected ? (
+        {selection.length > 1 ? (
+          <BulkDetail
+            selection={selection}
+            cellData={cellData}
+            pending={pending}
+            onBlock={(items) => runAction(() => blockSlots(toRefs(items)), true)}
+            onReopen={(items) => runAction(() => reopenSlots(toRefs(items)), true)}
+            onClear={() => setSelection([])}
+          />
+        ) : !selected ? (
           <div className="py-3 text-center text-[0.8rem] text-[var(--ink-soft)]">
             슬롯을 선택하면 상세 정보가 여기에 표시됩니다.
+            <div className="mt-1 text-[0.7rem]">Ctrl(맥은 ⌘) 또는 Shift를 누른 채 클릭하면 여러 슬롯을 함께 선택할 수 있어요.</div>
           </div>
         ) : (
           <SlotDetail
@@ -169,17 +202,17 @@ export default function ReservationsPage() {
 function WeekGrid({
   days,
   cellData,
-  selected,
+  selection,
   onSelect,
 }: {
   days: Date[];
   cellData: (d: Date, time: string) => SlotCell;
-  selected: Selected | null;
-  onSelect: (d: Date, time: string) => void;
+  selection: Selected[];
+  onSelect: (d: Date, time: string, additive: boolean) => void;
 }) {
   return (
     <div className="overflow-x-auto">
-      <div className="grid min-w-[560px] grid-cols-[56px_repeat(7,1fr)] gap-px overflow-hidden rounded-[10px] border border-[var(--line)] bg-[var(--line)] text-[0.74rem]">
+      <div className="grid min-w-[560px] select-none grid-cols-[56px_repeat(7,1fr)] gap-px overflow-hidden rounded-[10px] border border-[var(--line)] bg-[var(--line)] text-[0.74rem]">
         <div className="bg-[var(--page-bg)]" />
         {days.map((d) => {
           const closed = isClosedDay(d);
@@ -195,7 +228,7 @@ function WeekGrid({
           );
         })}
 
-        {TIMES.map((time) => (
+        {ADMIN_TIMES.map((time) => (
           <Fragment key={time}>
             <div className="flex items-center justify-center bg-[var(--card-bg)] font-[family-name:var(--font-mono-kr)] text-[0.68rem] text-[var(--ink-soft)]">
               {time}
@@ -205,7 +238,7 @@ function WeekGrid({
               const cell = cellData(d, time);
               const status = closed ? "closed" : cell.status;
               const key = `${dateKey(d.getFullYear(), d.getMonth(), d.getDate())}_${time}`;
-              const isSelected = selected?.key === key;
+              const isSelected = selection.some((s) => s.key === key);
               const label =
                 status === "closed"
                   ? BLOCKED[dateKey(d.getFullYear(), d.getMonth(), d.getDate())] || "휴진"
@@ -223,7 +256,7 @@ function WeekGrid({
                   key={key}
                   type="button"
                   disabled={status === "closed"}
-                  onClick={() => status !== "closed" && onSelect(d, time)}
+                  onClick={(e) => status !== "closed" && onSelect(d, time, e.ctrlKey || e.metaKey || e.shiftKey)}
                   className={`min-h-[30px] px-1 py-1 text-[0.68rem] text-center leading-[1.15] ${stripe} ${
                     status === "booked"
                       ? "border border-[var(--success)] bg-[var(--success-soft)] font-bold text-[var(--success)]"
@@ -352,6 +385,71 @@ function SlotDetail({
           className="rounded-lg bg-[var(--accent-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--accent-ink)] disabled:opacity-50"
         >
           슬롯 막기
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function BulkDetail({
+  selection,
+  cellData,
+  pending,
+  onBlock,
+  onReopen,
+  onClear,
+}: {
+  selection: Selected[];
+  cellData: (d: Date, time: string) => SlotCell;
+  pending: boolean;
+  onBlock: (items: Selected[]) => void;
+  onReopen: (items: Selected[]) => void;
+  onClear: () => void;
+}) {
+  const sorted = [...selection].sort((a, b) => a.key.localeCompare(b.key));
+  const openItems = sorted.filter((s) => cellData(new Date(s.y, s.m, s.d), s.time).status === "open");
+  const blockedItems = sorted.filter((s) => cellData(new Date(s.y, s.m, s.d), s.time).status === "blocked");
+
+  return (
+    <div>
+      <Row label="선택한 슬롯" value={`${sorted.length}개`} />
+      <div className="flex flex-wrap gap-1 border-b border-[var(--line)] py-2">
+        {sorted.map((s) => (
+          <span
+            key={s.key}
+            className="rounded-full bg-[var(--page-bg)] px-2 py-0.5 text-[0.7rem] text-[var(--ink-soft)]"
+          >
+            {s.m + 1}/{s.d} {s.time}
+          </span>
+        ))}
+      </div>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {openItems.length > 0 && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => onBlock(openItems)}
+            className="rounded-lg bg-[var(--accent-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--accent-ink)] disabled:opacity-50"
+          >
+            {openItems.length}개 슬롯 막기
+          </button>
+        )}
+        {blockedItems.length > 0 && (
+          <button
+            type="button"
+            disabled={pending}
+            onClick={() => onReopen(blockedItems)}
+            className="rounded-lg bg-[var(--accent-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--accent-ink)] disabled:opacity-50"
+          >
+            {blockedItems.length}개 슬롯 열기
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={onClear}
+          className="rounded-lg border border-[var(--line)] px-3.5 py-2 text-[0.8rem] text-[var(--ink-soft)]"
+        >
+          선택 해제
         </button>
       </div>
     </div>

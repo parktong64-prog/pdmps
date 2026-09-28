@@ -279,6 +279,21 @@ export async function reopenSlot(dateStr: string, time: string) {
   return { ok: true };
 }
 
+export type SlotRef = { dateStr: string; time: string };
+
+/** 여러 슬롯을 한 번에 막는다. 이미 예약된 슬롯 등 실패한 항목은 건너뛰고 첫 오류 메시지를 함께 돌려준다. */
+export async function blockSlots(items: SlotRef[]) {
+  const results = await Promise.all(items.map((it) => blockSlot(it.dateStr, it.time)));
+  const failed = results.filter((r) => !r.ok);
+  return { ok: failed.length === 0, error: failed[0]?.error, failedCount: failed.length };
+}
+
+/** 여러 슬롯의 차단을 한 번에 푼다. */
+export async function reopenSlots(items: SlotRef[]) {
+  await Promise.all(items.map((it) => reopenSlot(it.dateStr, it.time)));
+  return { ok: true };
+}
+
 // ───────────────────────── 환자 관리 ─────────────────────────
 
 export type PatientListRow = {
