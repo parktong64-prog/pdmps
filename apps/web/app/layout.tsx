@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_KR, Noto_Serif_KR, IBM_Plex_Mono } from "next/font/google";
 import { PostHogInit } from "@/lib/posthog/PostHogInit";
+import { SITE_URL } from "@/lib/business";
 import "./globals.css";
 
 const notoSansKR = Noto_Sans_KR({
@@ -20,8 +21,6 @@ const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["500"],
 });
-
-const SITE_URL = "https://booking.parkdongman.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

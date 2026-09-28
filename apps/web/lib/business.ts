@@ -1,3 +1,6 @@
+// 실제 서비스 주소 (공유 링크·OG 메타태그 공통)
+export const SITE_URL = "https://booking.parkdongman.com";
+
 // 사이트 하단·약관 페이지에 표시하는 사업자 정보. 변경 시 이 파일만 고치면 된다.
 export const BUSINESS = {
   name: "박동만성형외과",

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
+import { KakaoShareButton } from "./KakaoShareButton";
 
 type ConcernKey = "nasolabial" | "jawline" | "neck";
 
@@ -111,6 +112,10 @@ export default function HomeClient({ basePrice }: { basePrice: number }) {
         >
           상담 시작하기
         </Link>
+
+        <div className="mt-3">
+          <KakaoShareButton />
+        </div>
       </div>
     </div>
   );
