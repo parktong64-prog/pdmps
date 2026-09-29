@@ -119,3 +119,26 @@ export async function sendReservationConfirmedAlimtalk(input: {
     },
   });
 }
+
+/**
+ * 예약 확정을 관리자(원장·사무장) 휴대폰에도 알림톡으로 보낸다.
+ * 환자용과 같은 승인된 템플릿을 재사용한다 — 이 템플릿에는 환자 이름을 넣을 변수가 없어
+ * "#{날짜} #{시간} Face Lift 상담 예약이 확정되었습니다"만 온다. 이름까지 넣으려면
+ * 새 템플릿을 만들어 카카오 검수를 다시 받아야 한다.
+ * ADMIN_NOTIFY_PHONE 환경변수(관리자 휴대폰 번호)가 있어야 동작한다.
+ */
+export async function sendAdminReservationAlert(input: { date: string; time: string }): Promise<AlimtalkResult> {
+  const templateId = process.env.SOLAPI_TEMPLATE_RESERVATION_CONFIRMED;
+  const adminPhone = process.env.ADMIN_NOTIFY_PHONE;
+  if (!templateId || !adminPhone) {
+    return { ok: false, error: "관리자 알림톡 미설정 (SOLAPI_TEMPLATE_RESERVATION_CONFIRMED/ADMIN_NOTIFY_PHONE 환경변수 필요)" };
+  }
+  return sendAlimtalk({
+    to: adminPhone,
+    templateId,
+    variables: {
+      "#{날짜}": input.date,
+      "#{시간}": input.time,
+    },
+  });
+}

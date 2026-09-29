@@ -2,7 +2,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isClosedDay, TIMES } from "@/lib/booking";
 import { sendReservationNotificationEmail } from "@/lib/notifications/email";
-import { sendReservationConfirmedAlimtalk } from "@/lib/notifications/alimtalk";
+import { sendReservationConfirmedAlimtalk, sendAdminReservationAlert } from "@/lib/notifications/alimtalk";
 
 const SLOT_DURATION_MIN = 90;
 const PAYMENT_HOLD_MIN = 10;
@@ -329,6 +329,11 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
       reservation_id: reservation.id,
       message: `${patientObj.name}님 예약 확정 · ${dateLabel} ${timeLabel}`,
     });
+
+    const adminAlimtalkResult = await sendAdminReservationAlert({ date: dateLabel, time: timeLabel });
+    if (!adminAlimtalkResult.ok) {
+      console.error("관리자 알림톡 발송 실패:", adminAlimtalkResult.error);
+    }
   }
 
   return {
