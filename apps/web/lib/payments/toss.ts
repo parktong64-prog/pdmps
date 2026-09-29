@@ -1,8 +1,7 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isClosedDay, TIMES } from "@/lib/booking";
-// 관리자 알림 이메일은 요청으로 잠시 중단해둠 (재개 시 아래 import와 호출부 주석 해제)
-// import { sendReservationNotificationEmail } from "@/lib/notifications/email";
+import { sendReservationNotificationEmail } from "@/lib/notifications/email";
 import { sendReservationConfirmedAlimtalk } from "@/lib/notifications/alimtalk";
 
 const SLOT_DURATION_MIN = 90;
@@ -293,13 +292,14 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
     // Vercel 서버리스 환경에서는 응답을 반환한 뒤 실행 컨텍스트가 바로 정리될 수 있어
     // await 없이 fire-and-forget으로 보내면 fetch가 끝나기 전에 잘릴 수 있다. 반드시 기다린다.
     const { dateLabel, timeLabel } = formatDateTimeKST(startAt);
-    // 관리자 알림 이메일은 요청으로 잠시 중단해둠 (재개 시 아래 주석 해제)
-    // await sendReservationNotificationEmail({
-    //   name: patientObj.name,
-    //   phone: patientObj.phone ?? "-",
-    //   date: dateLabel,
-    //   time: timeLabel,
-    // });
+    // 로그아웃 상태거나 관리자 화면을 안 보고 있어도 놓치지 않도록 이메일로도 알린다
+    // (관리자 화면의 알림 벨은 /admin에 로그인해서 보고 있을 때만 울린다).
+    await sendReservationNotificationEmail({
+      name: patientObj.name,
+      phone: patientObj.phone ?? "-",
+      date: dateLabel,
+      time: timeLabel,
+    });
 
     const alimtalkResult = patientObj.phone
       ? await sendReservationConfirmedAlimtalk({
