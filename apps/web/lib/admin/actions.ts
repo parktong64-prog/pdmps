@@ -376,18 +376,29 @@ export async function createAdminReservation(input: { dateStr: string; time: str
     slotId = inserted.id;
   }
 
-  const { error: reservationErr } = await supabase.from("reservations").insert({
-    slot_id: slotId,
-    consultation_id: consultation.id,
-    patient_id: patient.id,
-    status: "confirmed",
-    confirmed_at: new Date().toISOString(),
-  });
-  if (reservationErr) {
+  const { data: newReservation, error: reservationErr } = await supabase
+    .from("reservations")
+    .insert({
+      slot_id: slotId,
+      consultation_id: consultation.id,
+      patient_id: patient.id,
+      status: "confirmed",
+      confirmed_at: new Date().toISOString(),
+    })
+    .select("id")
+    .single();
+  if (reservationErr || !newReservation) {
     await supabase.from("reservation_slots").update({ status: "open" }).eq("id", slotId);
     await rollbackConsultation();
     return { ok: false, error: "예약 생성에 실패했습니다." };
   }
+
+  // 관리자 직접 등록도 다른 관리자·직원이 놓치지 않도록 동일하게 알림을 남긴다.
+  await supabase.from("admin_alerts").insert({
+    reservation_id: newReservation.id,
+    message: `${name}님 예약 등록(관리자) · ${formatDateTimeKST(start.toISOString())}`,
+  });
+
   return { ok: true };
 }
 
