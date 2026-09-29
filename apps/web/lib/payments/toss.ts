@@ -323,6 +323,12 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
     if (!alimtalkResult.ok) {
       console.error("알림톡 발송 실패:", alimtalkResult.error);
     }
+
+    // 관리자 화면에서 확인 누를 때까지 계속 울리는 알림 — 새 예약 확정을 놓치지 않도록.
+    await supabase.from("admin_alerts").insert({
+      reservation_id: reservation.id,
+      message: `${patientObj.name}님 예약 확정 · ${dateLabel} ${timeLabel}`,
+    });
   }
 
   return {

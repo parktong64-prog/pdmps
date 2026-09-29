@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { markAdminBrowserAndOptOut } from "@/lib/posthog/client";
+import { AlertBanner } from "./AlertBanner";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "대시보드 홈" },
@@ -37,6 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--page-bg)] text-[var(--ink)] md:flex-row">
+      <AlertBanner />
       <nav className="flex flex-none flex-col gap-0.5 overflow-x-auto bg-[var(--sidebar-bg)] p-3.5 text-[var(--sidebar-ink)] md:w-[220px] md:overflow-visible md:p-5">
         <div className="mb-5 hidden font-[family-name:var(--font-display)] text-[1.1rem] font-bold text-[var(--brand-green)] md:block">
           PDMPS
