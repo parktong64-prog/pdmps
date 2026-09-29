@@ -127,6 +127,23 @@ export async function sendReservationConfirmedAlimtalk(input: {
  * 새 템플릿을 만들어 카카오 검수를 다시 받아야 한다.
  * ADMIN_NOTIFY_PHONE 환경변수(관리자 휴대폰 번호)가 있어야 동작한다.
  */
+/**
+ * 상담일 전날 리마인드 알림톡 (환자에게 발송).
+ * 새로 카카오 검수를 받아야 하는 별도 템플릿이며, 승인 후 템플릿 ID를
+ * SOLAPI_TEMPLATE_REMINDER_D1에 등록하면 동작한다. 미설정이면 조용히 건너뛴다.
+ */
+export async function sendReminderD1Alimtalk(input: { phone: string; time: string }): Promise<AlimtalkResult> {
+  const templateId = process.env.SOLAPI_TEMPLATE_REMINDER_D1;
+  if (!templateId) {
+    return { ok: false, error: "리마인드 알림톡 미설정 (SOLAPI_TEMPLATE_REMINDER_D1 환경변수 필요)" };
+  }
+  return sendAlimtalk({
+    to: input.phone,
+    templateId,
+    variables: { "#{시간}": input.time },
+  });
+}
+
 export async function sendAdminReservationAlert(input: { date: string; time: string }): Promise<AlimtalkResult> {
   const templateId = process.env.SOLAPI_TEMPLATE_RESERVATION_CONFIRMED;
   const adminPhone = process.env.ADMIN_NOTIFY_PHONE;
