@@ -97,13 +97,13 @@ export default function ReservationsPage() {
 
   return (
     <div>
-      <div className="mb-2.5 flex items-end justify-between">
+      <div className="mb-1.5 flex items-end justify-between">
         <h1 className="font-[family-name:var(--font-display)] text-[1.2rem] font-bold">예약 관리</h1>
         <div className="text-[0.76rem] text-[var(--ink-soft)]">박동만 원장</div>
       </div>
 
-      <div className="mb-2 rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-2.5">
-        <div className="mb-2 flex items-center justify-between">
+      <div className="mb-1.5 rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-2">
+        <div className="mb-1 flex items-center justify-between">
           <button
             type="button"
             aria-label="이전 3주"
@@ -137,7 +137,7 @@ export default function ReservationsPage() {
         {slots === null ? (
           <div className="py-6 text-center text-[0.82rem] text-[var(--ink-soft)]">불러오는 중…</div>
         ) : (
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1">
             {weeks.map((week) => (
               <WeekGrid
                 key={week[0].toISOString()}
@@ -150,7 +150,7 @@ export default function ReservationsPage() {
           </div>
         )}
 
-        <div className="mt-2 flex flex-wrap gap-3 text-[0.66rem] text-[var(--ink-soft)]">
+        <div className="mt-1.5 flex flex-wrap gap-3 text-[0.66rem] text-[var(--ink-soft)]">
           <span className="inline-flex items-center gap-1.5">
             <i className="inline-block h-2 w-2 rounded-[3px] border border-[var(--line)] bg-[var(--card-bg)]" />
             예약 가능
@@ -170,8 +170,8 @@ export default function ReservationsPage() {
         </div>
       </div>
 
-      <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-2.5">
-        <div className="mb-2 text-[0.8rem] font-bold">슬롯 상세</div>
+      <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-2">
+        <div className="mb-1.5 text-[0.8rem] font-bold">슬롯 상세</div>
         {selection.length > 1 ? (
           <BulkDetail
             selection={selection}
@@ -223,7 +223,7 @@ function WeekGrid({
         {days.map((d) => {
           const closed = isClosedDay(d);
           return (
-            <div key={d.toISOString()} className="bg-[var(--page-bg)] px-1 pt-1 text-center">
+            <div key={d.toISOString()} className="bg-[var(--page-bg)] px-1 pt-0.5 text-center">
               <div className={`text-[0.58rem] leading-tight ${closed ? "text-[var(--ink-faint)]" : "text-[var(--ink-soft)]"}`}>
                 {WEEKDAY_LABEL[d.getDay()]}
               </div>
@@ -263,7 +263,7 @@ function WeekGrid({
                   type="button"
                   disabled={status === "closed"}
                   onClick={(e) => status !== "closed" && onSelect(d, time, e.ctrlKey || e.metaKey || e.shiftKey)}
-                  className={`min-h-[30px] px-1 py-1 text-[0.68rem] text-center leading-[1.15] ${stripe} ${
+                  className={`min-h-[24px] px-1 py-0.5 text-[0.68rem] text-center leading-[1.15] ${stripe} ${
                     status === "booked"
                       ? cell.source === "admin"
                         ? "border border-[var(--line)] bg-[var(--manual)] font-bold text-white"
@@ -312,7 +312,7 @@ function SlotDetail({
         <Row label="연락처" value={cell.patientPhone ?? "-"} />
         <Row label="시술" value="Face Lift" />
         <Row label="일시" value={when} />
-        <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
+        <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
           <span className="text-[var(--ink-soft)]">상태</span>
           <StatusPill status="done" label="확정" />
         </div>
@@ -337,7 +337,7 @@ function SlotDetail({
         <Row label="연락처" value={cell.patientPhone ?? "-"} />
         <Row label="시술" value="Face Lift" />
         <Row label="일시" value={when} />
-        <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
+        <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
           <span className="text-[var(--ink-soft)]">상태</span>
           <StatusPill status="pending" label="결제 대기중" />
         </div>
@@ -362,7 +362,7 @@ function SlotDetail({
     return (
       <div>
         <Row label="일시" value={when} />
-        <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
+        <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
           <span className="text-[var(--ink-soft)]">상태</span>
           <StatusPill status="cancel" label="관리자 차단" />
         </div>
@@ -384,7 +384,7 @@ function SlotDetail({
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <Row label="일시" value={when} />
-        <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
+        <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
           <span className="text-[var(--ink-soft)]">상태</span>
           <StatusPill status="progress" label="예약 가능" />
         </div>
@@ -413,14 +413,14 @@ function ManualBookingForm({ pending, onCreate }: { pending: boolean; onCreate: 
 
   return (
     <form
-      className="mt-3 border-t border-[var(--line)] pt-3 sm:mt-0 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4"
+      className="mt-2 border-t border-[var(--line)] pt-2 sm:mt-0 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4"
       onSubmit={(e) => {
         e.preventDefault();
         onCreate(name, phone);
       }}
     >
-      <div className="mb-2 text-[0.8rem] font-bold">직접 예약 등록</div>
-      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+      <div className="mb-1.5 text-[0.8rem] font-bold">직접 예약 등록</div>
+      <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-2">
         <input
           type="text"
           value={name}
@@ -438,13 +438,13 @@ function ManualBookingForm({ pending, onCreate }: { pending: boolean; onCreate: 
           className={inputCls}
         />
       </div>
-      <p className="mt-1.5 text-[0.7rem] text-[var(--ink-soft)]">
+      <p className="mt-1 text-[0.7rem] text-[var(--ink-soft)]">
         예약금 결제 없이 바로 확정됩니다. 알림톡은 발송되지 않아요.
       </p>
       <button
         type="submit"
         disabled={pending || !name.trim() || !phone.trim()}
-        className="mt-2 rounded-lg bg-[var(--accent)] px-3.5 py-2 text-[0.8rem] font-bold text-white disabled:opacity-50"
+        className="mt-1.5 rounded-lg bg-[var(--accent)] px-3.5 py-2 text-[0.8rem] font-bold text-white disabled:opacity-50"
       >
         예약 등록
       </button>
@@ -519,7 +519,7 @@ function BulkDetail({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
+    <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
       <span className="text-[var(--ink-soft)]">{label}</span>
       <b className="font-semibold">{value}</b>
     </div>
