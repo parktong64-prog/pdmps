@@ -160,7 +160,7 @@ export default function ReservationsPage() {
             예약됨 (클릭 시 상세)
           </span>
           <span className="inline-flex items-center gap-1.5">
-            <i className="inline-block h-2 w-2 rounded-[3px] border border-[var(--st-progress)] bg-[var(--st-progress-soft)]" />
+            <i className="inline-block h-2 w-2 rounded-[3px] border border-[var(--navy)] bg-[var(--navy-soft)]" />
             관리자 직접 등록
           </span>
           <span className="inline-flex items-center gap-1.5">
@@ -266,7 +266,7 @@ function WeekGrid({
                   className={`min-h-[30px] px-1 py-1 text-[0.68rem] text-center leading-[1.15] ${stripe} ${
                     status === "booked"
                       ? cell.source === "admin"
-                        ? "border border-[var(--st-progress)] bg-[var(--st-progress-soft)] font-bold text-[var(--st-progress)]"
+                        ? "border border-[var(--navy)] bg-[var(--navy-soft)] font-bold text-[var(--navy)]"
                         : "border border-[var(--success)] bg-[var(--success-soft)] font-bold text-[var(--success)]"
                       : ""
                   } ${status === "pending" ? "bg-[var(--st-pending-soft)] font-bold text-[var(--st-pending)]" : ""} ${
