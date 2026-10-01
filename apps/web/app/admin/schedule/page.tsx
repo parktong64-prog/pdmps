@@ -155,14 +155,14 @@ export default function SchedulePage() {
   const sortedSelection = [...selection].sort((a, b) => a.d - b.d);
 
   return (
-    <div>
-      <div className="mb-6 flex items-end justify-between">
+    <div className="-mt-7 -mb-7 pt-3 pb-3">
+      <div className="mb-1.5 flex items-end justify-between">
         <h1 className="font-[family-name:var(--font-display)] text-[1.4rem] font-bold">일정 설정</h1>
         <div className="text-[0.8rem] text-[var(--ink-soft)]">환자용 예약 캘린더에 그대로 반영돼요</div>
       </div>
 
-      <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-5">
-        <div className="mb-4 flex items-center justify-between">
+      <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-2.5">
+        <div className="mb-1.5 flex items-center justify-between">
           <button
             type="button"
             aria-label="이전 달"
@@ -192,16 +192,16 @@ export default function SchedulePage() {
           </button>
         </div>
 
-        <div className="mb-1 grid grid-cols-7">
+        <div className="mb-0.5 grid grid-cols-7">
           {WEEKDAY_LABEL.map((w, i) => (
-            <span key={w} className={`py-1 text-center text-[0.7rem] ${i === 0 ? "text-[#c0605f]" : "text-[var(--ink-soft)]"}`}>
+            <span key={w} className={`py-0.5 text-center text-[0.7rem] ${i === 0 ? "text-[#c0605f]" : "text-[var(--ink-soft)]"}`}>
               {w}
             </span>
           ))}
         </div>
 
         {slotStates === null ? (
-          <div className="py-10 text-center text-[0.82rem] text-[var(--ink-soft)]">불러오는 중…</div>
+          <div className="py-5 text-center text-[0.82rem] text-[var(--ink-soft)]">불러오는 중…</div>
         ) : (
           <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: firstWeekday }).map((_, i) => (
@@ -223,7 +223,7 @@ export default function SchedulePage() {
                   disabled={disabled}
                   title={closedFixed ? BLOCKED[dateKey(y, m, d)] || "정기 휴진" : undefined}
                   onClick={(e) => !disabled && selectDate(d, e)}
-                  className={`flex aspect-square select-none flex-col items-center justify-center gap-1 rounded-lg font-[family-name:var(--font-mono-kr)] text-[0.82rem] transition-colors ${
+                  className={`flex h-9 select-none flex-col items-center justify-center gap-0.5 rounded-lg font-[family-name:var(--font-mono-kr)] text-[0.78rem] transition-colors ${
                     isSelected
                       ? "bg-[var(--accent)] text-white"
                       : disabled
@@ -249,7 +249,7 @@ export default function SchedulePage() {
           </div>
         )}
 
-        <div className="mt-3.5 flex flex-wrap gap-4 text-[0.7rem] text-[var(--ink-soft)]">
+        <div className="mt-1.5 flex flex-wrap gap-4 text-[0.7rem] text-[var(--ink-soft)]">
           <span className="inline-flex items-center gap-1.5">
             <i className="inline-block h-1 w-3.5 rounded-sm bg-[var(--st-done)]" />
             전체 시간 오픈
@@ -265,11 +265,11 @@ export default function SchedulePage() {
         </div>
       </div>
 
-      <div className="mt-4 rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-5">
+      <div className="mt-1.5 rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-2.5">
         {selection.length === 0 ? (
           <>
-            <div className="mb-3.5 text-[0.82rem] font-bold">날짜를 선택해주세요</div>
-            <div className="py-6 text-center text-[0.82rem] text-[var(--ink-soft)]">
+            <div className="mb-1.5 text-[0.82rem] font-bold">날짜를 선택해주세요</div>
+            <div className="py-3 text-center text-[0.82rem] text-[var(--ink-soft)]">
               위 달력에서 설정할 날짜를 선택하세요.
               <div className="mt-1 text-[0.72rem]">
                 Ctrl(맥은 ⌘)을 누른 채 클릭하면 여러 날짜를, Shift를 누른 채 클릭하면 범위를 한 번에 선택할 수 있어요.
@@ -278,7 +278,7 @@ export default function SchedulePage() {
           </>
         ) : (
           <>
-            <div className="mb-3.5 flex items-start justify-between gap-2">
+            <div className="mb-1.5 flex items-start justify-between gap-2">
               <div className="text-[0.82rem] font-bold">
                 {selected
                   ? `${selected.m + 1}월 ${selected.d}일(${WEEKDAY_LABEL[new Date(selected.y, selected.m, selected.d).getDay()]}) 설정`
@@ -296,7 +296,7 @@ export default function SchedulePage() {
             </div>
 
             {selected && (
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between">
               <span className="text-[0.84rem] font-semibold">이 날 진료 여부</span>
               <label className="relative inline-block h-6 w-[42px]">
                 <input
@@ -317,7 +317,7 @@ export default function SchedulePage() {
               </p>
             )}
 
-            <div className="mb-4 flex flex-wrap gap-2">
+            <div className="mb-2 flex flex-wrap gap-2">
               {TIMES.map((t) => {
                 const isBooked = infos.every((i) => i.booked.includes(t));
                 const blockedCount = infos.filter((i) => i.blocked.includes(t)).length;
@@ -354,7 +354,7 @@ export default function SchedulePage() {
               })}
             </div>
 
-            <div className="mb-[18px] flex flex-wrap gap-2">
+            <div className="mb-2 flex flex-wrap gap-2">
               <button
                 type="button"
                 disabled={pending || (selected ? selectedClosedFixed : false)}
