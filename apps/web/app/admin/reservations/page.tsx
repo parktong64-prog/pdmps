@@ -96,7 +96,7 @@ export default function ReservationsPage() {
   const rangeLabel = `${dates[0].getMonth() + 1}.${dates[0].getDate()} ~ ${dates[dates.length - 1].getMonth() + 1}.${dates[dates.length - 1].getDate()}`;
 
   return (
-    <div>
+    <div className="-mt-7 -mb-7 pt-3 pb-3">
       <div className="mb-1.5 flex items-end justify-between">
         <h1 className="font-[family-name:var(--font-display)] text-[1.2rem] font-bold">예약 관리</h1>
         <div className="text-[0.76rem] text-[var(--ink-soft)]">박동만 원장</div>
