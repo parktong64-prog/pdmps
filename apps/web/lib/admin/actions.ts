@@ -121,12 +121,11 @@ export type ConsultationRow = {
   flagged: boolean;
 };
 
-export async function getConsultations(): Promise<ConsultationRow[]> {
+export async function getConsultations(options?: { includeArchived?: boolean }): Promise<ConsultationRow[]> {
   const supabase = createAdminClient();
-  const { data, error } = await supabase
-    .from("consultations")
-    .select("id, status, source, created_at, patients(name)")
-    .order("created_at", { ascending: false });
+  let query = supabase.from("consultations").select("id, status, source, created_at, patients(name)");
+  query = options?.includeArchived ? query.not("archived_at", "is", null) : query.is("archived_at", null);
+  const { data, error } = await query.order("created_at", { ascending: false });
   if (error || !data) return [];
 
   return data.map((r) => {
@@ -143,6 +142,13 @@ export async function getConsultations(): Promise<ConsultationRow[]> {
       flagged: r.status === "needs_review",
     };
   });
+}
+
+/** 보관된 상담을 목록에 다시 노출한다 — 완전 삭제가 아니라 관리자가 실수로 가려졌을 때 되돌리는 용도. */
+export async function restoreConsultation(consultationId: string) {
+  const supabase = createAdminClient();
+  const { error } = await supabase.from("consultations").update({ archived_at: null }).eq("id", consultationId);
+  return { ok: !error };
 }
 
 // ───────────────────────── 예약 관리 (주간 그리드) ─────────────────────────
