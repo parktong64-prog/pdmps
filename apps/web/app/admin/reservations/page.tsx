@@ -160,6 +160,10 @@ export default function ReservationsPage() {
             예약됨 (클릭 시 상세)
           </span>
           <span className="inline-flex items-center gap-1.5">
+            <i className="inline-block h-2 w-2 rounded-[3px] border border-[var(--st-progress)] bg-[var(--st-progress-soft)]" />
+            관리자 직접 등록
+          </span>
+          <span className="inline-flex items-center gap-1.5">
             <i className="inline-block h-2 w-2 rounded-[3px] bg-[repeating-linear-gradient(45deg,var(--page-bg),var(--page-bg)_3px,var(--line)_3px,var(--line)_6px)]" />
             휴진 · 차단
           </span>
@@ -261,7 +265,9 @@ function WeekGrid({
                   onClick={(e) => status !== "closed" && onSelect(d, time, e.ctrlKey || e.metaKey || e.shiftKey)}
                   className={`min-h-[30px] px-1 py-1 text-[0.68rem] text-center leading-[1.15] ${stripe} ${
                     status === "booked"
-                      ? "border border-[var(--success)] bg-[var(--success-soft)] font-bold text-[var(--success)]"
+                      ? cell.source === "admin"
+                        ? "border border-[var(--st-progress)] bg-[var(--st-progress-soft)] font-bold text-[var(--st-progress)]"
+                        : "border border-[var(--success)] bg-[var(--success-soft)] font-bold text-[var(--success)]"
                       : ""
                   } ${status === "pending" ? "bg-[var(--st-pending-soft)] font-bold text-[var(--st-pending)]" : ""} ${
                     status === "open" ? "text-[var(--ink-faint)] hover:bg-[var(--accent-soft)]" : ""

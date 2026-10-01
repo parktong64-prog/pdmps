@@ -158,6 +158,8 @@ export type SlotCell = {
   reservationId?: string;
   patientName?: string;
   patientPhone?: string;
+  /** "admin"이면 관리자가 전화 등으로 직접 등록한 예약 — 온라인 예약(web/app)과 구분해서 보여준다. */
+  source?: "web" | "app" | "admin";
 };
 
 /** weekStartISO(그 주 일요일 00:00 KST 기준 로컬 날짜)부터 7일치 슬롯 맵을 반환. key: `${dateKey}_${time}` */
@@ -173,7 +175,7 @@ export async function getWeekSlots(y: number, m: number, d: number): Promise<Rec
 
   const { data, error } = await supabase
     .from("reservation_slots")
-    .select("id, start_at, status, reservations(id, status, cancel_reason, patients(name, phone))")
+    .select("id, start_at, status, reservations(id, status, cancel_reason, patients(name, phone), consultations(source))")
     .eq("staff_id", DOCTOR_ID)
     .gte("start_at", start.toISOString())
     .lt("start_at", end.toISOString());
@@ -185,14 +187,27 @@ export async function getWeekSlots(y: number, m: number, d: number): Promise<Rec
     const { dateKey: dk, time: tk } = kstDateTimeKey(row.start_at as string);
     const key = `${dk}_${tk}`;
     const resv = row.reservations as unknown as
-      | { id: string; status: string; patients: { name: string; phone: string } | { name: string; phone: string }[] | null }
-      | { id: string; status: string; patients: { name: string; phone: string } | { name: string; phone: string }[] | null }[]
+      | {
+          id: string;
+          status: string;
+          patients: { name: string; phone: string } | { name: string; phone: string }[] | null;
+          consultations: { source: string } | { source: string }[] | null;
+        }
+      | {
+          id: string;
+          status: string;
+          patients: { name: string; phone: string } | { name: string; phone: string }[] | null;
+          consultations: { source: string } | { source: string }[] | null;
+        }[]
       | null;
     // 취소 후 다시 예약된 슬롯은 예약 행이 여러 개일 수 있으므로 취소되지 않은 것을 우선한다.
     const resvList = Array.isArray(resv) ? resv : resv ? [resv] : [];
     const reservation = resvList.find((r) => r.status !== "cancelled") ?? resvList[0];
     const patient = reservation?.patients;
     const patientObj = Array.isArray(patient) ? patient[0] : patient;
+    const consultation = reservation?.consultations;
+    const consultationObj = Array.isArray(consultation) ? consultation[0] : consultation;
+    const source = consultationObj?.source as SlotCell["source"] | undefined;
 
     if (row.status === "booked" && reservation && reservation.status !== "cancelled") {
       map[key] = {
@@ -200,6 +215,7 @@ export async function getWeekSlots(y: number, m: number, d: number): Promise<Rec
         reservationId: reservation.id,
         patientName: patientObj?.name,
         patientPhone: patientObj?.phone,
+        source,
       };
     } else if (row.status === "held" && reservation && reservation.status === "pending_payment") {
       // 결제창으로 이동한 뒤 아직 승인되지 않은 슬롯 — 결제 대기중으로 표시
