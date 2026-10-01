@@ -381,21 +381,23 @@ function SlotDetail({
   }
 
   return (
-    <div>
-      <Row label="일시" value={when} />
-      <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
-        <span className="text-[var(--ink-soft)]">상태</span>
-        <StatusPill status="progress" label="예약 가능" />
-      </div>
-      <div className="mt-2">
-        <button
-          type="button"
-          disabled={pending}
-          onClick={onBlock}
-          className="rounded-lg bg-[var(--accent-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--accent-ink)] disabled:opacity-50"
-        >
-          슬롯 막기
-        </button>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <Row label="일시" value={when} />
+        <div className="flex justify-between border-b border-[var(--line)] py-1 text-[0.8rem]">
+          <span className="text-[var(--ink-soft)]">상태</span>
+          <StatusPill status="progress" label="예약 가능" />
+        </div>
+        <div className="mt-2">
+          <button
+            type="button"
+            disabled={pending}
+            onClick={onBlock}
+            className="rounded-lg bg-[var(--accent-soft)] px-3.5 py-2 text-[0.8rem] font-bold text-[var(--accent-ink)] disabled:opacity-50"
+          >
+            슬롯 막기
+          </button>
+        </div>
       </div>
       <ManualBookingForm key={selected.key} pending={pending} onCreate={onCreate} />
     </div>
@@ -411,14 +413,14 @@ function ManualBookingForm({ pending, onCreate }: { pending: boolean; onCreate: 
 
   return (
     <form
-      className="mt-3 border-t border-[var(--line)] pt-3"
+      className="mt-3 border-t border-[var(--line)] pt-3 sm:mt-0 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4"
       onSubmit={(e) => {
         e.preventDefault();
         onCreate(name, phone);
       }}
     >
       <div className="mb-2 text-[0.8rem] font-bold">직접 예약 등록</div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
         <input
           type="text"
           value={name}
