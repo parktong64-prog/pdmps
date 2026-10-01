@@ -33,8 +33,8 @@
   --st-done-soft: #e3f3ea;
   --st-cancel: #84898f;
   --st-cancel-soft: #eceded;
-  --navy: #1c3a5e;
-  --navy-soft: #dde6ef;
+  --manual: #1c1b1e;
+  --manual-soft: #e4e2e1;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -70,8 +70,8 @@
     --st-done-soft: #1f3329;
     --st-cancel: #a3a8ac;
     --st-cancel-soft: #2a2b2d;
-    --navy: #7fa8d6;
-    --navy-soft: #1c2c3c;
+    --manual: #d8d5d3;
+    --manual-soft: #2a2928;
   }
 }
 
