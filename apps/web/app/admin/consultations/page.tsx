@@ -62,7 +62,7 @@ export default function ConsultationsPage() {
 
       {showArchived && (
         <div className="mb-3 rounded-[10px] bg-[var(--accent-soft)] px-3.5 py-2.5 text-[0.76rem] text-[var(--accent-ink)]">
-          예약일이 7일 넘게 지나 자동으로 보관된 상담입니다. 이력은 그대로 남아 있고, 복원하면 다시 기본 목록에 보입니다.
+          예약일(예약이 없으면 신청일)이 7일 넘게 지나 자동으로 보관된 상담입니다. 이력은 그대로 남아 있고, 복원하면 다시 기본 목록에 보입니다.
         </div>
       )}
 
