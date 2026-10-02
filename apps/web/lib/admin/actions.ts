@@ -265,19 +265,28 @@ export async function cancelReservationSlot(dateStr: string, time: string) {
   const { start } = findSlotDate(dateStr, time);
   const { data: slot } = await supabase
     .from("reservation_slots")
-    .select("id, reservations(id)")
+    .select("id, reservations(id, status, consultation_id)")
     .eq("staff_id", DOCTOR_ID)
     .eq("start_at", start.toISOString())
     .maybeSingle();
   if (!slot) return { ok: false, error: "슬롯을 찾을 수 없습니다." };
 
-  const resv = slot.reservations as unknown as { id: string } | { id: string }[] | null;
-  const reservation = Array.isArray(resv) ? resv[0] : resv;
+  // 같은 슬롯에 취소된 예약이 이미 있고 다시 예약된 경우를 대비해, 아직 취소되지 않은 예약을 대상으로 한다.
+  type Resv = { id: string; status: string; consultation_id: string };
+  const resv = slot.reservations as unknown as Resv | Resv[] | null;
+  const resvList = Array.isArray(resv) ? resv : resv ? [resv] : [];
+  const reservation = resvList.find((r) => r.status !== "cancelled");
   if (reservation) {
     await supabase
       .from("reservations")
       .update({ status: "cancelled", cancel_reason: "관리자 취소" })
       .eq("id", reservation.id);
+    // 취소된 건은 상담 관리 목록에서 바로 숨긴다 (데이터는 보관함에 남는다).
+    await supabase
+      .from("consultations")
+      .update({ archived_at: new Date().toISOString() })
+      .eq("id", reservation.consultation_id)
+      .is("archived_at", null);
   }
   await supabase.from("reservation_slots").update({ status: "open" }).eq("id", slot.id);
   return { ok: true };
@@ -660,7 +669,7 @@ export async function getPayments(options?: {
   const { data, error } = await supabase
     .from("payments")
     .select(
-      "id, type, amount, status, pg_provider, paid_at, created_at, refundable, reservations(patients(name), consultations(archived_at))",
+      "id, type, amount, status, pg_provider, paid_at, created_at, refundable, reservations(patients(name), reservation_slots(start_at))",
     )
     .order("created_at", { ascending: false });
 
@@ -675,17 +684,19 @@ export async function getPayments(options?: {
   };
 
   // 매출 추이는 보관 여부와 무관하게 전체 결제 기록 기준으로 계산한다 — 목록에서만 숨기고
-  // 통계는 왜곡되지 않도록. 목록은 상담 관리와 같은 기준(예약일 7일 경과)으로 걸러 보여준다.
+  // 통계는 왜곡되지 않도록. 목록은 예약일이 7일 넘게 지난 결제를 숨긴다. (상담 관리의 보관 여부와는
+  // 따로 본다: 취소된 예약의 예약금처럼 상담 목록에서는 바로 사라져도 결제 내역은 정산을 위해 남아 있어야 한다.)
+  const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
   const rows: PaymentRow[] = data
     .filter((p) => {
       const resv = p.reservations as unknown as
-        | { consultations: { archived_at: string | null } | { archived_at: string | null }[] | null }
-        | { consultations: { archived_at: string | null } | { archived_at: string | null }[] | null }[]
+        | { reservation_slots: { start_at: string } | { start_at: string }[] | null }
+        | { reservation_slots: { start_at: string } | { start_at: string }[] | null }[]
         | null;
       const reservation = Array.isArray(resv) ? resv[0] : resv;
-      const consultation = reservation?.consultations;
-      const consultationObj = Array.isArray(consultation) ? consultation[0] : consultation;
-      const archived = !!consultationObj?.archived_at;
+      const slot = reservation?.reservation_slots;
+      const startAt = (Array.isArray(slot) ? slot[0] : slot)?.start_at;
+      const archived = !!startAt && new Date(startAt).getTime() < cutoff;
       return options?.includeArchived ? archived : !archived;
     })
     .map((p) => {

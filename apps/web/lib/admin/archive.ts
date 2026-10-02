@@ -11,6 +11,8 @@ const DAYS_PAST_DUE = 7;
  *
  * - 예약이 있는 상담: 예약일이 7일 넘게 지난 경우
  * - 예약이 없는 상담: 신청일(created_at)이 7일 넘게 지난 경우
+ * - 취소된 상담/예약: 기간과 상관없이 바로 (관리자가 예약을 취소하는 순간에도 즉시 처리하며,
+ *   여기서는 그 외 경로로 취소된 건을 매일 한 번 쓸어담는다)
  */
 export async function archiveOldConsultations(): Promise<{ archived: number }> {
   const supabase = createAdminClient();
@@ -21,17 +23,23 @@ export async function archiveOldConsultations(): Promise<{ archived: number }> {
     .select("consultation_id, reservation_slots!inner(start_at)")
     .lt("reservation_slots.start_at", cutoff);
 
-  const { data: oldConsultations } = await supabase
+  const { data: openConsultations } = await supabase
     .from("consultations")
-    .select("id, reservations(id)")
-    .is("archived_at", null)
-    .lt("created_at", cutoff);
+    .select("id, status, created_at, reservations(status)")
+    .is("archived_at", null);
 
-  const withoutReservation = (oldConsultations ?? [])
-    .filter((c) => ((c.reservations as unknown as unknown[] | null) ?? []).length === 0)
-    .map((c) => c.id as string);
+  const dueByAge: string[] = [];
+  const cancelled: string[] = [];
+  for (const c of openConsultations ?? []) {
+    const resvs = ((c.reservations as unknown as { status: string }[] | null) ?? []);
+    if (resvs.length === 0 && new Date(c.created_at as string).getTime() < new Date(cutoff).getTime()) dueByAge.push(c.id as string);
+    const allCancelled = resvs.length > 0 && resvs.every((r) => r.status === "cancelled");
+    if (c.status === "cancelled" || allCancelled) cancelled.push(c.id as string);
+  }
 
-  const ids = [...new Set([...(dueReservations ?? []).map((r) => r.consultation_id as string), ...withoutReservation])];
+  const ids = [
+    ...new Set([...(dueReservations ?? []).map((r) => r.consultation_id as string), ...dueByAge, ...cancelled]),
+  ];
   if (ids.length === 0) return { archived: 0 };
 
   const { data: updated, error } = await supabase
