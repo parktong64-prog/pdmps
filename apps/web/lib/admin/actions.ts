@@ -123,12 +123,16 @@ export type ConsultationRow = {
   status: StatusKey;
   statusLabel: string;
   date: string;
+  /** 예약된 일시. 예약이 없으면 "-", 취소된 예약뿐이면 "(취소)"를 붙인다. */
+  reservationDate: string;
   flagged: boolean;
 };
 
 export async function getConsultations(options?: { includeArchived?: boolean }): Promise<ConsultationRow[]> {
   const supabase = createAdminClient();
-  let query = supabase.from("consultations").select("id, status, source, created_at, patients(name)");
+  let query = supabase
+    .from("consultations")
+    .select("id, status, source, created_at, patients(name), reservations(status, reservation_slots(start_at))");
   query = options?.includeArchived ? query.not("archived_at", "is", null) : query.is("archived_at", null);
   const { data, error } = await query.order("created_at", { ascending: false });
   if (error || !data) return [];
@@ -137,6 +141,15 @@ export async function getConsultations(options?: { includeArchived?: boolean }):
     const meta = consultationStatusMeta(r.status);
     const patient = r.patients as unknown as { name: string } | { name: string }[] | null;
     const name = Array.isArray(patient) ? patient[0]?.name : patient?.name;
+
+    type Resv = { status: string; reservation_slots: { start_at: string } | { start_at: string }[] | null };
+    const resvs = (r.reservations ?? []) as unknown as Resv[];
+    const chosen = resvs.find((x) => x.status !== "cancelled") ?? resvs[0];
+    const slot = Array.isArray(chosen?.reservation_slots) ? chosen.reservation_slots[0] : chosen?.reservation_slots;
+    const reservationDate = slot?.start_at
+      ? formatDateTimeKST(slot.start_at) + (chosen.status === "cancelled" ? " (취소)" : "")
+      : "-";
+
     return {
       id: r.id as string,
       name: name ?? "-",
@@ -144,6 +157,7 @@ export async function getConsultations(options?: { includeArchived?: boolean }):
       status: meta.key,
       statusLabel: meta.label,
       date: formatDateDotKST(r.created_at as string),
+      reservationDate,
       flagged: r.status === "needs_review",
     };
   });

@@ -23,25 +23,29 @@ const FILTERS: { key: string; label: string; match: PaymentRow["status"][] | nul
 ];
 
 export default function PaymentsPage() {
-  const [payments, setPayments] = useState<PaymentRow[] | null>(null);
-  const [revenue, setRevenue] = useState<{ d: string; v: number }[]>([]);
-  const [stats, setStats] = useState<PaymentStats>(EMPTY_STATS);
+  const [data, setData] = useState<{
+    archived: boolean;
+    rows: PaymentRow[];
+    revenue: { d: string; v: number }[];
+    stats: PaymentStats;
+  } | null>(null);
   const [filter, setFilter] = useState("all");
   const [showArchived, setShowArchived] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
 
   const reload = useCallback(() => {
-    getPayments({ includeArchived: showArchived }).then(({ rows, revenue, stats }) => {
-      setPayments(rows);
-      setRevenue(revenue);
-      setStats(stats);
-    });
+    getPayments({ includeArchived: showArchived }).then((res) => setData({ archived: showArchived, ...res }));
   }, [showArchived]);
 
   useEffect(() => {
-    setPayments(null);
     reload();
   }, [reload]);
+
+  // 보관함 토글을 막 눌러서 아직 해당 목록을 못 받았으면 로딩으로 취급한다.
+  const ready = data && data.archived === showArchived ? data : null;
+  const payments = ready?.rows ?? null;
+  const revenue = ready?.revenue ?? [];
+  const stats = ready?.stats ?? EMPTY_STATS;
 
   if (payments === null) {
     return <div className="py-10 text-center text-[0.84rem] text-[var(--ink-soft)]">불러오는 중…</div>;

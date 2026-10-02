@@ -14,18 +14,20 @@ const FILTERS: { key: StatusKey | "all"; label: string }[] = [
 ];
 
 export default function ConsultationsPage() {
-  const [rowsAll, setRowsAll] = useState<ConsultationRow[] | null>(null);
+  const [data, setData] = useState<{ archived: boolean; rows: ConsultationRow[] } | null>(null);
   const [filter, setFilter] = useState<StatusKey | "all">("all");
   const [showArchived, setShowArchived] = useState(false);
 
   const reload = useCallback(() => {
-    getConsultations({ includeArchived: showArchived }).then(setRowsAll);
+    getConsultations({ includeArchived: showArchived }).then((rows) => setData({ archived: showArchived, rows }));
   }, [showArchived]);
 
   useEffect(() => {
-    setRowsAll(null);
     reload();
   }, [reload]);
+
+  // 보관함 토글을 막 눌러서 아직 해당 목록을 못 받았으면 로딩으로 취급한다.
+  const rowsAll = data && data.archived === showArchived ? data.rows : null;
 
   async function handleRestore(id: string) {
     await restoreConsultation(id);
@@ -91,10 +93,10 @@ export default function ConsultationsPage() {
             해당 상태의 상담이 없습니다.
           </div>
         ) : (
-          <table className="w-full min-w-[480px] border-collapse text-[0.82rem]">
+          <table className="w-full min-w-[560px] border-collapse text-[0.82rem]">
             <thead>
               <tr>
-                {[...["환자", "채널", "상태", "신청일"], ...(showArchived ? ["보관"] : [])].map((h) => (
+                {[...["환자", "채널", "상태", "예약일", "신청일"], ...(showArchived ? ["보관"] : [])].map((h) => (
                   <th
                     key={h}
                     className="border-b border-[var(--line)] px-2.5 pb-2.5 text-left text-[0.7rem] font-semibold tracking-[0.03em] text-[var(--ink-soft)] uppercase"
@@ -118,6 +120,9 @@ export default function ConsultationsPage() {
                   <td className="border-b border-[var(--line)] px-2.5 py-3">{r.channel}</td>
                   <td className="border-b border-[var(--line)] px-2.5 py-3">
                     <StatusPill status={r.status} label={r.statusLabel} />
+                  </td>
+                  <td className="border-b border-[var(--line)] px-2.5 py-3 font-[family-name:var(--font-mono-kr)] text-[0.78rem]">
+                    {r.reservationDate}
                   </td>
                   <td className="border-b border-[var(--line)] px-2.5 py-3">{r.date}</td>
                   {showArchived && (
