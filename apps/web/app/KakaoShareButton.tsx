@@ -75,6 +75,9 @@ export function KakaoShareButton() {
           title: "PDMPS | Face Lift 전문",
           description: "AI 시뮬레이션으로 미리 확인하고, 지금 바로 상담 예약하세요.",
           imageUrl: `${SITE_URL}/og-image.jpg`,
+          // 그림 크기를 알려주지 않으면 카카오가 정사각형으로 가운데만 잘라서 보여준다.
+          imageWidth: 1200,
+          imageHeight: 630,
           link: { mobileWebUrl: SITE_URL, webUrl: SITE_URL },
         },
         buttons: [{ title: "상담 예약하기", link: { mobileWebUrl: SITE_URL, webUrl: SITE_URL } }],
