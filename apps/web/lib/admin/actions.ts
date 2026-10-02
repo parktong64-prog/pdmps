@@ -475,9 +475,30 @@ export type PatientListRow = {
   phone: string;
   visits: number;
   reservations: number;
+  /** 가장 가까운 예정 예약(없으면 가장 최근 지난 예약). 취소된 예약뿐이면 "(취소)"를 붙이고, 없으면 "-". */
+  reservationDate: string;
   last: string;
   needsReview: boolean;
 };
+
+function pickReservationDate<T extends { status: string; reservation_slots: unknown }>(
+  reservations: T[],
+  nowMs: number,
+  startOf: (r: T) => string | null,
+): string {
+  const dated = reservations.map((r) => ({ status: r.status, startAt: startOf(r) })).filter((r) => r.startAt) as {
+    status: string;
+    startAt: string;
+  }[];
+  const active = dated.filter((r) => r.status !== "cancelled");
+  const time = (r: { startAt: string }) => new Date(r.startAt).getTime();
+  const upcoming = active.filter((r) => time(r) >= nowMs).sort((a, b) => time(a) - time(b))[0];
+  const latestPast = active.sort((a, b) => time(b) - time(a))[0];
+  const chosen = upcoming ?? latestPast;
+  if (chosen) return formatDateTimeKST(chosen.startAt);
+  const cancelled = dated.sort((a, b) => time(b) - time(a))[0];
+  return cancelled ? `${formatDateTimeKST(cancelled.startAt)} (취소)` : "-";
+}
 
 export async function getPatientsList(options?: { includeArchived?: boolean }): Promise<PatientListRow[]> {
   const supabase = createAdminClient();
@@ -489,9 +510,15 @@ export async function getPatientsList(options?: { includeArchived?: boolean }): 
   const [{ data: patients }, { data: consultations }, { data: reservations }] = await Promise.all([
     patientsQuery,
     supabase.from("consultations").select("id, patient_id, status, created_at"),
-    supabase.from("reservations").select("id, patient_id, created_at"),
+    supabase.from("reservations").select("id, patient_id, created_at, status, reservation_slots(start_at)"),
   ]);
   if (!patients) return [];
+
+  const nowMs = Date.now();
+  const startOf = (r: { reservation_slots: unknown }) => {
+    const slot = r.reservation_slots as { start_at: string } | { start_at: string }[] | null;
+    return (Array.isArray(slot) ? slot[0] : slot)?.start_at ?? null;
+  };
 
   return patients
     .map((p) => {
@@ -506,6 +533,7 @@ export async function getPatientsList(options?: { includeArchived?: boolean }): 
         phone: p.phone as string,
         visits: myConsultations.length,
         reservations: myReservations.length,
+        reservationDate: pickReservationDate(myReservations, nowMs, startOf),
         last: formatDateDotKST(lastActivity),
         lastActivityRaw: lastActivity,
         needsReview: myConsultations.some((c) => c.status === "needs_review"),

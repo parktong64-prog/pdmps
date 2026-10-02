@@ -118,10 +118,10 @@ export default function PatientsPage() {
               {showArchived ? "삭제된 환자가 없습니다." : "등록된 환자가 없습니다."}
             </div>
           ) : (
-            <table className="w-full min-w-[480px] border-collapse text-[0.82rem]">
+            <table className="w-full min-w-[620px] border-collapse text-[0.82rem]">
               <thead>
                 <tr>
-                  {["환자", "전화번호", "상담", "예약", "최근 활동"].map((h) => (
+                  {["환자", "전화번호", "상담", "예약", "예약일", "최근 활동"].map((h) => (
                     <th
                       key={h}
                       className="border-b border-[var(--line)] px-2.5 pb-2.5 text-left text-[0.7rem] font-semibold tracking-[0.03em] text-[var(--ink-soft)] uppercase"
@@ -145,6 +145,9 @@ export default function PatientsPage() {
                     <td className="border-b border-[var(--line)] px-2.5 py-3">{maskPhone(p.phone)}</td>
                     <td className="border-b border-[var(--line)] px-2.5 py-3">{p.visits}회</td>
                     <td className="border-b border-[var(--line)] px-2.5 py-3">{p.reservations}회</td>
+                    <td className="border-b border-[var(--line)] px-2.5 py-3 font-[family-name:var(--font-mono-kr)] text-[0.78rem]">
+                      {p.reservationDate}
+                    </td>
                     <td className="border-b border-[var(--line)] px-2.5 py-3">{p.last}</td>
                   </tr>
                 ))}
