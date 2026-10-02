@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { StatusPill, type StatusKey } from "@/lib/admin/status";
-import { getPayments, refundPayment, type PaymentRow } from "@/lib/admin/actions";
+import { getPayments, refundPayment, type PaymentRow, type PaymentStats } from "@/lib/admin/actions";
+
+const EMPTY_STATS: PaymentStats = { totalRevenue: 0, totalCount: 0, refundedSum: 0, successRate: 0 };
 
 const STATUS_META: Record<PaymentRow["status"], StatusKey> = {
   paid: "done",
@@ -23,19 +25,23 @@ const FILTERS: { key: string; label: string; match: PaymentRow["status"][] | nul
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<PaymentRow[] | null>(null);
   const [revenue, setRevenue] = useState<{ d: string; v: number }[]>([]);
+  const [stats, setStats] = useState<PaymentStats>(EMPTY_STATS);
   const [filter, setFilter] = useState("all");
+  const [showArchived, setShowArchived] = useState(false);
   const [pendingId, setPendingId] = useState<string | null>(null);
 
-  function reload() {
-    getPayments().then(({ rows, revenue }) => {
+  const reload = useCallback(() => {
+    getPayments({ includeArchived: showArchived }).then(({ rows, revenue, stats }) => {
       setPayments(rows);
       setRevenue(revenue);
+      setStats(stats);
     });
-  }
+  }, [showArchived]);
 
   useEffect(() => {
+    setPayments(null);
     reload();
-  }, []);
+  }, [reload]);
 
   if (payments === null) {
     return <div className="py-10 text-center text-[0.84rem] text-[var(--ink-soft)]">불러오는 중…</div>;
@@ -44,17 +50,18 @@ export default function PaymentsPage() {
   const activeFilter = FILTERS.find((f) => f.key === filter)!;
   const rows = activeFilter.match ? payments.filter((p) => activeFilter.match!.includes(p.status)) : payments;
 
-  const thisMonthPaid = payments.filter((p) => p.status === "paid");
-  const monthRevenue = thisMonthPaid.reduce((sum, p) => sum + p.amount, 0);
-  const refundedSum = payments.filter((p) => p.status === "refunded").reduce((sum, p) => sum + p.amount, 0);
-  const total = payments.length;
-  const successRate = total > 0 ? Math.round((payments.filter((p) => p.status === "paid").length / total) * 1000) / 10 : 0;
-
+  // 지표는 보관함 토글과 무관하게 항상 전체 결제 기록 기준이다 (getPayments의 stats 참고).
   const tiles = [
-    { lbl: "누적 매출", val: monthRevenue >= 1_000_000 ? `${(monthRevenue / 1_000_000).toFixed(1)}M` : `${monthRevenue.toLocaleString()}원` },
-    { lbl: "결제건수", val: String(total) },
-    { lbl: "환불액", val: refundedSum >= 1_000_000 ? `${(refundedSum / 1_000_000).toFixed(1)}M` : `${refundedSum.toLocaleString()}원` },
-    { lbl: "결제 성공률", val: `${successRate}%` },
+    {
+      lbl: "누적 매출",
+      val: stats.totalRevenue >= 1_000_000 ? `${(stats.totalRevenue / 1_000_000).toFixed(1)}M` : `${stats.totalRevenue.toLocaleString()}원`,
+    },
+    { lbl: "결제건수", val: String(stats.totalCount) },
+    {
+      lbl: "환불액",
+      val: stats.refundedSum >= 1_000_000 ? `${(stats.refundedSum / 1_000_000).toFixed(1)}M` : `${stats.refundedSum.toLocaleString()}원`,
+    },
+    { lbl: "결제 성공률", val: `${stats.successRate}%` },
   ];
 
   const max = Math.max(1, ...revenue.map((r) => r.v));
@@ -79,8 +86,27 @@ export default function PaymentsPage() {
     <div>
       <div className="mb-6 flex items-end justify-between">
         <h1 className="font-[family-name:var(--font-display)] text-[1.4rem] font-bold">결제·매출 관리</h1>
-        <div className="text-[0.8rem] text-[var(--ink-soft)]">전체 기간</div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setShowArchived((v) => !v)}
+            className={`rounded-full border px-3 py-1 text-[0.72rem] font-semibold transition-colors ${
+              showArchived
+                ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                : "border-[var(--line)] text-[var(--ink-soft)]"
+            }`}
+          >
+            {showArchived ? "보관함 보는 중" : "보관함 보기"}
+          </button>
+          <div className="text-[0.8rem] text-[var(--ink-soft)]">전체 기간</div>
+        </div>
       </div>
+
+      {showArchived && (
+        <div className="mb-3 rounded-[10px] bg-[var(--accent-soft)] px-3.5 py-2.5 text-[0.76rem] text-[var(--accent-ink)]">
+          예약일이 7일 넘게 지나 자동으로 보관된 결제 내역입니다. 위 지표(누적 매출 등)에는 이미 포함되어 있습니다.
+        </div>
+      )}
 
       <div className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-4">
         {tiles.map((t) => (

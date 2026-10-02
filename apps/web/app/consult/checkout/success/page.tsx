@@ -54,8 +54,11 @@ export default async function CheckoutSuccessPage({
             <div className="mb-1.5 rounded-[4px_14px_14px_14px] bg-[#fee500] px-3.5 py-3 text-left text-[0.78rem] leading-[1.6] text-[#3c1e1e]">
               [PDMPS] {reservation.when} Face Lift 상담 예약이 확정되었습니다.
             </div>
-            <div className="mb-[18px] text-left text-[0.68rem] text-[var(--ink-soft)]">
+            <div className="mb-2 text-left text-[0.68rem] text-[var(--ink-soft)]">
               알림톡 발송 실패 시 문자(SMS)로 자동 재발송됩니다.
+            </div>
+            <div className="mb-[18px] text-left text-[0.68rem] text-[var(--ink-soft)]">
+              병원 사정에 따라 예약 일정이 변경될 수 있으며, 변경 시 별도로 연락드립니다.
             </div>
 
             <Link href="/consult/schedule" className="text-[0.82rem] text-[var(--accent-ink)] underline underline-offset-2">

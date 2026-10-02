@@ -632,14 +632,20 @@ export type PaymentRow = {
   refundable: boolean;
 };
 
-export async function getPayments(): Promise<{ rows: PaymentRow[]; revenue: { d: string; v: number }[] }> {
+export type PaymentStats = { totalRevenue: number; totalCount: number; refundedSum: number; successRate: number };
+
+export async function getPayments(options?: {
+  includeArchived?: boolean;
+}): Promise<{ rows: PaymentRow[]; revenue: { d: string; v: number }[]; stats: PaymentStats }> {
   const supabase = createAdminClient();
   const { data, error } = await supabase
     .from("payments")
-    .select("id, type, amount, status, pg_provider, paid_at, created_at, refundable, reservations(patients(name))")
+    .select(
+      "id, type, amount, status, pg_provider, paid_at, created_at, refundable, reservations(patients(name), consultations(archived_at))",
+    )
     .order("created_at", { ascending: false });
 
-  if (error || !data) return { rows: [], revenue: [] };
+  if (error || !data) return { rows: [], revenue: [], stats: { totalRevenue: 0, totalCount: 0, refundedSum: 0, successRate: 0 } };
 
   const STATUS_LABEL: Record<string, string> = {
     pending: "대기",
@@ -649,23 +655,40 @@ export async function getPayments(): Promise<{ rows: PaymentRow[]; revenue: { d:
     cancelled: "취소",
   };
 
-  const rows: PaymentRow[] = data.map((p) => {
-    const resv = p.reservations as unknown as { patients: { name: string } | { name: string }[] | null } | { patients: { name: string } | { name: string }[] | null }[] | null;
-    const reservation = Array.isArray(resv) ? resv[0] : resv;
-    const patient = reservation?.patients;
-    const patientObj = Array.isArray(patient) ? patient[0] : patient;
-    return {
-      id: p.id as string,
-      patient: patientObj?.name ?? "-",
-      type: p.type === "deposit" ? "예약금" : "시술비",
-      amount: p.amount as number,
-      method: p.pg_provider ?? "-",
-      date: p.paid_at ? formatDateDotKST(p.paid_at) : p.created_at ? formatDateDotKST(p.created_at) : "-",
-      status: p.status as PaymentRow["status"],
-      statusLabel: STATUS_LABEL[p.status as string] ?? p.status,
-      refundable: p.refundable as boolean,
-    };
-  });
+  // 매출 추이는 보관 여부와 무관하게 전체 결제 기록 기준으로 계산한다 — 목록에서만 숨기고
+  // 통계는 왜곡되지 않도록. 목록은 상담 관리와 같은 기준(예약일 7일 경과)으로 걸러 보여준다.
+  const rows: PaymentRow[] = data
+    .filter((p) => {
+      const resv = p.reservations as unknown as
+        | { consultations: { archived_at: string | null } | { archived_at: string | null }[] | null }
+        | { consultations: { archived_at: string | null } | { archived_at: string | null }[] | null }[]
+        | null;
+      const reservation = Array.isArray(resv) ? resv[0] : resv;
+      const consultation = reservation?.consultations;
+      const consultationObj = Array.isArray(consultation) ? consultation[0] : consultation;
+      const archived = !!consultationObj?.archived_at;
+      return options?.includeArchived ? archived : !archived;
+    })
+    .map((p) => {
+      const resv = p.reservations as unknown as
+        | { patients: { name: string } | { name: string }[] | null }
+        | { patients: { name: string } | { name: string }[] | null }[]
+        | null;
+      const reservation = Array.isArray(resv) ? resv[0] : resv;
+      const patient = reservation?.patients;
+      const patientObj = Array.isArray(patient) ? patient[0] : patient;
+      return {
+        id: p.id as string,
+        patient: patientObj?.name ?? "-",
+        type: p.type === "deposit" ? "예약금" : "시술비",
+        amount: p.amount as number,
+        method: p.pg_provider ?? "-",
+        date: p.paid_at ? formatDateDotKST(p.paid_at) : p.created_at ? formatDateDotKST(p.created_at) : "-",
+        status: p.status as PaymentRow["status"],
+        statusLabel: STATUS_LABEL[p.status as string] ?? p.status,
+        refundable: p.refundable as boolean,
+      };
+    });
 
   // 최근 7일(KST) 매출 추이
   const days: { d: string; v: number }[] = [];
@@ -680,7 +703,17 @@ export async function getPayments(): Promise<{ rows: PaymentRow[]; revenue: { d:
     days.push({ d: `${kst.getUTCMonth() + 1}/${kst.getUTCDate()}`, v: sum });
   }
 
-  return { rows, revenue: days };
+  // 상단 요약 지표(누적 매출 등)는 보관함 토글과 무관하게 항상 전체 결제 기록 기준으로 낸다 —
+  // 목록에서 오래된 건을 숨긴다고 해서 누적 매출이 줄어든 것처럼 보이면 안 되기 때문.
+  const paidAll = data.filter((p) => p.status === "paid");
+  const stats = {
+    totalRevenue: paidAll.reduce((sum, p) => sum + (p.amount as number), 0),
+    totalCount: data.length,
+    refundedSum: data.filter((p) => p.status === "refunded").reduce((sum, p) => sum + (p.amount as number), 0),
+    successRate: data.length > 0 ? Math.round((paidAll.length / data.length) * 1000) / 10 : 0,
+  };
+
+  return { rows, revenue: days, stats };
 }
 
 export async function refundPayment(paymentId: string) {
