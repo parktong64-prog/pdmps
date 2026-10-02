@@ -39,10 +39,15 @@ export async function getDashboardData() {
         .select("id", { count: "exact", head: true })
         .gte("created_at", todayStart.toISOString())
         .lt("created_at", todayEnd.toISOString()),
-      supabase.from("consultations").select("id", { count: "exact", head: true }).eq("status", "needs_review"),
+      supabase
+        .from("consultations")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "needs_review")
+        .is("archived_at", null),
       supabase
         .from("consultations")
         .select("id, status, source, created_at, patients(name)")
+        .is("archived_at", null)
         .order("created_at", { ascending: false })
         .limit(5),
       supabase
