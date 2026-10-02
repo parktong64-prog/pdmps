@@ -1,37 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { SITE_URL } from "@/lib/business";
 
-type KakaoSdk = {
-  isInitialized: () => boolean;
-  init: (key: string) => void;
-  Share: { sendDefault: (options: Record<string, unknown>) => void };
-};
-
-declare global {
-  interface Window {
-    Kakao?: KakaoSdk;
-  }
-}
-
-const SDK_URL = "https://t1.kakaocdn.net/kakao_js_sdk/2.7.4/kakao.min.js";
-
-let sdkPromise: Promise<KakaoSdk> | null = null;
-
-function loadKakaoSdk(): Promise<KakaoSdk> {
-  if (sdkPromise) return sdkPromise;
-  sdkPromise = new Promise((resolve, reject) => {
-    if (window.Kakao) return resolve(window.Kakao);
-    const script = document.createElement("script");
-    script.src = SDK_URL;
-    script.async = true;
-    script.onload = () => (window.Kakao ? resolve(window.Kakao) : reject(new Error("Kakao SDK not found")));
-    script.onerror = () => reject(new Error("Kakao SDK load failed"));
-    document.head.appendChild(script);
-  });
-  return sdkPromise;
-}
+const SHARE_TITLE = "PDMPS | Face Lift 전문";
+const SHARE_TEXT = "AI 시뮬레이션으로 미리 확인하고, 지금 바로 상담 예약하세요.";
 
 async function copyLink() {
   try {
@@ -42,49 +15,24 @@ async function copyLink() {
   }
 }
 
+// 카카오 SDK 대신 기기의 기본 공유창(Web Share API)을 쓴다. 카카오 개발자 설정(도메인 등록 등)에
+// 의존하지 않아 링크가 항상 열리고, 카카오톡 대화방에는 이 주소의 대표 이미지·제목으로 미리보기
+// 카드가 자동으로 만들어진다. 공유창을 지원하지 않는 환경(대부분의 PC)에서는 링크 복사로 대신한다.
 export function KakaoShareButton() {
   const [notice, setNotice] = useState<string | null>(null);
-  const readyRef = useRef(false);
 
-  // 팝업 차단을 피하려면 클릭 핸들러 안에서 공유창(window.open)이 기다림 없이 곧바로 열려야
-  // 브라우저가 "사용자가 직접 누른 동작"으로 인정한다. SDK 로딩을 클릭 이후로 미루면 그 사이의
-  // 지연 때문에 팝업이 차단되므로, 버튼이 화면에 뜨는 즉시 미리 불러와 초기화해둔다.
-  useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_KAKAO_JS_KEY;
-    if (!key) return;
-    loadKakaoSdk()
-      .then((kakao) => {
-        if (!kakao.isInitialized()) kakao.init(key);
-        readyRef.current = true;
-      })
-      .catch(() => {});
-  }, []);
-
-  function handleShare() {
+  async function handleShare() {
     setNotice(null);
-    const kakao = window.Kakao;
-    if (!readyRef.current || !kakao) {
-      // 아직 준비되지 않았으면(느린 네트워크 등) 기다리는 사이 팝업이 막히므로 링크 복사로 대신한다.
-      void copyLink().then((ok) => setNotice(ok ? "링크를 복사했어요. 카카오톡에 붙여넣어 보내주세요." : SITE_URL));
-      return;
+    if (typeof navigator.share === "function") {
+      try {
+        await navigator.share({ title: SHARE_TITLE, text: SHARE_TEXT, url: SITE_URL });
+        return;
+      } catch (err) {
+        // 사용자가 공유창을 그냥 닫은 경우는 아무 안내도 하지 않는다.
+        if (err instanceof DOMException && err.name === "AbortError") return;
+      }
     }
-    try {
-      kakao.Share.sendDefault({
-        objectType: "feed",
-        content: {
-          title: "PDMPS | Face Lift 전문",
-          description: "AI 시뮬레이션으로 미리 확인하고, 지금 바로 상담 예약하세요.",
-          imageUrl: `${SITE_URL}/og-image.jpg`,
-          // 그림 크기를 알려주지 않으면 카카오가 정사각형으로 가운데만 잘라서 보여준다.
-          imageWidth: 1200,
-          imageHeight: 630,
-          link: { mobileWebUrl: SITE_URL, webUrl: SITE_URL },
-        },
-        buttons: [{ title: "상담 예약하기", link: { mobileWebUrl: SITE_URL, webUrl: SITE_URL } }],
-      });
-    } catch {
-      void copyLink().then((ok) => setNotice(ok ? "링크를 복사했어요. 카카오톡에 붙여넣어 보내주세요." : SITE_URL));
-    }
+    setNotice((await copyLink()) ? "링크를 복사했어요. 카카오톡에 붙여넣어 보내주세요." : SITE_URL);
   }
 
   return (
@@ -94,7 +42,7 @@ export function KakaoShareButton() {
         onClick={handleShare}
         className="block w-full rounded-[11px] bg-[#FEE500] py-[14px] text-center text-[0.9rem] font-bold text-[#191919] transition-[filter] hover:brightness-[0.97]"
       >
-        카카오톡으로 공유하기
+        카카오톡 등으로 공유하기
       </button>
       {notice && <p className="mt-2 text-center text-[0.76rem] break-all text-[var(--ink-soft)]">{notice}</p>}
     </div>
