@@ -224,10 +224,10 @@ function WeekGrid({
           const closed = isClosedDay(d);
           return (
             <div key={d.toISOString()} className="bg-[var(--page-bg)] px-1 pt-0.5 text-center">
-              <div className={`text-[0.58rem] leading-tight ${closed ? "text-[var(--ink-faint)]" : "text-[var(--ink-soft)]"}`}>
+              <div className={`text-[0.58rem] leading-tight ${closed ? "text-[var(--danger)]" : "text-[var(--ink-soft)]"}`}>
                 {WEEKDAY_LABEL[d.getDay()]}
               </div>
-              <div className={`font-[family-name:var(--font-mono-kr)] text-[0.78rem] leading-tight font-semibold ${closed ? "text-[var(--ink-faint)]" : ""}`}>
+              <div className={`font-[family-name:var(--font-mono-kr)] text-[0.78rem] leading-tight font-semibold ${closed ? "text-[var(--danger)]" : ""}`}>
                 {d.getDate()}
               </div>
             </div>
@@ -271,7 +271,7 @@ function WeekGrid({
                       : ""
                   } ${status === "pending" ? "bg-[var(--st-pending-soft)] font-bold text-[var(--st-pending)]" : ""} ${
                     status === "open" ? "text-[var(--ink-faint)] hover:bg-[var(--accent-soft)]" : ""
-                  } ${status === "closed" ? "cursor-default text-[var(--ink-faint)]" : "cursor-pointer"} ${
+                  } ${status === "closed" ? "cursor-default text-[var(--danger)]" : "cursor-pointer"} ${
                     isSelected ? "outline outline-2 -outline-offset-2 outline-[var(--accent)]" : ""
                   }`}
                 >
