@@ -34,7 +34,8 @@ export default function SchedulePage() {
   const [slotStates, setSlotStates] = useState<Record<string, TimeState> | null>(null);
 
   const { y, m } = MONTHS[monthIndex];
-  const firstWeekday = new Date(y, m, 1).getDay();
+  // 월요일부터 시작하는 달력 — 1일 앞에 채울 빈 칸 수 (일요일은 6칸, 월요일은 0칸).
+  const firstWeekday = (new Date(y, m, 1).getDay() + 6) % 7;
   const daysInMonth = new Date(y, m + 1, 0).getDate();
 
   const reload = useCallback(() => {
@@ -136,10 +137,10 @@ export default function SchedulePage() {
             </div>
 
             <div className="mb-1 grid grid-cols-7">
-              {WEEKDAY_LABEL.map((w, i) => (
+              {[...WEEKDAY_LABEL.slice(1), WEEKDAY_LABEL[0]].map((w, i) => (
                 <span
                   key={w}
-                  className={`py-1 text-center text-[0.68rem] ${i === 0 || i === 6 ? "text-[var(--danger)]" : "text-[var(--ink-soft)]"}`}
+                  className={`py-1 text-center text-[0.68rem] ${i >= 5 ? "text-[var(--danger)]" : "text-[var(--ink-soft)]"}`}
                 >
                   {w}
                 </span>
