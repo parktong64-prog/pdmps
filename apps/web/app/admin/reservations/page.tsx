@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { StatusPill } from "@/lib/admin/status";
-import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay, isRedDay, redDayName } from "@/lib/booking";
+import { WEEKDAY_LABEL, TIMES, dateKey, isClosedDay, isRedDay, redDayName } from "@/lib/booking";
 import {
   getWeekSlots,
   cancelReservationSlot,
@@ -15,7 +15,7 @@ import {
 } from "@/lib/admin/actions";
 
 
-// 오늘이 속한 주의 일요일 — 여기서부터 3주(21일)를 기본으로 보여준다.
+// 오늘이 속한 주의 일요일 — 여기서부터 4주(28일)를 기본으로 보여준다.
 function sundayOf(d: Date) {
   const copy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
   copy.setDate(copy.getDate() - copy.getDay());
@@ -29,7 +29,7 @@ const BASE_SUNDAY = sundayOf(new Date());
 type Selected = { y: number; m: number; d: number; time: string; key: string };
 
 export default function ReservationsPage() {
-  // blockIdx*21일만큼 오프셋된 3주치를 보여준다 (0 = 이번 주 + 다음 2주).
+  // blockIdx*28일만큼 오프셋된 4주치를 보여준다 (0 = 이번 주 + 다음 3주).
   const [blockIdx, setBlockIdx] = useState(0);
   const [slots, setSlots] = useState<Record<string, SlotCell> | null>(null);
   const [selection, setSelection] = useState<Selected[]>([]);
@@ -37,7 +37,7 @@ export default function ReservationsPage() {
   const selected = selection.length === 1 ? selection[0] : null;
 
   const weekStarts = useMemo(
-    () => [0, 7, 14].map((n) => addDays(BASE_SUNDAY, blockIdx * 21 + n)),
+    () => [0, 7, 14, 21].map((n) => addDays(BASE_SUNDAY, blockIdx * 28 + n)),
     [blockIdx],
   );
   const weeks = useMemo(
@@ -106,7 +106,7 @@ export default function ReservationsPage() {
         <div className="mb-1 flex items-center justify-between">
           <button
             type="button"
-            aria-label="이전 3주"
+            aria-label="이전 4주"
             onClick={() => changeBlock(blockIdx - 1)}
             className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[var(--line)] text-[0.8rem]"
           >
@@ -126,7 +126,7 @@ export default function ReservationsPage() {
           </div>
           <button
             type="button"
-            aria-label="다음 3주"
+            aria-label="다음 4주"
             onClick={() => changeBlock(blockIdx + 1)}
             className="flex h-[24px] w-[24px] items-center justify-center rounded-full border border-[var(--line)] text-[0.8rem]"
           >
@@ -204,7 +204,7 @@ export default function ReservationsPage() {
   );
 }
 
-/** 한 주(7일) 분량의 시간표 그리드. 3주 표시를 위해 이 블록을 세 번 그린다. */
+/** 한 주(7일) 분량의 시간표 그리드. 4주 표시를 위해 이 블록을 네 번 그린다. */
 function WeekGrid({
   days,
   cellData,
@@ -247,7 +247,7 @@ function WeekGrid({
               const isSelected = selection.some((s) => s.key === key);
               const label =
                 status === "closed"
-                  ? BLOCKED[dateKey(d.getFullYear(), d.getMonth(), d.getDate())] || "휴진"
+                  ? redDayName(d) || "휴진"
                   : status === "booked" || status === "pending"
                     ? cell.patientName
                     : status === "blocked"

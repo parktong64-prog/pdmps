@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay, isRedDay, redDayName } from "@/lib/booking";
+import { WEEKDAY_LABEL, TIMES, dateKey, isClosedDay, isRedDay, redDayName } from "@/lib/booking";
 import { getMonthSlotStates, type TimeState } from "@/lib/schedule/actions";
 import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
 
@@ -18,7 +18,7 @@ function dayStatus(y: number, m: number, d: number, slotStates: Record<string, T
   const key = dateKey(y, m, d);
   const date = new Date(y, m, d);
   if (date < TODAY) return { open: false, reason: null as string | null, title: undefined as string | undefined };
-  if (isClosedDay(date)) return { open: false, reason: "휴", title: BLOCKED[key] };
+  if (isClosedDay(date)) return { open: false, reason: "휴", title: redDayName(date) ?? undefined };
   const hasOpenTime = TIMES.some((t) => !slotStates[`${key}_${t}`]);
   if (!hasOpenTime) return { open: false, reason: "마감", title: undefined };
   return { open: true, reason: null, title: undefined };

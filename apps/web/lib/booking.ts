@@ -9,19 +9,9 @@ export const WEEKDAY_LABEL = ["일", "월", "화", "수", "목", "금", "토"];
 // 상담 소요시간 1시간 30분 간격으로 배치. 오후 진료만 운영한다 (오전 10:00, 11:30 폐지).
 export const TIMES = ["13:00", "14:30", "16:00"];
 
-// 정기 휴진 외에 병원이 별도로 막아둔 날짜 (공휴일/원장 학회 등)
-export const BLOCKED: Record<string, string> = {
-  "2026-09-24": "추석연휴",
-  "2026-09-25": "추석연휴",
-  "2026-09-26": "추석연휴",
-  "2026-10-05": "개천절 대체공휴일",
-  "2026-10-09": "한글날",
-  "2026-12-25": "성탄절",
-  "2027-01-01": "신정",
-  "2027-02-08": "설날연휴",
-  "2027-02-09": "설날 대체공휴일",
-  "2027-03-01": "삼일절",
-};
+// 토·일요일과 법정 공휴일(lib/holidays.ts가 자동 계산)은 따로 적지 않아도 휴진이다.
+// 여기에는 그 밖에 병원이 별도로 쉬는 날(원장 학회, 병원 사정 등)만 "YYYY-MM-DD": "사유"로 추가한다.
+export const BLOCKED: Record<string, string> = {};
 
 export function hash(str: string) {
   let h = 0;
@@ -55,7 +45,7 @@ export function redDayName(date: Date): string | null {
 
 export function isClosedDay(date: Date) {
   const weekday = date.getDay();
-  return weekday === 0 || weekday === 6 || !!BLOCKED[dateKey(date.getFullYear(), date.getMonth(), date.getDate())];
+  return weekday === 0 || weekday === 6 || !!redDayName(date);
 }
 
 // ───────────────────────── KST ↔ 서버(UTC) 시각 변환 ─────────────────────────

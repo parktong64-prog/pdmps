@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay, isRedDay, redDayName } from "@/lib/booking";
+import { WEEKDAY_LABEL, TIMES, dateKey, isClosedDay, isRedDay, redDayName } from "@/lib/booking";
 import {
   getMonthSlotStates,
   setDayOpen,
@@ -221,7 +221,7 @@ export default function SchedulePage() {
                   key={d}
                   type="button"
                   disabled={disabled}
-                  title={closedFixed ? BLOCKED[dateKey(y, m, d)] || redDayName(date) || "정기 휴진" : (redDayName(date) ?? undefined)}
+                  title={redDayName(date) ?? (closedFixed ? "정기 휴진" : undefined)}
                   onClick={(e) => !disabled && selectDate(d, e)}
                   className={`flex h-9 select-none flex-col items-center justify-center gap-0.5 rounded-lg font-[family-name:var(--font-mono-kr)] text-[0.78rem] transition-colors ${
                     isSelected
