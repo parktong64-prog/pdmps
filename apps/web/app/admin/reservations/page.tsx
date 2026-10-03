@@ -15,16 +15,16 @@ import {
 } from "@/lib/admin/actions";
 
 
-// 오늘이 속한 주의 일요일 — 여기서부터 4주(28일)를 기본으로 보여준다.
-function sundayOf(d: Date) {
+// 오늘이 속한 주의 월요일 — 여기서부터 4주(28일)를 기본으로 보여준다. (월~일 순서, 일요일이 토요일 다음)
+function mondayOf(d: Date) {
   const copy = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-  copy.setDate(copy.getDate() - copy.getDay());
+  copy.setDate(copy.getDate() - ((copy.getDay() + 6) % 7));
   return copy;
 }
 function addDays(d: Date, n: number) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
 }
-const BASE_SUNDAY = sundayOf(new Date());
+const BASE_MONDAY = mondayOf(new Date());
 
 type Selected = { y: number; m: number; d: number; time: string; key: string };
 
@@ -37,7 +37,7 @@ export default function ReservationsPage() {
   const selected = selection.length === 1 ? selection[0] : null;
 
   const weekStarts = useMemo(
-    () => [0, 7, 14, 21].map((n) => addDays(BASE_SUNDAY, blockIdx * 28 + n)),
+    () => [0, 7, 14, 21].map((n) => addDays(BASE_MONDAY, blockIdx * 28 + n)),
     [blockIdx],
   );
   const weeks = useMemo(

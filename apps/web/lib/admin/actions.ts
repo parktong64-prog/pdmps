@@ -181,7 +181,7 @@ export type SlotCell = {
   source?: "web" | "app" | "admin";
 };
 
-/** weekStartISO(그 주 일요일 00:00 KST 기준 로컬 날짜)부터 7일치 슬롯 맵을 반환. key: `${dateKey}_${time}` */
+/** 주어진 로컬 날짜(KST 달력 기준 그 주의 시작일 00:00)부터 7일치 슬롯 맵을 반환. key: `${dateKey}_${time}` */
 export async function getWeekSlots(y: number, m: number, d: number): Promise<Record<string, SlotCell>> {
   // 결제 대기중 표시가 방치된 홀드 때문에 계속 남아있지 않도록, 조회할 때마다 만료분을 정리한다.
   await expireStaleHeldReservations();
