@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay } from "@/lib/booking";
+import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay, isRedDay, redDayName } from "@/lib/booking";
 import {
   getMonthSlotStates,
   setDayOpen,
@@ -194,7 +194,7 @@ export default function SchedulePage() {
 
         <div className="mb-0.5 grid grid-cols-7">
           {WEEKDAY_LABEL.map((w, i) => (
-            <span key={w} className={`py-0.5 text-center text-[0.7rem] ${i === 0 ? "text-[#c0605f]" : "text-[var(--ink-soft)]"}`}>
+            <span key={w} className={`py-0.5 text-center text-[0.7rem] ${i === 0 || i === 6 ? "text-[var(--danger)]" : "text-[var(--ink-soft)]"}`}>
               {w}
             </span>
           ))}
@@ -221,14 +221,14 @@ export default function SchedulePage() {
                   key={d}
                   type="button"
                   disabled={disabled}
-                  title={closedFixed ? BLOCKED[dateKey(y, m, d)] || "정기 휴진" : undefined}
+                  title={closedFixed ? BLOCKED[dateKey(y, m, d)] || redDayName(date) || "정기 휴진" : (redDayName(date) ?? undefined)}
                   onClick={(e) => !disabled && selectDate(d, e)}
                   className={`flex h-9 select-none flex-col items-center justify-center gap-0.5 rounded-lg font-[family-name:var(--font-mono-kr)] text-[0.78rem] transition-colors ${
                     isSelected
                       ? "bg-[var(--accent)] text-white"
                       : disabled
-                        ? "cursor-not-allowed bg-[var(--page-bg)] text-[var(--ink-faint)]"
-                        : "bg-[var(--page-bg)] text-[var(--ink)] hover:bg-[var(--accent-soft)]"
+                        ? `cursor-not-allowed bg-[var(--page-bg)] ${isRedDay(date) ? "text-[var(--danger)]" : "text-[var(--ink-faint)]"}`
+                        : `bg-[var(--page-bg)] ${isRedDay(date) ? "text-[var(--danger)]" : "text-[var(--ink)]"} hover:bg-[var(--accent-soft)]`
                   }`}
                 >
                   <span>{d}</span>

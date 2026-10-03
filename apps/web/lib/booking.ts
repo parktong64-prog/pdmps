@@ -3,6 +3,8 @@
 // 동일한 휴진 규칙을 참조하도록 여기에 모아둔다.
 // 실제 연동 시 이 파일의 로직은 reservation_slots 테이블 조회로 교체된다.
 
+import { publicHolidayName } from "./holidays";
+
 export const WEEKDAY_LABEL = ["일", "월", "화", "수", "목", "금", "토"];
 // 상담 소요시간 1시간 30분 간격으로 배치. 오후 진료만 운영한다 (오전 10:00, 11:30 폐지).
 export const TIMES = ["13:00", "14:30", "16:00"];
@@ -16,8 +18,8 @@ export const BLOCKED: Record<string, string> = {
   "2026-10-09": "한글날",
   "2026-12-25": "성탄절",
   "2027-01-01": "신정",
-  "2027-02-05": "설날연휴",
-  "2027-02-08": "설날 대체공휴일",
+  "2027-02-08": "설날연휴",
+  "2027-02-09": "설날 대체공휴일",
   "2027-03-01": "삼일절",
 };
 
@@ -38,6 +40,17 @@ export function dateKey(y: number, m: number, d: number) {
 /** 결정론적 가짜 예약 여부 (실제로는 reservations 테이블 조회) */
 export function isNaturallyBooked(key: string, time: string) {
   return hash(`${key}_${time}`) % 100 < 30;
+}
+
+/** 달력에서 붉게 표시할 날(토·일, 법정 공휴일, 병원 지정 휴진일)인지 여부. 실제 예약 마감(isClosedDay)과는 별개다. */
+export function isRedDay(date: Date) {
+  const w = date.getDay();
+  return w === 0 || w === 6 || !!redDayName(date);
+}
+
+/** 공휴일 또는 병원 지정 휴진일의 이름 (없으면 null). */
+export function redDayName(date: Date): string | null {
+  return BLOCKED[dateKey(date.getFullYear(), date.getMonth(), date.getDate())] ?? publicHolidayName(date);
 }
 
 export function isClosedDay(date: Date) {

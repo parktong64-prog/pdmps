@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { StatusPill } from "@/lib/admin/status";
-import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay } from "@/lib/booking";
+import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay, isRedDay, redDayName } from "@/lib/booking";
 import {
   getWeekSlots,
   cancelReservationSlot,
@@ -221,13 +221,13 @@ function WeekGrid({
       <div className="grid min-w-[560px] select-none grid-cols-[56px_repeat(7,1fr)] gap-px overflow-hidden rounded-[10px] border border-[var(--line)] bg-[var(--line)] text-[0.74rem]">
         <div className="bg-[var(--page-bg)]" />
         {days.map((d) => {
-          const closed = isClosedDay(d);
+          const red = isRedDay(d);
           return (
-            <div key={d.toISOString()} className="bg-[var(--page-bg)] px-1 pt-0.5 text-center">
-              <div className={`text-[0.58rem] leading-tight ${closed ? "text-[var(--danger)]" : "text-[var(--ink-soft)]"}`}>
+            <div key={d.toISOString()} title={redDayName(d) ?? undefined} className="bg-[var(--page-bg)] px-1 pt-0.5 text-center">
+              <div className={`text-[0.58rem] leading-tight ${red ? "text-[var(--danger)]" : "text-[var(--ink-soft)]"}`}>
                 {WEEKDAY_LABEL[d.getDay()]}
               </div>
-              <div className={`font-[family-name:var(--font-mono-kr)] text-[0.78rem] leading-tight font-semibold ${closed ? "text-[var(--danger)]" : ""}`}>
+              <div className={`font-[family-name:var(--font-mono-kr)] text-[0.78rem] leading-tight font-semibold ${red ? "text-[var(--danger)]" : ""}`}>
                 {d.getDate()}
               </div>
             </div>

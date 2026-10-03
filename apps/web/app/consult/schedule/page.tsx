@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay } from "@/lib/booking";
+import { WEEKDAY_LABEL, TIMES, BLOCKED, dateKey, isClosedDay, isRedDay, redDayName } from "@/lib/booking";
 import { getMonthSlotStates, type TimeState } from "@/lib/schedule/actions";
 import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
 
@@ -139,7 +139,7 @@ export default function SchedulePage() {
               {WEEKDAY_LABEL.map((w, i) => (
                 <span
                   key={w}
-                  className={`py-1 text-center text-[0.68rem] ${i === 0 ? "text-[#c0605f]" : "text-[var(--ink-soft)]"}`}
+                  className={`py-1 text-center text-[0.68rem] ${i === 0 || i === 6 ? "text-[var(--danger)]" : "text-[var(--ink-soft)]"}`}
                 >
                   {w}
                 </span>
@@ -158,12 +158,16 @@ export default function SchedulePage() {
                     key={d}
                     type="button"
                     disabled={!status.open}
-                    title={status.title}
+                    title={status.title ?? redDayName(new Date(y, m, d)) ?? undefined}
                     onClick={() => status.open && openTimeView(d)}
                     className={`relative flex aspect-square flex-col items-center justify-center gap-[3px] rounded-lg font-[family-name:var(--font-mono-kr)] text-[0.8rem] ${
-                      status.open
-                        ? "cursor-pointer text-[var(--ink)] hover:bg-[var(--accent-soft)]"
-                        : "cursor-not-allowed text-[var(--ink-faint)]"
+                      isRedDay(new Date(y, m, d))
+                        ? "text-[var(--danger)]"
+                        : status.open
+                          ? "text-[var(--ink)]"
+                          : "text-[var(--ink-faint)]"
+                    } ${
+                      status.open ? "cursor-pointer hover:bg-[var(--accent-soft)]" : "cursor-not-allowed"
                     } ${isToday ? "shadow-[inset_0_0_0_1.4px_var(--accent-ink)]" : ""}`}
                   >
                     <span>{d}</span>
