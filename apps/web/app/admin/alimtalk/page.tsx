@@ -4,11 +4,23 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { MANUAL_TEMPLATES, renderTemplateBody } from "@/lib/notifications/manual-templates";
 import { extractPhones, readFileAsText } from "@/lib/phone-extract";
 import {
+  HOSPITAL_PREFIX,
+  PLACEHOLDERS,
+  SMS_MAX_BYTES,
+  TEXT_MAX_BYTES,
+  fillPlaceholders,
+  hasPlaceholders,
+  smsByteLength,
+} from "@/lib/notifications/text-utils";
+import {
   getTemplateAvailability,
   listPatientsForSend,
   listUpcomingReservations,
   sendAlimtalkBatch,
   sendAlimtalkToReservations,
+  sendTextBatch,
+  sendTextToReservations,
+  getSmsSender,
   recordBroadcast,
   type BatchResult,
   type ManualTemplateInfo,
@@ -40,11 +52,16 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 
 const maskPhone = (p: string) => p.replace(/^(\d{3})-(\d{3,4})-(\d{4})$/, "$1-****-$3");
 type Mode = "numbers" | "reservations";
+type Channel = "alimtalk" | "text";
 
 export default function AlimtalkSendPage() {
   const [availability, setAvailability] = useState<ManualTemplateInfo[] | null>(null);
   const [templateKey, setTemplateKey] = useState(MANUAL_TEMPLATES[0].key);
   const [mode, setMode] = useState<Mode>("reservations");
+  const [channel, setChannel] = useState<Channel>("alimtalk");
+  const [body, setBody] = useState("");
+  const [withPrefix, setWithPrefix] = useState(true);
+  const [sender, setSender] = useState<string | null | undefined>(undefined);
   const [values, setValues] = useState<Record<string, string>>({});
   const [text, setText] = useState("");
   const [fileNote, setFileNote] = useState<string | null>(null);
@@ -61,6 +78,7 @@ export default function AlimtalkSendPage() {
   useEffect(() => {
     getTemplateAvailability().then(setAvailability);
     listUpcomingReservations().then(setReservations);
+    getSmsSender().then(setSender);
   }, []);
 
   const template = MANUAL_TEMPLATES.find((t) => t.key === templateKey)!;
@@ -68,20 +86,40 @@ export default function AlimtalkSendPage() {
   const { phones, duplicates } = useMemo(() => extractPhones(text), [text]);
   const sending = progress !== null;
 
-  // 예약 환자 방식: 이 템플릿으로 보낼 수 있는 예약만 (내일 안내는 내일 예약만)
-  const eligible = (r: ReservationOption) => templateKey !== "reminder_d1" || r.isTomorrow;
+  const isText = channel === "text";
+
+  // 예약 환자 방식: 이 템플릿으로 보낼 수 있는 예약만 (내일 안내는 내일 예약만). 문자는 모든 확정 예약.
+  const eligible = (r: ReservationOption) => isText || templateKey !== "reminder_d1" || r.isTomorrow;
   const eligibleList = (reservations ?? []).filter(eligible);
   const pickedEligible = eligibleList.filter((r) => picked.has(r.id));
+
+  const composeText = (vals: { 이름?: string; 날짜?: string; 시간?: string }) => {
+    const filled = fillPlaceholders(body.trim(), vals);
+    return withPrefix && filled && !filled.startsWith("[") ? `${HOSPITAL_PREFIX}${filled}` : filled;
+  };
   const reservationPreview = (r: ReservationOption) =>
-    renderTemplateBody(template.body, { 날짜: r.dateLabel, 시간: r.timeLabel });
+    isText
+      ? composeText({ 이름: r.name, 날짜: r.dateLabel, 시간: r.timeLabel })
+      : renderTemplateBody(template.body, { 날짜: r.dateLabel, 시간: r.timeLabel });
+
+  const sampleText = composeText({ 이름: "홍길동", 날짜: "2026년 10월 27일(화)", 시간: "16:00" });
+  const textBytes = smsByteLength(sampleText);
+  const textInvalid =
+    isText &&
+    (!body.trim() || textBytes > TEXT_MAX_BYTES || (mode === "numbers" && hasPlaceholders(body)) || sender === null);
 
   // 번호 직접 입력 방식
-  const manualPreview = renderTemplateBody(template.body, values);
-  const allFilled = template.variables.every((v) => (values[v.name] ?? "").trim());
+  const manualPreview = isText ? composeText({}) : renderTemplateBody(template.body, values);
+  const allFilled = isText || template.variables.every((v) => (values[v.name] ?? "").trim());
   const overLimit = (mode === "numbers" ? phones.length : pickedEligible.length) > MAX_RECIPIENTS;
   const count = mode === "numbers" ? phones.length : pickedEligible.length;
   const canSend =
-    available && count > 0 && !overLimit && consent && !sending && (mode === "reservations" || allFilled);
+    (isText ? !textInvalid : available) &&
+    count > 0 &&
+    !overLimit &&
+    consent &&
+    !sending &&
+    (mode === "reservations" || allFilled);
 
   const filteredPatients = useMemo(() => {
     const q = query.trim();
@@ -119,7 +157,7 @@ export default function AlimtalkSendPage() {
     if (!canSend) return;
     const sample = mode === "numbers" ? manualPreview : reservationPreview(pickedEligible[0]);
     const ok = window.confirm(
-      `"${template.name}" 알림톡을 ${count}명에게 발송합니다.\n\n${sample}${mode === "reservations" && count > 1 ? "\n(받는 분마다 본인 예약 날짜·시간이 들어갑니다)" : ""}\n\n발송 후에는 취소할 수 없습니다. 계속할까요?`,
+      `${isText ? "문자(SMS/LMS)를" : `"${template.name}" 알림톡을`} ${count}명에게 발송합니다.\n\n${sample}${mode === "reservations" && count > 1 ? "\n(받는 분마다 본인 예약 날짜·시간이 들어갑니다)" : ""}\n\n발송 후에는 취소할 수 없습니다. 계속할까요?`,
     );
     if (!ok) return;
 
@@ -137,8 +175,11 @@ export default function AlimtalkSendPage() {
         attempted = i + chunk.length;
         let res: BatchResult;
         try {
-          const call =
-            mode === "numbers"
+          const call = isText
+            ? mode === "numbers"
+              ? sendTextBatch({ text: body, withPrefix, phones: chunk })
+              : sendTextToReservations({ text: body, withPrefix, reservationIds: chunk })
+            : mode === "numbers"
               ? sendAlimtalkBatch({ templateKey, variables: values, phones: chunk })
               : sendAlimtalkToReservations({ templateKey, reservationIds: chunk });
           res = await withTimeout(call, CALL_TIMEOUT_MS);
@@ -162,8 +203,12 @@ export default function AlimtalkSendPage() {
       try {
         await withTimeout(
           recordBroadcast({
-            templateKey,
-            variables: mode === "numbers" ? values : { 방식: "예약 환자 선택" },
+            templateKey: isText ? "custom_text" : templateKey,
+            variables: isText
+              ? { 문구: body.trim().slice(0, 500), 방식: mode === "numbers" ? "번호 직접 입력" : "예약 환자 선택" }
+              : mode === "numbers"
+                ? values
+                : { 방식: "예약 환자 선택" },
             total: attempted,
             success: sent,
             failed: failed.length,
@@ -195,7 +240,61 @@ export default function AlimtalkSendPage() {
       </div>
 
       <section className="mb-4 rounded-[14px] border border-[var(--line)] bg-[var(--card-bg)] p-4">
-        <div className="mb-2 text-[0.82rem] font-bold">1. 템플릿</div>
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="mr-2 text-[0.82rem] font-bold">1. 보내는 방식</div>
+          <button type="button" className={tabCls(channel === "alimtalk")} onClick={() => setChannel("alimtalk")}>
+            알림톡 (승인된 문구)
+          </button>
+          <button type="button" className={tabCls(channel === "text")} onClick={() => setChannel("text")}>
+            문자 직접 작성 (자유 문구)
+          </button>
+        </div>
+
+        {isText ? (
+          <div>
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              rows={5}
+              placeholder={"보낼 문구를 직접 작성하세요.\n예) {이름}님, {날짜} {시간} 예약 관련하여 안내드립니다."}
+              className={inputCls}
+            />
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.76rem]">
+              <span className="text-[var(--ink-soft)]">환자별로 바뀌는 값 넣기(예약 환자 선택에서만):</span>
+              {PLACEHOLDERS.map((ph) => (
+                <button
+                  key={ph}
+                  type="button"
+                  onClick={() => setBody((b) => `${b}{${ph}}`)}
+                  className="rounded-md border border-[var(--line)] px-2 py-0.5 font-[family-name:var(--font-mono-kr)] text-[var(--ink-soft)] hover:border-[var(--accent)]"
+                >
+                  {`{${ph}}`}
+                </button>
+              ))}
+            </div>
+            <label className="mt-2 flex items-center gap-2 text-[0.78rem]">
+              <input type="checkbox" checked={withPrefix} onChange={(e) => setWithPrefix(e.target.checked)} />
+              맨 앞에 <b>{HOSPITAL_PREFIX.trim()}</b> 붙이기
+            </label>
+            <div className="mt-2 text-[0.76rem] text-[var(--ink-soft)]">
+              길이 {textBytes}바이트 · {textBytes > SMS_MAX_BYTES ? "장문(LMS)" : "단문(SMS)"}으로 발송됩니다
+              {textBytes > TEXT_MAX_BYTES && (
+                <span className="text-[var(--danger)]"> · 너무 깁니다(최대 {TEXT_MAX_BYTES}바이트)</span>
+              )}
+              {mode === "numbers" && hasPlaceholders(body) && (
+                <span className="text-[var(--danger)]"> · {"{이름}"} 등은 &apos;예약 환자 선택&apos;에서만 쓸 수 있어요</span>
+              )}
+            </div>
+            <p className="mt-1 text-[0.76rem] text-[var(--ink-soft)]">
+              발신번호: {sender === undefined ? "확인 중…" : (sender ?? "설정되지 않음")}
+            </p>
+            <p className="mt-2 rounded-lg bg-[var(--st-pending-soft)] px-3 py-2 text-[0.76rem] leading-[1.6] text-[var(--st-pending)]">
+              예약·진료 관련 <b>안내</b>(정보성) 문자만 보내세요. 이벤트·홍보 같은 <b>광고성 문자는 수신 동의와
+              무료수신거부 번호가 필요</b>해서 이 화면으로 보낼 수 없습니다.
+            </p>
+          </div>
+        ) : (
+          <div>
         <select
           value={templateKey}
           onChange={(e) => {
@@ -216,6 +315,8 @@ export default function AlimtalkSendPage() {
           <p className="mt-1.5 rounded-lg bg-[var(--danger-soft)] px-3 py-2 text-[0.76rem] text-[var(--danger)]">
             이 템플릿은 아직 발송 설정(템플릿 ID 등록)이 되어 있지 않아 보낼 수 없습니다.
           </p>
+        )}
+          </div>
         )}
       </section>
 
@@ -313,7 +414,7 @@ export default function AlimtalkSendPage() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <div>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {template.variables.map((v) => (
+                {(isText ? [] : template.variables).map((v) => (
                   <label key={v.name} className="text-[0.76rem] text-[var(--ink-soft)]">
                     {v.label}
                     <input
@@ -331,7 +432,7 @@ export default function AlimtalkSendPage() {
               <div className="mt-1 rounded-[4px_14px_14px_14px] bg-[#fee500] px-3.5 py-3 text-[0.82rem] leading-[1.6] text-[#3c1e1e]">
                 {manualPreview}
               </div>
-              <p className="mt-1.5 text-[0.72rem] text-[var(--ink-soft)]">모든 받는 사람에게 같은 값이 들어갑니다.</p>
+              <p className="mt-1.5 text-[0.72rem] text-[var(--ink-soft)]">모든 받는 사람에게 같은 문구가 갑니다.</p>
             </div>
 
             <div>
@@ -416,8 +517,8 @@ export default function AlimtalkSendPage() {
         <label className="flex items-start gap-2 text-[0.8rem] leading-[1.6]">
           <input type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-1" />
           <span>
-            받는 분이 이 안내를 받을 수 있는 환자(위에 적힌 용도에 해당)임을 확인했습니다. 홍보·이벤트 같은
-            광고성 내용은 알림톡으로 보낼 수 없습니다.
+            받는 분이 이 안내를 받을 수 있는 환자(예약·진료 관련 안내 대상)임을 확인했습니다. 홍보·이벤트 같은
+            광고성 내용은 이 화면으로 보낼 수 없습니다.
           </span>
         </label>
         <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -431,9 +532,15 @@ export default function AlimtalkSendPage() {
           </button>
           {!sending && !canSend && (
             <span className="text-[0.76rem] text-[var(--ink-soft)]">
-              {!available
-                ? "발송 설정이 필요한 템플릿입니다."
-                : mode === "numbers" && !allFilled
+              {isText && !body.trim()
+                ? "보낼 문구를 입력하세요."
+                : isText && sender === null
+                  ? "문자 발신번호 설정이 필요합니다."
+                  : isText && textInvalid
+                    ? "문구를 확인하세요."
+                    : !isText && !available
+                      ? "발송 설정이 필요한 템플릿입니다."
+                      : mode === "numbers" && !allFilled
                   ? "템플릿 변수를 모두 입력하세요."
                   : count === 0
                     ? mode === "reservations"
@@ -462,7 +569,9 @@ export default function AlimtalkSendPage() {
               </ul>
             )}
             <p className="mt-2 text-[0.74rem] text-[var(--ink-soft)]">
-              알림톡 수신이 불가능한 번호는 문자(SMS)로 대신 나가며, 최종 도착 여부는 솔라피 발송 내역에서 확인하세요.
+              {isText
+                ? "최종 도착 여부는 솔라피 발송 내역에서 확인하세요."
+                : "알림톡 수신이 불가능한 번호는 문자(SMS)로 대신 나가며, 최종 도착 여부는 솔라피 발송 내역에서 확인하세요."}
             </p>
           </div>
         )}

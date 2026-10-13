@@ -6,6 +6,14 @@ import { sendAlimtalk } from "@/lib/notifications/alimtalk";
 import { MANUAL_TEMPLATES } from "@/lib/notifications/manual-templates";
 import { normalizePhone } from "@/lib/phone-extract";
 import { alimtalkLabels } from "@/lib/booking";
+import { sendSms, senderPhoneMasked } from "@/lib/notifications/sms";
+import {
+  HOSPITAL_PREFIX,
+  TEXT_MAX_BYTES,
+  fillPlaceholders,
+  hasPlaceholders,
+  smsByteLength,
+} from "@/lib/notifications/text-utils";
 import { kstParts, kstMidnightUTC } from "@/lib/admin/time";
 
 // 한 번의 서버 호출에서 처리할 최대 건수 (서버 실행 시간 제한을 넘지 않게 화면에서 나눠서 보낸다).
@@ -262,6 +270,118 @@ export async function sendAlimtalkToReservations(input: { templateKey: string; r
         sent_at: res.ok ? new Date().toISOString() : null,
       });
       if (error) console.error("알림톡 발송 기록 저장 실패:", error.message);
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, worker));
+  return { ok: true, sent, failed };
+}
+
+// ───────────────────────── 문자(SMS/LMS) 직접 작성 ─────────────────────────
+// 알림톡은 승인된 문구만 보낼 수 있어서, 자유 문구는 문자로 보낸다. 정보성(예약·진료 안내) 용도만 허용한다.
+
+function composeText(raw: string, withPrefix: boolean, values: { 이름?: string; 날짜?: string; 시간?: string }) {
+  const body = fillPlaceholders(raw.trim(), values);
+  return withPrefix && !body.startsWith("[") ? `${HOSPITAL_PREFIX}${body}` : body;
+}
+
+/** 문자 발송 화면에 보여줄 발신번호(일부 가림). */
+export async function getSmsSender(): Promise<string | null> {
+  if (!(await requireAdmin()).ok) return null;
+  return senderPhoneMasked();
+}
+
+export async function sendTextBatch(input: { text: string; withPrefix: boolean; phones: string[] }): Promise<BatchResult> {
+  if (!(await requireAdmin()).ok) return { ok: false, sent: 0, failed: [], error: "로그인이 필요합니다." };
+  const raw = input.text.trim();
+  if (!raw) return { ok: false, sent: 0, failed: [], error: "문구를 입력해주세요." };
+  if (hasPlaceholders(raw)) {
+    return { ok: false, sent: 0, failed: [], error: "{이름} {날짜} {시간}은 '예약 환자 선택'에서만 쓸 수 있습니다." };
+  }
+  const text = composeText(raw, input.withPrefix, {});
+  if (smsByteLength(text) > TEXT_MAX_BYTES) return { ok: false, sent: 0, failed: [], error: "문구가 너무 깁니다." };
+
+  const phones = [...new Set(input.phones.map((p) => normalizePhone(p)).filter((p): p is string => !!p))];
+  if (phones.length === 0) return { ok: false, sent: 0, failed: [], error: "보낼 번호가 없습니다." };
+  if (phones.length > MAX_PER_CALL) return { ok: false, sent: 0, failed: [], error: "한 번에 보낼 수 있는 건수를 넘었습니다." };
+
+  const failed: { phone: string; reason: string }[] = [];
+  let sent = 0;
+  let next = 0;
+  async function worker() {
+    while (next < phones.length) {
+      const phone = phones[next++];
+      const res = await sendSms({ to: phone, text });
+      if (res.ok) sent++;
+      else failed.push({ phone, reason: res.error.slice(0, 120) });
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, phones.length) }, worker));
+  return { ok: true, sent, failed };
+}
+
+export async function sendTextToReservations(input: {
+  text: string;
+  withPrefix: boolean;
+  reservationIds: string[];
+}): Promise<BatchResult> {
+  if (!(await requireAdmin()).ok) return { ok: false, sent: 0, failed: [], error: "로그인이 필요합니다." };
+  const raw = input.text.trim();
+  if (!raw) return { ok: false, sent: 0, failed: [], error: "문구를 입력해주세요." };
+
+  const ids = [...new Set(input.reservationIds)];
+  if (ids.length === 0) return { ok: false, sent: 0, failed: [], error: "선택한 예약이 없습니다." };
+  if (ids.length > MAX_PER_CALL) return { ok: false, sent: 0, failed: [], error: "한 번에 보낼 수 있는 건수를 넘었습니다." };
+
+  const supabase = createAdminClient();
+  const { data } = await supabase
+    .from("reservations")
+    .select("id, patient_id, consultation_id, patients(name, phone), reservation_slots!inner(start_at)")
+    .eq("status", "confirmed")
+    .in("id", ids);
+  const rows = (data ?? []) as unknown as ResvRow[];
+
+  const jobs: { row: ResvRow; label: string; phone: string; text: string }[] = [];
+  const failed: { phone: string; reason: string }[] = [];
+  for (const id of ids) {
+    const row = rows.find((r) => r.id === id);
+    if (!row) {
+      failed.push({ phone: "(알 수 없는 예약)", reason: "확정된 예약이 아니거나 찾을 수 없습니다." });
+      continue;
+    }
+    const u = unpack(row);
+    const label = `${maskName(u.name)} ${maskPhone(u.phone)}`;
+    const phone = normalizePhone(u.phone);
+    if (!phone) {
+      failed.push({ phone: label, reason: "휴대폰 번호 형식이 올바르지 않습니다." });
+      continue;
+    }
+    const { dateLabel, timeLabel } = alimtalkLabels(u.startAt);
+    const text = composeText(raw, input.withPrefix, { 이름: u.name, 날짜: dateLabel, 시간: timeLabel });
+    if (smsByteLength(text) > TEXT_MAX_BYTES) {
+      failed.push({ phone: label, reason: "문구가 너무 깁니다." });
+      continue;
+    }
+    jobs.push({ row, label, phone, text });
+  }
+
+  let sent = 0;
+  let next = 0;
+  async function worker() {
+    while (next < jobs.length) {
+      const job = jobs[next++];
+      const res = await sendSms({ to: job.phone, text: job.text });
+      if (res.ok) sent++;
+      else failed.push({ phone: job.label, reason: res.error.slice(0, 120) });
+      const { error } = await supabase.from("notifications").insert({
+        reservation_id: job.row.id,
+        consultation_id: job.row.consultation_id,
+        recipient_patient_id: job.row.patient_id,
+        channel: "sms",
+        template_key: "custom_text",
+        status: res.ok ? "sent" : "failed",
+        sent_at: res.ok ? new Date().toISOString() : null,
+      });
+      if (error) console.error("문자 발송 기록 저장 실패:", error.message);
     }
   }
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, jobs.length) }, worker));
