@@ -54,6 +54,11 @@ export function isClosedDay(date: Date) {
 // 그 값이 KST가 아니라 UTC로 해석되어 실제 저장된 시각과 9시간 어긋난다.
 // 절대 시각을 다룰 때는 반드시 아래 헬퍼를 통해 KST 오프셋(+09:00)을 명시한다.
 
+/** 해당 예약 시각(KST)이 이미 지났는지. 환자가 오늘 이미 지난 시간대를 고르지 못하게 할 때 쓴다. */
+export function isSlotInPast(dateStr: string, time: string, nowMs: number = Date.now()): boolean {
+  return kstInstant(dateStr, time).getTime() <= nowMs;
+}
+
 /** "YYYY-MM-DD" 날짜와 "HH:mm" 시간을 KST 기준 절대 시각으로 변환한다. */
 export function kstInstant(dateStr: string, time: string): Date {
   return new Date(`${dateStr}T${time}:00+09:00`);

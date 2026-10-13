@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isClosedDay, TIMES } from "@/lib/booking";
+import { isClosedDay, isSlotInPast, TIMES } from "@/lib/booking";
 import { sendReservationNotificationEmail } from "@/lib/notifications/email";
 import { sendReservationConfirmedAlimtalk, sendAdminReservationAlert } from "@/lib/notifications/alimtalk";
 
@@ -30,6 +30,9 @@ export async function createPendingReservation(input: PendingReservationInput): 
   const startAt = new Date(`${date}T${time}:00+09:00`);
   if (Number.isNaN(startAt.getTime()) || !TIMES.includes(time)) {
     return { ok: false, error: "예약 일시가 올바르지 않습니다.", status: 400 };
+  }
+  if (isSlotInPast(date, time)) {
+    return { ok: false, error: "이미 지난 시간은 예약할 수 없습니다. 다른 시간을 선택해주세요.", status: 409 };
   }
   const endAt = new Date(startAt.getTime() + SLOT_DURATION_MIN * 60 * 1000);
 

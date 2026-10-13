@@ -18,7 +18,7 @@ export async function sendDueDayBeforeReminders(): Promise<{ sent: number; faile
 
   const { data, error } = await supabase
     .from("reservations")
-    .select("id, reservation_slots!inner(start_at), patients(phone)")
+    .select("id, patient_id, consultation_id, reservation_slots!inner(start_at), patients(phone)")
     .eq("status", "confirmed")
     .gte("reservation_slots.start_at", tomorrowStart.toISOString())
     .lt("reservation_slots.start_at", dayAfterStart.toISOString());
@@ -58,13 +58,18 @@ export async function sendDueDayBeforeReminders(): Promise<{ sent: number; faile
     const { time } = kstDateTimeKey(startAt);
     const result = await sendReminderD1Alimtalk({ phone: patientObj.phone, time });
 
-    await supabase.from("notifications").insert({
+    // notifications에는 받는 환자(recipient_patient_id)가 반드시 있어야 한다(DB 제약).
+    // 기록이 저장되지 않으면 중복 발송 방지와 발송 이력 확인이 모두 깨지므로 실패를 로그로 남긴다.
+    const { error: logErr } = await supabase.from("notifications").insert({
       reservation_id: row.id,
+      consultation_id: row.consultation_id,
+      recipient_patient_id: row.patient_id,
       channel: "alimtalk",
       template_key: "reminder_d1",
       status: result.ok ? "sent" : "failed",
       sent_at: result.ok ? new Date().toISOString() : null,
     });
+    if (logErr) console.error("리마인드 발송 기록 저장 실패:", logErr.message);
 
     if (result.ok) sent++;
     else {
