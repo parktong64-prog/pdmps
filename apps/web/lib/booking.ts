@@ -70,6 +70,16 @@ export function kstMidnightInstant(y: number, m: number, day: number): Date {
   return new Date(Date.UTC(y, m, day) - 9 * 60 * 60 * 1000);
 }
 
+/** 알림톡 문구에 들어가는 예약 날짜·시간 표기 ("2026년 10월 27일(화)", "16:00"). 자동 발송과 수동 발송이 같은 표기를 쓴다. */
+export function alimtalkLabels(iso: string): { dateLabel: string; timeLabel: string } {
+  const d = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000);
+  const weekday = WEEKDAY_LABEL[d.getUTCDay()];
+  return {
+    dateLabel: `${d.getUTCFullYear()}년 ${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일(${weekday})`,
+    timeLabel: `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`,
+  };
+}
+
 /** 저장된 UTC ISO 시각 문자열을 KST 기준 날짜 키("YYYY-MM-DD")와 "HH:mm"으로 분해한다. */
 export function kstDateTimeKey(iso: string): { dateKey: string; time: string } {
   const shifted = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000);

@@ -1,6 +1,6 @@
 import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { isClosedDay, isSlotInPast, TIMES } from "@/lib/booking";
+import { alimtalkLabels, isClosedDay, isSlotInPast, TIMES } from "@/lib/booking";
 import { sendReservationNotificationEmail } from "@/lib/notifications/email";
 import { sendReservationConfirmedAlimtalk, sendAdminReservationAlert } from "@/lib/notifications/alimtalk";
 
@@ -358,13 +358,4 @@ function formatWhenKST(iso: string) {
 }
 
 /** 알림 이메일용으로 날짜와 시간을 따로 뽑는다. */
-function formatDateTimeKST(iso: string) {
-  const d = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000);
-  const weekday = ["일", "월", "화", "수", "목", "금", "토"][d.getUTCDay()];
-  const hh = String(d.getUTCHours()).padStart(2, "0");
-  const mm = String(d.getUTCMinutes()).padStart(2, "0");
-  return {
-    dateLabel: `${d.getUTCFullYear()}년 ${d.getUTCMonth() + 1}월 ${d.getUTCDate()}일(${weekday})`,
-    timeLabel: `${hh}:${mm}`,
-  };
-}
+const formatDateTimeKST = alimtalkLabels;
