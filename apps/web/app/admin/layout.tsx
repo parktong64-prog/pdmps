@@ -15,6 +15,7 @@ const NAV_ITEMS = [
   { href: "/admin/schedule", label: "일정 설정" },
   { href: "/admin/patients", label: "환자 관리" },
   { href: "/admin/payments", label: "결제·매출" },
+  { href: "/admin/alimtalk", label: "알림톡 발송" },
   { href: "/admin/settings", label: "설정" },
 ];
 

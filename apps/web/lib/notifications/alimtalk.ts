@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 // Solapi를 통한 카카오 알림톡 발송.
 // 아직 카카오 채널 연동·템플릿 승인이 끝나지 않아 관련 환경변수가 없으면
