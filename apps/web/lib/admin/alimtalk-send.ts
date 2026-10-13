@@ -7,7 +7,7 @@ import { MANUAL_TEMPLATES } from "@/lib/notifications/manual-templates";
 import { normalizePhone } from "@/lib/phone-extract";
 
 // 한 번의 서버 호출에서 처리할 최대 건수 (서버 실행 시간 제한을 넘지 않게 화면에서 나눠서 보낸다).
-const MAX_PER_CALL = 25;
+const MAX_PER_CALL = 10;
 const MAX_VALUE_LEN = 40;
 const CONCURRENCY = 5;
 

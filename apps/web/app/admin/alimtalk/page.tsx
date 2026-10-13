@@ -13,7 +13,26 @@ import {
 } from "@/lib/admin/alimtalk-send";
 
 const MAX_RECIPIENTS = 300;
-const CHUNK = 25;
+// 한 번의 서버 호출에서 처리할 건수 (서버의 MAX_PER_CALL과 같아야 한다). 작게 나눠야 서버 시간 제한에 안 걸린다.
+const CHUNK = 10;
+// 서버 응답을 이 시간 넘게 못 받으면 멈춘 것으로 보고 중단한다.
+const CALL_TIMEOUT_MS = 45_000;
+
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error("timeout")), ms);
+    p.then(
+      (v) => {
+        clearTimeout(t);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(t);
+        reject(e);
+      },
+    );
+  });
+}
 
 const maskPhone = (p: string) => p.replace(/^(\d{3})-(\d{3,4})-(\d{4})$/, "$1-****-$3");
 
@@ -83,23 +102,44 @@ export default function AlimtalkSendPage() {
     let sent = 0;
     const failed: { phone: string; reason: string }[] = [];
     let fatal: string | undefined;
+    let attempted = 0;
 
-    for (let i = 0; i < phones.length; i += CHUNK) {
-      const chunk = phones.slice(i, i + CHUNK);
-      const res = await sendAlimtalkBatch({ templateKey, variables: values, phones: chunk });
-      if (!res.ok) {
-        fatal = res.error;
-        for (const phone of chunk) failed.push({ phone, reason: res.error ?? "발송 실패" });
-        break;
+    try {
+      for (let i = 0; i < phones.length; i += CHUNK) {
+        const chunk = phones.slice(i, i + CHUNK);
+        attempted = i + chunk.length;
+        let res;
+        try {
+          res = await withTimeout(sendAlimtalkBatch({ templateKey, variables: values, phones: chunk }), CALL_TIMEOUT_MS);
+        } catch {
+          // 서버와의 연결이 끊겼거나(배포로 화면이 낡은 버전이 된 경우 포함) 응답이 없는 경우.
+          // 이미 나간 건이 있을 수 있어 "실패"로 단정하지 않고 확인을 안내한다.
+          fatal =
+            "서버 응답을 받지 못했습니다. 화면을 새로고침(F5)한 뒤, 솔라피 발송 내역에서 이미 나간 건이 있는지 확인하고 다시 시도하세요.";
+          for (const phone of chunk) failed.push({ phone, reason: "응답 없음(발송 여부 확인 필요)" });
+          break;
+        }
+        if (!res.ok) {
+          fatal = res.error;
+          for (const phone of chunk) failed.push({ phone, reason: res.error ?? "발송 실패" });
+          break;
+        }
+        sent += res.sent;
+        failed.push(...res.failed);
+        setProgress({ done: Math.min(i + CHUNK, phones.length), total: phones.length });
       }
-      sent += res.sent;
-      failed.push(...res.failed);
-      setProgress({ done: Math.min(i + CHUNK, phones.length), total: phones.length });
+      try {
+        await withTimeout(
+          recordBroadcast({ templateKey, variables: values, total: attempted, success: sent, failed: failed.length }),
+          15_000,
+        );
+      } catch {
+        // 기록 저장에 실패해도 발송 결과 표시는 막지 않는다.
+      }
+    } finally {
+      setResult({ sent, failed, error: fatal });
+      setProgress(null);
     }
-
-    await recordBroadcast({ templateKey, variables: values, total: phones.length, success: sent, failed: failed.length });
-    setResult({ sent, failed, error: fatal });
-    setProgress(null);
   }
 
   const inputCls =
