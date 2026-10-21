@@ -25,6 +25,7 @@ const ibmPlexMono = IBM_Plex_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   verification: {
+    google: "oQkLt9kXuC7foO9A9sPkQEAcGyIJjYznrCAIkoNUi_c",
     other: {
       "naver-site-verification": "022b267cd1763ee1c778aae300170de918f799fa",
     },
