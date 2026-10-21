@@ -24,6 +24,11 @@ const ibmPlexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  verification: {
+    other: {
+      "naver-site-verification": "022b267cd1763ee1c778aae300170de918f799fa",
+    },
+  },
   title: "PDMPS | Face Lift 전문",
   description: "Face Lift 전문 · 박동만 원장 상담·예약 서비스",
   // 카카오톡 등에 링크를 보낼 때 썸네일이 있는 카드로 표시되도록 Open Graph 메타를 채운다.
