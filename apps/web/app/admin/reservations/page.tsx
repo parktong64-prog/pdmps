@@ -420,18 +420,19 @@ function ManualBookingForm({
   const [procedureName, setProcedureName] = useState("");
   const [notify, setNotify] = useState(true);
   const inputCls =
-    "w-full rounded-lg border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-2 text-[0.8rem] outline-none focus:border-[var(--accent)]";
+    "w-full rounded-lg border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-1.5 text-[0.8rem] outline-none focus:border-[var(--accent)]";
 
   return (
     <form
-      className="mt-2 border-t border-[var(--line)] pt-2 sm:mt-0 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4"
+      // 제목을 위쪽 "슬롯 상세" 줄 높이로 올려 한 화면에 들어오게 한다 (sm 이상에서만).
+      className="mt-2 border-t border-[var(--line)] pt-2 sm:-mt-[1.6rem] sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4"
       onSubmit={(e) => {
         e.preventDefault();
         onCreate({ name, phone, email, procedureName, notify });
       }}
     >
       <div className="mb-1.5 text-[0.8rem] font-bold">직접 예약 등록</div>
-      <div className="grid grid-cols-1 gap-1.5 lg:grid-cols-2">
+      <div className="grid grid-cols-2 gap-1.5">
         <input
           type="text"
           value={name}
@@ -448,38 +449,39 @@ function ManualBookingForm({
           autoComplete="off"
           className={inputCls}
         />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="이메일 (선택)"
+          autoComplete="off"
+          className={inputCls}
+        />
+        <input
+          type="text"
+          value={procedureName}
+          maxLength={50}
+          onChange={(e) => setProcedureName(e.target.value)}
+          placeholder="시술명 직접 입력 (예: Face Lift)"
+          autoComplete="off"
+          className={inputCls}
+        />
       </div>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="이메일 (선택)"
-        autoComplete="off"
-        className={`${inputCls} mt-1.5`}
-      />
-      <input
-        type="text"
-        value={procedureName}
-        maxLength={50}
-        onChange={(e) => setProcedureName(e.target.value)}
-        placeholder="시술명 직접 입력 (예: Face Lift, 보톡스)"
-        autoComplete="off"
-        className={`${inputCls} mt-1.5`}
-      />
-      <label className="mt-1.5 flex items-start gap-1.5 text-[0.72rem] leading-[1.5] text-[var(--ink-soft)]">
-        <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="mt-0.5" />
-        <span>
-          환자에게 <b>예약 확정 안내</b>(카카오톡, 실패 시 문자)를 바로 보냅니다. 하루 전·일주일 전에도 자동으로 안내가 갑니다.
-        </span>
-      </label>
-      <p className="mt-1 text-[0.7rem] text-[var(--ink-soft)]">예약금 결제 없이 바로 확정됩니다.</p>
-      <button
-        type="submit"
-        disabled={pending || !name.trim() || !phone.trim()}
-        className="mt-1.5 rounded-lg bg-[var(--accent)] px-3.5 py-2 text-[0.8rem] font-bold text-white disabled:opacity-50"
-      >
-        예약 등록
-      </button>
+      <div className="mt-1.5 flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={pending || !name.trim() || !phone.trim()}
+          className="flex-none rounded-lg bg-[var(--accent)] px-3.5 py-1.5 text-[0.8rem] font-bold text-white disabled:opacity-50"
+        >
+          예약 등록
+        </button>
+        <label className="flex items-start gap-1.5 text-[0.7rem] leading-[1.4] text-[var(--ink-soft)]">
+          <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="mt-0.5" />
+          <span>
+            <b>예약 확정 안내</b> 바로 발송(카톡, 실패 시 문자) · 하루 전·일주일 전에도 자동 안내. 예약금 없이 바로 확정됩니다.
+          </span>
+        </label>
+      </div>
     </form>
   );
 }
