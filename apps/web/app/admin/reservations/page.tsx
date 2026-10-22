@@ -314,8 +314,8 @@ function SlotDetail({
         <Row label="연락처" value={cell.patientPhone ?? "-"} />
         <Row label="시술" value={procedureLabel} />
         <Row label="일시" value={when} />
-        <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
-          <span className="text-[var(--ink-soft)]">상태</span>
+        <div className="flex items-center gap-4 border-b border-[var(--line)] py-0.5 text-[0.8rem]">
+          <span className="min-w-14 shrink-0 whitespace-nowrap text-[var(--ink-soft)]">상태</span>
           <StatusPill status="done" label="확정" />
         </div>
         <div className="mt-2">
@@ -339,8 +339,8 @@ function SlotDetail({
         <Row label="연락처" value={cell.patientPhone ?? "-"} />
         <Row label="시술" value={procedureLabel} />
         <Row label="일시" value={when} />
-        <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
-          <span className="text-[var(--ink-soft)]">상태</span>
+        <div className="flex items-center gap-4 border-b border-[var(--line)] py-0.5 text-[0.8rem]">
+          <span className="min-w-14 shrink-0 whitespace-nowrap text-[var(--ink-soft)]">상태</span>
           <StatusPill status="pending" label="결제 대기중" />
         </div>
         <p className="mt-2.5 text-[0.72rem] text-[var(--ink-soft)]">
@@ -364,8 +364,8 @@ function SlotDetail({
     return (
       <div>
         <Row label="일시" value={when} />
-        <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
-          <span className="text-[var(--ink-soft)]">상태</span>
+        <div className="flex items-center gap-4 border-b border-[var(--line)] py-0.5 text-[0.8rem]">
+          <span className="min-w-14 shrink-0 whitespace-nowrap text-[var(--ink-soft)]">상태</span>
           <StatusPill status="cancel" label="관리자 차단" />
         </div>
         <div className="mt-2">
@@ -386,8 +386,8 @@ function SlotDetail({
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div>
         <Row label="일시" value={when} />
-        <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
-          <span className="text-[var(--ink-soft)]">상태</span>
+        <div className="flex items-center gap-4 border-b border-[var(--line)] py-0.5 text-[0.8rem]">
+          <span className="min-w-14 shrink-0 whitespace-nowrap text-[var(--ink-soft)]">상태</span>
           <StatusPill status="progress" label="예약 가능" />
         </div>
         <div className="mt-2">
@@ -551,8 +551,8 @@ function BulkDetail({
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
-      <span className="text-[var(--ink-soft)]">{label}</span>
+    <div className="flex items-center gap-4 border-b border-[var(--line)] py-0.5 text-[0.8rem]">
+      <span className="min-w-14 shrink-0 whitespace-nowrap text-[var(--ink-soft)]">{label}</span>
       <b className="font-semibold">{value}</b>
     </div>
   );
