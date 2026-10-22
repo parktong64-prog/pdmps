@@ -13,6 +13,8 @@ import {
 } from "@/lib/admin/time";
 import { kstInstant, kstMidnightInstant, kstDateTimeKey, isClosedDay, TIMES, alimtalkLabels } from "@/lib/booking";
 import { sendReservationConfirmedAlimtalk } from "@/lib/notifications/alimtalk";
+import { sendSms } from "@/lib/notifications/sms";
+import { HOSPITAL_PREFIX } from "@/lib/notifications/text-utils";
 import { expireStaleHeldReservations } from "@/lib/payments/toss";
 
 const SLOT_DURATION_MIN = 90;
@@ -178,6 +180,8 @@ export type SlotCell = {
   reservationId?: string;
   patientName?: string;
   patientPhone?: string;
+  /** 관리자가 직접 입력한 시술명. 비어 있으면 null (온라인 예약은 기본 상담 시술로 간주해 화면에서 보완). */
+  procedureName?: string | null;
   /** "admin"이면 관리자가 전화 등으로 직접 등록한 예약 — 온라인 예약(web/app)과 구분해서 보여준다. */
   source?: "web" | "app" | "admin";
 };
@@ -195,7 +199,7 @@ export async function getWeekSlots(y: number, m: number, d: number): Promise<Rec
 
   const { data, error } = await supabase
     .from("reservation_slots")
-    .select("id, start_at, status, reservations(id, status, cancel_reason, patients(name, phone), consultations(source))")
+    .select("id, start_at, status, reservations(id, status, cancel_reason, procedure_name, patients(name, phone), consultations(source))")
     .eq("staff_id", DOCTOR_ID)
     .gte("start_at", start.toISOString())
     .lt("start_at", end.toISOString());
@@ -210,12 +214,14 @@ export async function getWeekSlots(y: number, m: number, d: number): Promise<Rec
       | {
           id: string;
           status: string;
+          procedure_name: string | null;
           patients: { name: string; phone: string } | { name: string; phone: string }[] | null;
           consultations: { source: string } | { source: string }[] | null;
         }
       | {
           id: string;
           status: string;
+          procedure_name: string | null;
           patients: { name: string; phone: string } | { name: string; phone: string }[] | null;
           consultations: { source: string } | { source: string }[] | null;
         }[]
@@ -235,6 +241,7 @@ export async function getWeekSlots(y: number, m: number, d: number): Promise<Rec
         reservationId: reservation.id,
         patientName: patientObj?.name,
         patientPhone: patientObj?.phone,
+        procedureName: reservation.procedure_name,
         source,
       };
     } else if (row.status === "held" && reservation && reservation.status === "pending_payment") {
@@ -244,6 +251,7 @@ export async function getWeekSlots(y: number, m: number, d: number): Promise<Rec
         reservationId: reservation.id,
         patientName: patientObj?.name,
         patientPhone: patientObj?.phone,
+        procedureName: reservation.procedure_name,
       };
     } else if (row.status === "blocked") {
       map[key] = { status: "blocked" };
@@ -354,12 +362,15 @@ export async function createAdminReservation(input: {
   name: string;
   phone: string;
   email?: string;
+  procedureName?: string;
   notify?: boolean;
 }) {
   const name = input.name.trim();
   if (!name) return { ok: false, error: "이름을 입력해주세요." };
   const phone = normalizeKoreanMobile(input.phone);
   if (!phone) return { ok: false, error: "전화번호 형식이 올바르지 않습니다. (예: 010-1234-5678)" };
+  const procedureName = (input.procedureName ?? "").trim();
+  if (procedureName.length > 50) return { ok: false, error: "시술명은 50자 이내로 입력해주세요." };
   const email = (input.email ?? "").trim();
   if (email && (email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
     return { ok: false, error: "이메일 형식이 올바르지 않습니다. (예: name@example.com)" };
@@ -450,6 +461,7 @@ export async function createAdminReservation(input: {
       patient_id: patient.id,
       status: "confirmed",
       confirmed_at: new Date().toISOString(),
+      procedure_name: procedureName || null,
     })
     .select("id")
     .single();
@@ -468,12 +480,20 @@ export async function createAdminReservation(input: {
   // 환자에게 예약 확정 안내. 실패해도 예약 등록은 이미 끝났으므로 경고만 돌려준다.
   if (input.notify !== false) {
     const { dateLabel, timeLabel } = alimtalkLabels(start.toISOString());
-    const sent = await sendReservationConfirmedAlimtalk({ phone, date: dateLabel, time: timeLabel });
+    // 승인된 알림톡 문구는 "Face Lift 상담 예약이 확정되었습니다"로 고정이라, 관리자가 직접 "Face Lift"라고
+    // 입력한 경우에만 쓴다. 시술명을 비웠거나 다른 시술이면 시술명을 멋대로 넣지 않도록 문자(SMS/LMS)로 보낸다.
+    const isFaceLift = procedureName.replace(/\s/g, "").toLowerCase() === "facelift";
+    const sent = isFaceLift
+      ? await sendReservationConfirmedAlimtalk({ phone, date: dateLabel, time: timeLabel })
+      : await sendSms({
+          to: phone,
+          text: `${HOSPITAL_PREFIX}${dateLabel} ${timeLabel} ${procedureName ? `${procedureName} ` : ""}상담 예약이 확정되었습니다.`,
+        });
     await supabase.from("notifications").insert({
       reservation_id: newReservation.id,
       consultation_id: consultation.id,
       recipient_patient_id: patient.id,
-      channel: "alimtalk",
+      channel: isFaceLift ? "alimtalk" : "sms",
       template_key: "reservation_confirmed",
       status: sent.ok ? "sent" : "failed",
       sent_at: sent.ok ? new Date().toISOString() : null,

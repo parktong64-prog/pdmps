@@ -194,10 +194,8 @@ export default function ReservationsPage() {
             onCancel={() => runAction(() => cancelReservationSlot(selected.key.split("_")[0], selected.time))}
             onBlock={() => runAction(() => blockSlot(selected.key.split("_")[0], selected.time))}
             onReopen={() => runAction(() => reopenSlot(selected.key.split("_")[0], selected.time))}
-            onCreate={(name, phone, email, notify) =>
-              runAction(() =>
-                createAdminReservation({ dateStr: selected.key.split("_")[0], time: selected.time, name, phone, email, notify }),
-              )
+            onCreate={(v) =>
+              runAction(() => createAdminReservation({ dateStr: selected.key.split("_")[0], time: selected.time, ...v }))
             }
           />
         )}
@@ -303,8 +301,10 @@ function SlotDetail({
   onCancel: () => void;
   onBlock: () => void;
   onReopen: () => void;
-  onCreate: (name: string, phone: string, email: string, notify: boolean) => void;
+  onCreate: (v: { name: string; phone: string; email: string; procedureName: string; notify: boolean }) => void;
 }) {
+  // 관리자가 직접 입력한 시술명을 보여준다. 입력하지 않은 수기 예약은 "-", 온라인 예약은 기본 상담 시술(Face Lift).
+  const procedureLabel = cell.procedureName?.trim() || (cell.source === "admin" ? "-" : "Face Lift");
   const when = `${selected.m + 1}월 ${selected.d}일(${WEEKDAY_LABEL[new Date(selected.y, selected.m, selected.d).getDay()]}) ${selected.time}`;
 
   if (cell.status === "booked") {
@@ -312,7 +312,7 @@ function SlotDetail({
       <div>
         <Row label="환자" value={cell.patientName ?? "-"} />
         <Row label="연락처" value={cell.patientPhone ?? "-"} />
-        <Row label="시술" value="Face Lift" />
+        <Row label="시술" value={procedureLabel} />
         <Row label="일시" value={when} />
         <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
           <span className="text-[var(--ink-soft)]">상태</span>
@@ -337,7 +337,7 @@ function SlotDetail({
       <div>
         <Row label="환자" value={cell.patientName ?? "-"} />
         <Row label="연락처" value={cell.patientPhone ?? "-"} />
-        <Row label="시술" value="Face Lift" />
+        <Row label="시술" value={procedureLabel} />
         <Row label="일시" value={when} />
         <div className="flex justify-between border-b border-[var(--line)] py-0.5 text-[0.8rem]">
           <span className="text-[var(--ink-soft)]">상태</span>
@@ -412,11 +412,12 @@ function ManualBookingForm({
   onCreate,
 }: {
   pending: boolean;
-  onCreate: (name: string, phone: string, email: string, notify: boolean) => void;
+  onCreate: (v: { name: string; phone: string; email: string; procedureName: string; notify: boolean }) => void;
 }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [procedureName, setProcedureName] = useState("");
   const [notify, setNotify] = useState(true);
   const inputCls =
     "w-full rounded-lg border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-2 text-[0.8rem] outline-none focus:border-[var(--accent)]";
@@ -426,7 +427,7 @@ function ManualBookingForm({
       className="mt-2 border-t border-[var(--line)] pt-2 sm:mt-0 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4"
       onSubmit={(e) => {
         e.preventDefault();
-        onCreate(name, phone, email, notify);
+        onCreate({ name, phone, email, procedureName, notify });
       }}
     >
       <div className="mb-1.5 text-[0.8rem] font-bold">직접 예약 등록</div>
@@ -453,6 +454,15 @@ function ManualBookingForm({
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         placeholder="이메일 (선택)"
+        autoComplete="off"
+        className={`${inputCls} mt-1.5`}
+      />
+      <input
+        type="text"
+        value={procedureName}
+        maxLength={50}
+        onChange={(e) => setProcedureName(e.target.value)}
+        placeholder="시술명 직접 입력 (예: Face Lift, 보톡스)"
         autoComplete="off"
         className={`${inputCls} mt-1.5`}
       />
