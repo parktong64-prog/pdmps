@@ -11,6 +11,7 @@ import {
   blockSlots,
   reopenSlots,
   createAdminReservation,
+  rescheduleReservation,
   type SlotCell,
 } from "@/lib/admin/actions";
 
@@ -197,6 +198,12 @@ export default function ReservationsPage() {
             onCreate={(v) =>
               runAction(() => createAdminReservation({ dateStr: selected.key.split("_")[0], time: selected.time, ...v }))
             }
+            onReschedule={(v) =>
+              runAction(
+                () => rescheduleReservation({ fromDateStr: selected.key.split("_")[0], fromTime: selected.time, ...v }),
+                true,
+              )
+            }
           />
         )}
       </div>
@@ -294,6 +301,7 @@ function SlotDetail({
   onBlock,
   onReopen,
   onCreate,
+  onReschedule,
 }: {
   selected: Selected;
   cell: SlotCell;
@@ -302,6 +310,7 @@ function SlotDetail({
   onBlock: () => void;
   onReopen: () => void;
   onCreate: (v: { name: string; phone: string; email: string; procedureName: string; notify: boolean }) => void;
+  onReschedule: (v: { toDateStr: string; toTime: string; notify: boolean }) => void;
 }) {
   // 관리자가 직접 입력한 시술명을 보여준다. 입력하지 않은 수기 예약은 "-", 온라인 예약은 기본 상담 시술(Face Lift).
   const procedureLabel = cell.procedureName?.trim() || (cell.source === "admin" ? "-" : "Face Lift");
@@ -318,6 +327,7 @@ function SlotDetail({
           <span className="min-w-14 shrink-0 whitespace-nowrap text-[var(--ink-soft)]">상태</span>
           <StatusPill status="done" label="확정" />
         </div>
+        <RescheduleForm key={selected.key} pending={pending} onReschedule={onReschedule} />
         <div className="mt-2">
           <button
             type="button"
@@ -403,6 +413,56 @@ function SlotDetail({
       </div>
       <ManualBookingForm key={selected.key} pending={pending} onCreate={onCreate} />
     </div>
+  );
+}
+
+/** 예약자가 연기를 요청했을 때 새 날짜·시간으로 예약을 옮기고 안내를 보낸다. */
+function RescheduleForm({
+  pending,
+  onReschedule,
+}: {
+  pending: boolean;
+  onReschedule: (v: { toDateStr: string; toTime: string; notify: boolean }) => void;
+}) {
+  const [toDate, setToDate] = useState("");
+  const [toTime, setToTime] = useState(TIMES[0]);
+  const [notify, setNotify] = useState(true);
+  const inputCls =
+    "rounded-lg border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-1.5 text-[0.8rem] outline-none focus:border-[var(--accent)]";
+
+  return (
+    <form
+      className="mt-2 rounded-lg border border-[var(--line)] p-2"
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (!toDate) return;
+        if (!window.confirm(`${toDate} ${toTime}(으)로 예약을 옮길까요?${notify ? " 환자에게 변경된 일시 안내가 발송됩니다." : ""}`)) return;
+        onReschedule({ toDateStr: toDate, toTime, notify });
+      }}
+    >
+      <div className="mb-1 text-[0.76rem] font-bold">예약 연기 · 날짜 변경</div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className={inputCls} />
+        <select value={toTime} onChange={(e) => setToTime(e.target.value)} className={inputCls}>
+          {TIMES.map((tm) => (
+            <option key={tm} value={tm}>
+              {tm}
+            </option>
+          ))}
+        </select>
+        <button
+          type="submit"
+          disabled={pending || !toDate}
+          className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[0.8rem] font-bold text-white disabled:opacity-50"
+        >
+          날짜 변경
+        </button>
+      </div>
+      <label className="mt-1.5 flex items-center gap-1.5 text-[0.7rem] text-[var(--ink-soft)]">
+        <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} />
+        <span>변경된 일시를 알림톡(또는 문자)으로 환자에게 보냅니다. 기존 시간은 자동으로 비워집니다.</span>
+      </label>
+    </form>
   );
 }
 

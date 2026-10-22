@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import { consultationStatusMeta, type StatusKey } from "@/lib/admin/status";
 import {
   startOfTodayKST,
@@ -11,7 +12,7 @@ import {
   formatDateTimeKST,
   kstMidnightUTC,
 } from "@/lib/admin/time";
-import { kstInstant, kstMidnightInstant, kstDateTimeKey, isClosedDay, TIMES, alimtalkLabels } from "@/lib/booking";
+import { kstInstant, kstMidnightInstant, kstDateTimeKey, isClosedDay, isSlotInPast, TIMES, alimtalkLabels } from "@/lib/booking";
 import { sendReservationConfirmedAlimtalk } from "@/lib/notifications/alimtalk";
 import { sendSms } from "@/lib/notifications/sms";
 import { HOSPITAL_PREFIX } from "@/lib/notifications/text-utils";
@@ -507,6 +508,163 @@ export async function createAdminReservation(input: {
     }
   }
 
+  return { ok: true };
+}
+
+/**
+ * 예약자가 날짜 연기(변경)를 요청했을 때, 확정된 예약을 새 날짜·시간으로 옮긴다. 예약금을 다시 받지 않고
+ * 같은 예약 기록이 새 슬롯으로 이동하며, 기존 슬롯은 자동으로 다시 열린다. notify가 true(기본)이면
+ * 새 일시로 예약 확정 안내(알림톡, 시술명이 Face Lift가 아니면 문자)를 보낸다.
+ * 서버 액션은 바깥에서도 호출될 수 있어 관리자 로그인을 한 번 더 확인한다.
+ */
+export async function rescheduleReservation(input: {
+  fromDateStr: string;
+  fromTime: string;
+  toDateStr: string;
+  toTime: string;
+  notify?: boolean;
+}) {
+  const auth = await (await createClient()).auth.getUser();
+  if (!auth.data.user) return { ok: false, error: "로그인이 필요합니다." };
+
+  const isDate = (v: string) => /^\d{4}-\d{2}-\d{2}$/.test(v);
+  if (!isDate(input.fromDateStr) || !isDate(input.toDateStr) || !TIMES.includes(input.fromTime) || !TIMES.includes(input.toTime)) {
+    return { ok: false, error: "예약 일시가 올바르지 않습니다." };
+  }
+  if (input.fromDateStr === input.toDateStr && input.fromTime === input.toTime) {
+    return { ok: false, error: "현재 예약과 같은 일시입니다. 다른 날짜나 시간을 선택해주세요." };
+  }
+  const [ty, tm, td] = input.toDateStr.split("-").map(Number);
+  if (isClosedDay(new Date(ty, tm - 1, td))) return { ok: false, error: "휴진일로는 옮길 수 없습니다." };
+  if (isSlotInPast(input.toDateStr, input.toTime)) return { ok: false, error: "이미 지난 시간으로는 옮길 수 없습니다." };
+
+  await expireStaleHeldReservations();
+
+  const supabase = createAdminClient();
+  const from = findSlotDate(input.fromDateStr, input.fromTime);
+  const to = findSlotDate(input.toDateStr, input.toTime);
+
+  const { data: fromSlot } = await supabase
+    .from("reservation_slots")
+    .select(
+      "id, reservations(id, status, consultation_id, patient_id, procedure_name, patients(name, phone), consultations(source))",
+    )
+    .eq("staff_id", DOCTOR_ID)
+    .eq("start_at", from.start.toISOString())
+    .maybeSingle();
+  if (!fromSlot) return { ok: false, error: "기존 예약을 찾을 수 없습니다. 새로고침 후 다시 시도해주세요." };
+
+  type Joined<T> = T | T[] | null;
+  type Resv = {
+    id: string;
+    status: string;
+    consultation_id: string;
+    patient_id: string;
+    procedure_name: string | null;
+    patients: Joined<{ name: string; phone: string }>;
+    consultations: Joined<{ source: string }>;
+  };
+  const one = <T,>(v: Joined<T>): T | undefined => (Array.isArray(v) ? v[0] : (v ?? undefined));
+  const resvList = (Array.isArray(fromSlot.reservations) ? fromSlot.reservations : fromSlot.reservations ? [fromSlot.reservations] : []) as unknown as Resv[];
+  const reservation = resvList.find((r) => r.status === "confirmed");
+  if (!reservation) return { ok: false, error: "확정된 예약만 날짜를 옮길 수 있습니다." };
+  const patient = one(reservation.patients);
+  const source = one(reservation.consultations)?.source;
+
+  const { data: procedure } = await supabase.from("procedures").select("id").eq("is_active", true).limit(1).maybeSingle();
+  if (!procedure) return { ok: false, error: "시술 정보를 찾을 수 없습니다." };
+
+  // 새 슬롯 확보 — 이미 있는 슬롯은 '열림'일 때만, 없으면 새로 만든다.
+  const { data: targetSlot } = await supabase
+    .from("reservation_slots")
+    .select("id, status")
+    .eq("staff_id", DOCTOR_ID)
+    .eq("start_at", to.start.toISOString())
+    .maybeSingle();
+  if (targetSlot && targetSlot.status !== "open") {
+    return { ok: false, error: "옮기려는 시간이 이미 예약되었거나 막혀 있습니다." };
+  }
+
+  let newSlotId: string;
+  let createdNewSlot = false;
+  if (targetSlot) {
+    const { data: claimed } = await supabase
+      .from("reservation_slots")
+      .update({ status: "booked" })
+      .eq("id", targetSlot.id)
+      .eq("status", "open")
+      .select("id")
+      .maybeSingle();
+    if (!claimed) return { ok: false, error: "방금 다른 예약이 들어온 시간입니다. 새로고침 후 다시 시도해주세요." };
+    newSlotId = claimed.id;
+  } else {
+    const { data: inserted, error: insertErr } = await supabase
+      .from("reservation_slots")
+      .insert({
+        procedure_id: procedure.id,
+        staff_id: DOCTOR_ID,
+        start_at: to.start.toISOString(),
+        end_at: to.end.toISOString(),
+        status: "booked",
+      })
+      .select("id")
+      .single();
+    if (insertErr || !inserted) {
+      return {
+        ok: false,
+        error: insertErr?.code === "23505" ? "방금 다른 예약이 들어온 시간입니다. 새로고침 후 다시 시도해주세요." : "예약 시간 등록에 실패했습니다.",
+      };
+    }
+    newSlotId = inserted.id;
+    createdNewSlot = true;
+  }
+
+  const { error: moveErr } = await supabase.from("reservations").update({ slot_id: newSlotId }).eq("id", reservation.id);
+  if (moveErr) {
+    if (createdNewSlot) await supabase.from("reservation_slots").delete().eq("id", newSlotId);
+    else await supabase.from("reservation_slots").update({ status: "open" }).eq("id", newSlotId);
+    return { ok: false, error: "예약 날짜 변경에 실패했습니다." };
+  }
+
+  // 기존 시간은 다시 열고, 이전 날짜 기준으로 이미 나간 하루 전·일주일 전 안내 기록은 지워
+  // 새 날짜에 맞춰 안내가 다시 나가도록 한다(중복 발송 방지가 이 기록으로 동작한다).
+  await supabase.from("reservation_slots").update({ status: "open" }).eq("id", fromSlot.id);
+  await supabase.from("notifications").delete().eq("reservation_id", reservation.id).in("template_key", ["reminder_d1", "reminder_d7"]);
+
+  await supabase.from("admin_alerts").insert({
+    reservation_id: reservation.id,
+    message: `${patient?.name ?? "환자"}님 예약 날짜 변경 · ${formatDateTimeKST(from.start.toISOString())} → ${formatDateTimeKST(to.start.toISOString())}`,
+  });
+
+  if (input.notify === false || !patient?.phone) return { ok: true };
+
+  const { dateLabel, timeLabel } = alimtalkLabels(to.start.toISOString());
+  // 승인된 알림톡 문구는 "Face Lift 상담 예약이 확정되었습니다"로 고정이다. 시술명을 Face Lift로 입력했거나
+  // (입력 없는) 온라인 예약이면 알림톡, 그 밖의 수기 예약은 시술명을 틀리게 넣지 않도록 문자로 보낸다.
+  const named = (reservation.procedure_name ?? "").trim();
+  const isFaceLift = named ? named.replace(/\s/g, "").toLowerCase() === "facelift" : source !== "admin";
+  const sent = isFaceLift
+    ? await sendReservationConfirmedAlimtalk({ phone: patient.phone, date: dateLabel, time: timeLabel })
+    : await sendSms({
+        to: patient.phone,
+        text: `${HOSPITAL_PREFIX}상담 예약이 ${dateLabel} ${timeLabel}으로 변경되었습니다.`,
+      });
+  await supabase.from("notifications").insert({
+    reservation_id: reservation.id,
+    consultation_id: reservation.consultation_id,
+    recipient_patient_id: reservation.patient_id,
+    channel: isFaceLift ? "alimtalk" : "sms",
+    template_key: "reservation_confirmed",
+    status: sent.ok ? "sent" : "failed",
+    sent_at: sent.ok ? new Date().toISOString() : null,
+  });
+  if (!sent.ok) {
+    console.error("예약 날짜 변경 안내 발송 실패:", sent.error);
+    return {
+      ok: true,
+      error: "날짜는 변경됐지만 환자에게 보내는 안내 발송에 실패했습니다. 알림톡 발송 화면에서 다시 보내주세요.",
+    };
+  }
   return { ok: true };
 }
 
