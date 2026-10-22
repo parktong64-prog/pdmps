@@ -180,7 +180,10 @@ export default function PatientsPage() {
               </div>
               <div>
                 <div className="font-[family-name:var(--font-display)] text-[1.2rem] font-bold">{detail.name}</div>
-                <div className="mt-0.5 text-[0.8rem] text-[var(--ink-soft)]">{maskPhone(detail.phone)}</div>
+                <div className="mt-0.5 text-[0.8rem] text-[var(--ink-soft)]">
+                  {maskPhone(detail.phone)}
+                  {detail.email && <span className="ml-2">· {detail.email}</span>}
+                </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   <span className="rounded-full border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-1 text-[0.68rem] text-[var(--ink-soft)]">
                     상담 {detail.visits}회

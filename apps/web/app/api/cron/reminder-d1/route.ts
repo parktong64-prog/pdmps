@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { sendDueDayBeforeReminders } from "@/lib/notifications/reminders";
+import { sendDueDayBeforeReminders, sendDueWeekBeforeReminders } from "@/lib/notifications/reminders";
 import { archiveOldConsultations } from "@/lib/admin/archive";
 
 /**
@@ -19,6 +19,7 @@ export async function GET(request: Request) {
   }
 
   const reminders = await sendDueDayBeforeReminders();
+  const weekReminders = await sendDueWeekBeforeReminders();
   const archive = await archiveOldConsultations();
-  return NextResponse.json({ ok: true, reminders, archive });
+  return NextResponse.json({ ok: true, reminders, weekReminders, archive });
 }

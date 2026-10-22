@@ -83,7 +83,7 @@ export default function ReservationsPage() {
     setPending(true);
     try {
       const res = await fn();
-      if (!res.ok && res.error) alert(res.error);
+      if (res.error) alert(res.error);
       if (clearSelection) setSelection([]);
       reload();
     } finally {
@@ -194,8 +194,10 @@ export default function ReservationsPage() {
             onCancel={() => runAction(() => cancelReservationSlot(selected.key.split("_")[0], selected.time))}
             onBlock={() => runAction(() => blockSlot(selected.key.split("_")[0], selected.time))}
             onReopen={() => runAction(() => reopenSlot(selected.key.split("_")[0], selected.time))}
-            onCreate={(name, phone) =>
-              runAction(() => createAdminReservation({ dateStr: selected.key.split("_")[0], time: selected.time, name, phone }))
+            onCreate={(name, phone, email, notify) =>
+              runAction(() =>
+                createAdminReservation({ dateStr: selected.key.split("_")[0], time: selected.time, name, phone, email, notify }),
+              )
             }
           />
         )}
@@ -301,7 +303,7 @@ function SlotDetail({
   onCancel: () => void;
   onBlock: () => void;
   onReopen: () => void;
-  onCreate: (name: string, phone: string) => void;
+  onCreate: (name: string, phone: string, email: string, notify: boolean) => void;
 }) {
   const when = `${selected.m + 1}월 ${selected.d}일(${WEEKDAY_LABEL[new Date(selected.y, selected.m, selected.d).getDay()]}) ${selected.time}`;
 
@@ -405,9 +407,17 @@ function SlotDetail({
 }
 
 /** 전화 등으로 받은 예약을 관리자가 직접 입력해 확정한다. */
-function ManualBookingForm({ pending, onCreate }: { pending: boolean; onCreate: (name: string, phone: string) => void }) {
+function ManualBookingForm({
+  pending,
+  onCreate,
+}: {
+  pending: boolean;
+  onCreate: (name: string, phone: string, email: string, notify: boolean) => void;
+}) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [notify, setNotify] = useState(true);
   const inputCls =
     "w-full rounded-lg border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-2 text-[0.8rem] outline-none focus:border-[var(--accent)]";
 
@@ -416,7 +426,7 @@ function ManualBookingForm({ pending, onCreate }: { pending: boolean; onCreate: 
       className="mt-2 border-t border-[var(--line)] pt-2 sm:mt-0 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4"
       onSubmit={(e) => {
         e.preventDefault();
-        onCreate(name, phone);
+        onCreate(name, phone, email, notify);
       }}
     >
       <div className="mb-1.5 text-[0.8rem] font-bold">직접 예약 등록</div>
@@ -438,9 +448,21 @@ function ManualBookingForm({ pending, onCreate }: { pending: boolean; onCreate: 
           className={inputCls}
         />
       </div>
-      <p className="mt-1 text-[0.7rem] text-[var(--ink-soft)]">
-        예약금 결제 없이 바로 확정됩니다. 알림톡은 발송되지 않아요.
-      </p>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="이메일 (선택)"
+        autoComplete="off"
+        className={`${inputCls} mt-1.5`}
+      />
+      <label className="mt-1.5 flex items-start gap-1.5 text-[0.72rem] leading-[1.5] text-[var(--ink-soft)]">
+        <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="mt-0.5" />
+        <span>
+          환자에게 <b>예약 확정 안내</b>(카카오톡, 실패 시 문자)를 바로 보냅니다. 하루 전·일주일 전에도 자동으로 안내가 갑니다.
+        </span>
+      </label>
+      <p className="mt-1 text-[0.7rem] text-[var(--ink-soft)]">예약금 결제 없이 바로 확정됩니다.</p>
       <button
         type="submit"
         disabled={pending || !name.trim() || !phone.trim()}

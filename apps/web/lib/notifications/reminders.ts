@@ -2,36 +2,47 @@ import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { kstParts, kstMidnightUTC } from "@/lib/admin/time";
-import { kstDateTimeKey } from "@/lib/booking";
-import { sendReminderD1Alimtalk } from "./alimtalk";
+import { alimtalkLabels, kstDateTimeKey } from "@/lib/booking";
+import { BUSINESS } from "@/lib/business";
+import { HOSPITAL_PREFIX } from "./text-utils";
+import { hasReminderD7Template, sendReminderD1Alimtalk, sendReminderD7Alimtalk } from "./alimtalk";
+import { sendSms } from "./sms";
 
-/**
- * 내일 확정된 예약에 리마인드 알림톡을 보낸다. 매일 한 번(크론)으로 호출된다.
- * 같은 예약에 두 번 보내지 않도록, notifications 테이블에 template_key='reminder_d1'
- * 기록이 이미 있는 예약은 건너뛴다.
- */
-export async function sendDueDayBeforeReminders(): Promise<{ sent: number; failed: number; skipped: number }> {
+type Delivery = { ok: true } | { ok: false; error: string };
+type Reminder = {
+  /** 예약일이 오늘로부터 며칠 뒤인 예약에 보낼지 */
+  daysAhead: number;
+  /** notifications에 남기는 키. 같은 예약에 같은 키가 이미 있으면 다시 보내지 않는다. */
+  templateKey: "reminder_d1" | "reminder_d7";
+  channel: "alimtalk" | "sms";
+  deliver: (v: { phone: string; startAt: string }) => Promise<Delivery>;
+  label: string;
+};
+
+type Result = { sent: number; failed: number; skipped: number };
+
+async function sendReminders(r: Reminder): Promise<Result> {
   const supabase = createAdminClient();
   const { y, m, day } = kstParts();
-  const tomorrowStart = kstMidnightUTC(y, m, day + 1);
-  const dayAfterStart = kstMidnightUTC(y, m, day + 2);
+  const from = kstMidnightUTC(y, m, day + r.daysAhead);
+  const to = kstMidnightUTC(y, m, day + r.daysAhead + 1);
 
   const { data, error } = await supabase
     .from("reservations")
     .select("id, patient_id, consultation_id, reservation_slots!inner(start_at), patients(phone)")
     .eq("status", "confirmed")
-    .gte("reservation_slots.start_at", tomorrowStart.toISOString())
-    .lt("reservation_slots.start_at", dayAfterStart.toISOString());
+    .gte("reservation_slots.start_at", from.toISOString())
+    .lt("reservation_slots.start_at", to.toISOString());
 
   if (error || !data || data.length === 0) return { sent: 0, failed: 0, skipped: 0 };
 
   const { data: already } = await supabase
     .from("notifications")
     .select("reservation_id")
-    .eq("template_key", "reminder_d1")
+    .eq("template_key", r.templateKey)
     .in(
       "reservation_id",
-      data.map((r) => r.id),
+      data.map((row) => row.id),
     );
   const alreadySent = new Set((already ?? []).map((n) => n.reservation_id as string));
 
@@ -55,8 +66,7 @@ export async function sendDueDayBeforeReminders(): Promise<{ sent: number; faile
       continue;
     }
 
-    const { time } = kstDateTimeKey(startAt);
-    const result = await sendReminderD1Alimtalk({ phone: patientObj.phone, time });
+    const result = await r.deliver({ phone: patientObj.phone, startAt });
 
     // notifications에는 받는 환자(recipient_patient_id)가 반드시 있어야 한다(DB 제약).
     // 기록이 저장되지 않으면 중복 발송 방지와 발송 이력 확인이 모두 깨지므로 실패를 로그로 남긴다.
@@ -64,19 +74,55 @@ export async function sendDueDayBeforeReminders(): Promise<{ sent: number; faile
       reservation_id: row.id,
       consultation_id: row.consultation_id,
       recipient_patient_id: row.patient_id,
-      channel: "alimtalk",
-      template_key: "reminder_d1",
+      channel: r.channel,
+      template_key: r.templateKey,
       status: result.ok ? "sent" : "failed",
       sent_at: result.ok ? new Date().toISOString() : null,
     });
-    if (logErr) console.error("리마인드 발송 기록 저장 실패:", logErr.message);
+    if (logErr) console.error(`${r.label} 발송 기록 저장 실패:`, logErr.message);
 
     if (result.ok) sent++;
     else {
       failed++;
-      console.error("리마인드 알림톡 발송 실패:", result.error);
+      console.error(`${r.label} 발송 실패:`, result.error);
     }
   }
 
   return { sent, failed, skipped };
+}
+
+/**
+ * 내일 확정된 예약에 리마인드 알림톡을 보낸다. 매일 한 번(크론)으로 호출된다.
+ * 온라인 예약과 관리자가 직접 등록한 예약을 구분하지 않고 확정된 예약 전체가 대상이다.
+ */
+export function sendDueDayBeforeReminders(): Promise<Result> {
+  return sendReminders({
+    daysAhead: 1,
+    templateKey: "reminder_d1",
+    channel: "alimtalk",
+    label: "전날 안내",
+    deliver: ({ startAt, phone }) => sendReminderD1Alimtalk({ phone, time: kstDateTimeKey(startAt).time }),
+  });
+}
+
+/**
+ * 일주일 뒤 확정된 예약에 안내를 보낸다. 일주일 전 알림톡 템플릿(SOLAPI_TEMPLATE_REMINDER_D7)이
+ * 승인·등록되어 있으면 알림톡으로, 아직이면 같은 내용을 문자(SMS/LMS)로 보낸다.
+ */
+export function sendDueWeekBeforeReminders(): Promise<Result> {
+  const useAlimtalk = hasReminderD7Template();
+  return sendReminders({
+    daysAhead: 7,
+    templateKey: "reminder_d7",
+    channel: useAlimtalk ? "alimtalk" : "sms",
+    label: "일주일 전 안내",
+    deliver: ({ startAt, phone }) => {
+      const { dateLabel, timeLabel } = alimtalkLabels(startAt);
+      if (useAlimtalk) return sendReminderD7Alimtalk({ phone, date: dateLabel, time: timeLabel });
+      return sendSms({
+        to: phone,
+        text: `${HOSPITAL_PREFIX}일주일 뒤 ${dateLabel} ${timeLabel} 상담 예약이 있습니다. 일정 변경이 필요하시면 병원(${BUSINESS.phone})으로 연락 부탁드립니다.`,
+      });
+    },
+  });
 }

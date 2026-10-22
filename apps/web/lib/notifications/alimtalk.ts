@@ -144,6 +144,27 @@ export async function sendReminderD1Alimtalk(input: { phone: string; time: strin
   });
 }
 
+/** 일주일 전 안내 알림톡 템플릿이 등록되어 있는지. 없으면 호출하는 쪽이 문자(SMS)로 대신 보낸다. */
+export function hasReminderD7Template(): boolean {
+  return !!process.env.SOLAPI_TEMPLATE_REMINDER_D7;
+}
+
+/**
+ * 상담일 일주일 전 안내 알림톡 (환자에게 발송). 카카오 검수를 받은 템플릿 ID를
+ * SOLAPI_TEMPLATE_REMINDER_D7에 등록하면 쓸 수 있다. 템플릿 변수는 #{날짜}, #{시간}.
+ */
+export async function sendReminderD7Alimtalk(input: { phone: string; date: string; time: string }): Promise<AlimtalkResult> {
+  const templateId = process.env.SOLAPI_TEMPLATE_REMINDER_D7;
+  if (!templateId) {
+    return { ok: false, error: "일주일 전 안내 알림톡 미설정 (SOLAPI_TEMPLATE_REMINDER_D7 환경변수 필요)" };
+  }
+  return sendAlimtalk({
+    to: input.phone,
+    templateId,
+    variables: { "#{날짜}": input.date, "#{시간}": input.time },
+  });
+}
+
 export async function sendAdminReservationAlert(input: { date: string; time: string }): Promise<AlimtalkResult> {
   const templateId = process.env.SOLAPI_TEMPLATE_RESERVATION_CONFIRMED;
   const adminPhone = process.env.ADMIN_NOTIFY_PHONE;

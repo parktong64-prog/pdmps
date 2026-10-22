@@ -11,7 +11,8 @@ import {
   formatDateTimeKST,
   kstMidnightUTC,
 } from "@/lib/admin/time";
-import { kstInstant, kstMidnightInstant, kstDateTimeKey, isClosedDay, TIMES } from "@/lib/booking";
+import { kstInstant, kstMidnightInstant, kstDateTimeKey, isClosedDay, TIMES, alimtalkLabels } from "@/lib/booking";
+import { sendReservationConfirmedAlimtalk } from "@/lib/notifications/alimtalk";
 import { expireStaleHeldReservations } from "@/lib/payments/toss";
 
 const SLOT_DURATION_MIN = 90;
@@ -342,13 +343,27 @@ function normalizeKoreanMobile(raw: string): string | null {
 
 /**
  * 관리자가 전화 등으로 받은 예약을 직접 등록한다. 결제 절차 없이 바로 '확정' 상태로 만든다
- * (예약금 결제 기록·알림톡은 남기지 않는다).
+ * (예약금 결제 기록은 남기지 않는다). 이메일은 선택 입력이며 환자 정보에 저장만 한다.
+ * notify가 true(기본)이면 환자에게 예약 확정 안내(알림톡, 실패 시 문자)를 보내고, 하루 전·일주일 전
+ * 안내는 매일 도는 크론이 확정 예약 전체를 대상으로 알아서 보낸다.
+ * 예약 자체는 성공했지만 안내 발송이 실패한 경우 ok: true와 함께 error에 경고 문구를 담아 돌려준다.
  */
-export async function createAdminReservation(input: { dateStr: string; time: string; name: string; phone: string }) {
+export async function createAdminReservation(input: {
+  dateStr: string;
+  time: string;
+  name: string;
+  phone: string;
+  email?: string;
+  notify?: boolean;
+}) {
   const name = input.name.trim();
   if (!name) return { ok: false, error: "이름을 입력해주세요." };
   const phone = normalizeKoreanMobile(input.phone);
   if (!phone) return { ok: false, error: "전화번호 형식이 올바르지 않습니다. (예: 010-1234-5678)" };
+  const email = (input.email ?? "").trim();
+  if (email && (email.length > 100 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+    return { ok: false, error: "이메일 형식이 올바르지 않습니다. (예: name@example.com)" };
+  }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(input.dateStr) || !TIMES.includes(input.time)) {
     return { ok: false, error: "예약 일시가 올바르지 않습니다." };
   }
@@ -376,7 +391,8 @@ export async function createAdminReservation(input: { dateStr: string; time: str
 
   const { data: patient, error: patientErr } = await supabase
     .from("patients")
-    .upsert({ name, phone }, { onConflict: "phone" })
+    // 이메일은 입력했을 때만 덮어쓴다 (비워 두면 기존에 저장된 이메일을 지우지 않는다).
+    .upsert(email ? { name, phone, email } : { name, phone }, { onConflict: "phone" })
     .select("id")
     .single();
   if (patientErr || !patient) return { ok: false, error: "환자 정보 저장에 실패했습니다." };
@@ -448,6 +464,28 @@ export async function createAdminReservation(input: { dateStr: string; time: str
     reservation_id: newReservation.id,
     message: `${name}님 예약 등록(관리자) · ${formatDateTimeKST(start.toISOString())}`,
   });
+
+  // 환자에게 예약 확정 안내. 실패해도 예약 등록은 이미 끝났으므로 경고만 돌려준다.
+  if (input.notify !== false) {
+    const { dateLabel, timeLabel } = alimtalkLabels(start.toISOString());
+    const sent = await sendReservationConfirmedAlimtalk({ phone, date: dateLabel, time: timeLabel });
+    await supabase.from("notifications").insert({
+      reservation_id: newReservation.id,
+      consultation_id: consultation.id,
+      recipient_patient_id: patient.id,
+      channel: "alimtalk",
+      template_key: "reservation_confirmed",
+      status: sent.ok ? "sent" : "failed",
+      sent_at: sent.ok ? new Date().toISOString() : null,
+    });
+    if (!sent.ok) {
+      console.error("수기 예약 확정 안내 발송 실패:", sent.error);
+      return {
+        ok: true,
+        error: "예약은 등록됐지만 환자에게 보내는 예약 확정 안내 발송에 실패했습니다. 알림톡 발송 화면에서 다시 보내주세요.",
+      };
+    }
+  }
 
   return { ok: true };
 }
@@ -563,6 +601,7 @@ export type PatientDetail = {
   id: string;
   name: string;
   phone: string;
+  email: string | null;
   archivedAt: string | null;
   visits: number;
   reservationsCount: number;
@@ -577,7 +616,7 @@ export type PatientDetail = {
 
 export async function getPatientDetail(patientId: string): Promise<PatientDetail | null> {
   const supabase = createAdminClient();
-  const { data: patient } = await supabase.from("patients").select("id, name, phone, archived_at").eq("id", patientId).single();
+  const { data: patient } = await supabase.from("patients").select("id, name, phone, email, archived_at").eq("id", patientId).single();
   if (!patient) return null;
 
   const { data: consultations } = await supabase
@@ -645,6 +684,7 @@ export async function getPatientDetail(patientId: string): Promise<PatientDetail
     id: patient.id as string,
     name: patient.name as string,
     phone: patient.phone as string,
+    email: (patient.email as string | null) ?? null,
     archivedAt: patient.archived_at as string | null,
     visits: consultations?.length ?? 0,
     reservationsCount: reservations?.length ?? 0,
