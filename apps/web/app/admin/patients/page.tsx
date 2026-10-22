@@ -370,8 +370,8 @@ export default function PatientsPage() {
 
 function MiniRow({ title, meta, pill }: { title: string; meta: string; pill: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between border-b border-[var(--line)] py-2.5 text-[0.82rem] last:border-b-0">
-      <div>
+    <div className="flex items-center gap-4 border-b border-[var(--line)] py-2.5 text-[0.82rem] last:border-b-0">
+      <div className="min-w-32">
         <div className="font-semibold">{title}</div>
         <div className="mt-0.5 text-[0.7rem] text-[var(--ink-soft)]">{meta}</div>
       </div>
