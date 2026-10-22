@@ -3,10 +3,7 @@ import "server-only";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { kstParts, kstMidnightUTC } from "@/lib/admin/time";
 import { alimtalkLabels, kstDateTimeKey } from "@/lib/booking";
-import { BUSINESS } from "@/lib/business";
-import { HOSPITAL_PREFIX } from "./text-utils";
 import { hasReminderD7Template, sendReminderD1Alimtalk, sendReminderD7Alimtalk } from "./alimtalk";
-import { sendSms } from "./sms";
 
 type Delivery = { ok: true } | { ok: false; error: string };
 type Reminder = {
@@ -106,23 +103,19 @@ export function sendDueDayBeforeReminders(): Promise<Result> {
 }
 
 /**
- * 일주일 뒤 확정된 예약에 안내를 보낸다. 일주일 전 알림톡 템플릿(SOLAPI_TEMPLATE_REMINDER_D7)이
- * 승인·등록되어 있으면 알림톡으로, 아직이면 같은 내용을 문자(SMS/LMS)로 보낸다.
+ * 일주일 뒤 확정된 예약에 알림톡으로 안내한다. 일주일 전 알림톡 템플릿(SOLAPI_TEMPLATE_REMINDER_D7)이
+ * 승인·등록되기 전에는 문자로 대신 보내지 않고 아무것도 보내지 않는다(요청에 따라 문자 발송 없음).
  */
 export function sendDueWeekBeforeReminders(): Promise<Result> {
-  const useAlimtalk = hasReminderD7Template();
+  if (!hasReminderD7Template()) return Promise.resolve({ sent: 0, failed: 0, skipped: 0 });
   return sendReminders({
     daysAhead: 7,
     templateKey: "reminder_d7",
-    channel: useAlimtalk ? "alimtalk" : "sms",
+    channel: "alimtalk",
     label: "일주일 전 안내",
     deliver: ({ startAt, phone }) => {
       const { dateLabel, timeLabel } = alimtalkLabels(startAt);
-      if (useAlimtalk) return sendReminderD7Alimtalk({ phone, date: dateLabel, time: timeLabel });
-      return sendSms({
-        to: phone,
-        text: `${HOSPITAL_PREFIX}일주일 뒤 ${dateLabel} ${timeLabel} 상담 예약이 있습니다. 일정 변경이 필요하시면 병원(${BUSINESS.phone})으로 연락 부탁드립니다.`,
-      });
+      return sendReminderD7Alimtalk({ phone, date: dateLabel, time: timeLabel });
     },
   });
 }

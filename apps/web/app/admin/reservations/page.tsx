@@ -545,7 +545,7 @@ function ManualBookingForm({
         <label className="flex items-start gap-1.5 text-[0.7rem] leading-[1.4] text-[var(--ink-soft)]">
           <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="mt-0.5" />
           <span>
-            <b>예약 확정 안내</b> 바로 발송(카톡, 실패 시 문자) · 하루 전·일주일 전에도 자동 안내. 예약금 없이 바로 확정됩니다.
+            <b>예약 확정 안내</b> 바로 발송(카톡, 실패 시 문자) · 하루 전에도 자동 안내. 예약금 없이 바로 확정됩니다.
           </span>
         </label>
       </div>
