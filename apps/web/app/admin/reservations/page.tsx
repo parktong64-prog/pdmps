@@ -318,7 +318,8 @@ function SlotDetail({
 
   if (cell.status === "booked") {
     return (
-      <div>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div>
         <Row label="환자" value={cell.patientName ?? "-"} />
         <Row label="연락처" value={cell.patientPhone ?? "-"} />
         <Row label="시술" value={procedureLabel} />
@@ -327,7 +328,6 @@ function SlotDetail({
           <span className="min-w-14 shrink-0 whitespace-nowrap text-[var(--ink-soft)]">상태</span>
           <StatusPill status="done" label="확정" />
         </div>
-        <RescheduleForm key={selected.key} pending={pending} onReschedule={onReschedule} />
         <div className="mt-2">
           <button
             type="button"
@@ -338,6 +338,8 @@ function SlotDetail({
             예약 취소
           </button>
         </div>
+        </div>
+        <RescheduleForm key={selected.key} pending={pending} onReschedule={onReschedule} />
       </div>
     );
   }
@@ -428,11 +430,12 @@ function RescheduleForm({
   const [toTime, setToTime] = useState(TIMES[0]);
   const [notify, setNotify] = useState(true);
   const inputCls =
-    "rounded-lg border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-1.5 text-[0.8rem] outline-none focus:border-[var(--accent)]";
+    "w-full rounded-lg border border-[var(--line)] bg-[var(--page-bg)] px-2.5 py-1.5 text-[0.8rem] outline-none focus:border-[var(--accent)]";
 
   return (
     <form
-      className="mt-2 rounded-lg border border-[var(--line)] p-2"
+      // 직접 예약 등록 폼과 같은 위치·모양: 제목을 "슬롯 상세" 줄로 올리고 한 화면에 들어오게 한다.
+      className="mt-2 border-t border-[var(--line)] pt-2 sm:-mt-[1.6rem] sm:border-t-0 sm:border-l sm:pt-0 sm:pl-4"
       onSubmit={(e) => {
         e.preventDefault();
         if (!toDate) return;
@@ -440,8 +443,8 @@ function RescheduleForm({
         onReschedule({ toDateStr: toDate, toTime, notify });
       }}
     >
-      <div className="mb-1 text-[0.76rem] font-bold">예약 연기 · 날짜 변경</div>
-      <div className="flex flex-wrap items-center gap-1.5">
+      <div className="mb-1.5 text-[0.8rem] font-bold">예약 연기 · 날짜 변경</div>
+      <div className="grid grid-cols-2 gap-1.5">
         <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className={inputCls} />
         <select value={toTime} onChange={(e) => setToTime(e.target.value)} className={inputCls}>
           {TIMES.map((tm) => (
@@ -450,18 +453,22 @@ function RescheduleForm({
             </option>
           ))}
         </select>
+      </div>
+      <div className="mt-1.5 flex items-center gap-3">
         <button
           type="submit"
           disabled={pending || !toDate}
-          className="rounded-lg bg-[var(--accent)] px-3 py-1.5 text-[0.8rem] font-bold text-white disabled:opacity-50"
+          className="flex-none rounded-lg bg-[var(--accent)] px-3.5 py-1.5 text-[0.8rem] font-bold text-white disabled:opacity-50"
         >
           날짜 변경
         </button>
+        <label className="flex items-start gap-1.5 text-[0.7rem] leading-[1.4] text-[var(--ink-soft)]">
+          <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} className="mt-0.5" />
+          <span>
+            <b>변경 일시 안내</b> 바로 발송(알림톡, 시술명이 다르면 문자). 기존 시간은 자동으로 비워집니다.
+          </span>
+        </label>
       </div>
-      <label className="mt-1.5 flex items-center gap-1.5 text-[0.7rem] text-[var(--ink-soft)]">
-        <input type="checkbox" checked={notify} onChange={(e) => setNotify(e.target.checked)} />
-        <span>변경된 일시를 알림톡(또는 문자)으로 환자에게 보냅니다. 기존 시간은 자동으로 비워집니다.</span>
-      </label>
     </form>
   );
 }
