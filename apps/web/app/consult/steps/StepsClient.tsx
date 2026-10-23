@@ -57,7 +57,7 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
 
   function goNext() {
     if (isLast) {
-      router.push("/consult/simulation");
+      router.push("/consult/schedule");
       return;
     }
     setIndex((i) => Math.min(i + 1, steps.length - 1));
@@ -178,19 +178,15 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
           <button
             type="button"
             onClick={goNext}
-            className="flex-[1.4] rounded-[10px] bg-[var(--accent)] py-3.5 text-center text-[0.92rem] font-bold text-white transition-[filter] hover:brightness-[1.06]"
+            className={
+              isLast
+                ? "flex-[1.4] rounded-[11px] bg-[var(--accent)] px-3 py-[22px] text-center text-[1.7rem] font-bold leading-none tracking-wide text-white transition-[filter] hover:brightness-[1.06]"
+                : "flex-[1.4] rounded-[10px] bg-[var(--accent)] py-3.5 text-center text-[0.92rem] font-bold text-white transition-[filter] hover:brightness-[1.06]"
+            }
           >
-            {isLast ? "다음 · AI 시뮬레이션 보기" : "다음 ›"}
+            {isLast ? "상담예약하기" : "다음 ›"}
           </button>
         </div>
-
-        <button
-          type="button"
-          onClick={() => router.push("/consult/schedule")}
-          className="mt-3.5 block w-full text-center text-[0.78rem] text-[var(--ink-soft)] underline underline-offset-2 hover:text-[var(--accent-ink)]"
-        >
-          AI 시뮬레이션 생략하고 상담 예약하기
-        </button>
       </div>
     </div>
   );
