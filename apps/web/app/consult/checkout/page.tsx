@@ -197,7 +197,7 @@ function CheckoutForm() {
               <h1 className="mb-2 font-[family-name:var(--font-display)] text-[1.5rem] font-bold">
                 예약 내용을 확인해주세요
               </h1>
-              <p className="mb-7 text-[1.24rem] leading-[1.6] font-semibold text-[var(--ink-soft)]">
+              <p className="mb-2.5 text-[1.24rem] leading-[1.5] font-semibold text-[var(--ink-soft)]">
                 결제가 완료되면 예약이 바로 확정됩니다.
               </p>
 
