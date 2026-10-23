@@ -52,7 +52,7 @@ export default async function CheckoutSuccessPage({
               카카오 알림톡 자동 발송
             </div>
             <div className="mb-1.5 rounded-[4px_14px_14px_14px] bg-[#fee500] px-3.5 py-3 text-left text-[0.78rem] leading-[1.6] text-[#3c1e1e]">
-              [PDMPS] {reservation.when} Face Lift 상담 예약이 확정되었습니다.
+              [PDM박동만성형외과] {reservation.when} 상담 예약이 확정되었습니다.
             </div>
             <div className="mb-2 text-left text-[0.68rem] text-[var(--ink-soft)]">
               알림톡 발송 실패 시 문자(SMS)로 자동 재발송됩니다.

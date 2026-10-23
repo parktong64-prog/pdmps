@@ -34,6 +34,8 @@ export async function sendAlimtalk(input: {
   to: string;
   templateId: string;
   variables: Record<string, string>;
+  /** false이면 알림톡이 실패해도 문자(SMS)로 대신 보내지 않는다. 기본은 대체 발송. */
+  fallbackSms?: boolean;
 }): Promise<AlimtalkResult> {
   const apiKey = process.env.SOLAPI_API_KEY;
   const apiSecret = process.env.SOLAPI_API_SECRET;
@@ -59,8 +61,8 @@ export async function sendAlimtalk(input: {
             pfId,
             templateId: input.templateId,
             variables: input.variables,
-            // 알림톡이 실패(미가입/차단 등)하면 문자(SMS)로 자동 대체 발송
-            disableSms: false,
+            // 알림톡이 실패(미가입/차단 등)하면 문자(SMS)로 자동 대체 발송 (fallbackSms: false면 끔)
+            disableSms: input.fallbackSms === false,
           },
         },
       }),
@@ -97,9 +99,8 @@ export async function sendAlimtalk(input: {
 
 /**
  * 예약 확정 알림톡 (환자에게 발송).
- * 카카오 채널에 템플릿이 승인된 뒤, 그 템플릿 ID를 SOLAPI_TEMPLATE_RESERVATION_CONFIRMED에 등록하면 동작한다.
- * 템플릿 본문의 변수명(#{...})은 실제 승인받은 템플릿과 정확히 일치해야 하므로,
- * 템플릿 승인 후 아래 변수명을 그에 맞게 조정해야 할 수 있다.
+ * 승인된 문구: "[PDM박동만성형외과] #{날짜} #{시간} 상담 예약이 확정되었습니다."
+ * 템플릿 ID는 SOLAPI_TEMPLATE_RESERVATION_CONFIRMED에 등록한다. 시술명은 문구에 없어 모든 시술에 쓸 수 있다.
  */
 export async function sendReservationConfirmedAlimtalk(input: {
   phone: string;
@@ -123,7 +124,7 @@ export async function sendReservationConfirmedAlimtalk(input: {
 /**
  * 예약 확정을 관리자(원장·사무장) 휴대폰에도 알림톡으로 보낸다.
  * 환자용과 같은 승인된 템플릿을 재사용한다 — 이 템플릿에는 환자 이름을 넣을 변수가 없어
- * "#{날짜} #{시간} Face Lift 상담 예약이 확정되었습니다"만 온다. 이름까지 넣으려면
+ * "#{날짜} #{시간} 상담 예약이 확정되었습니다"만 온다. 이름까지 넣으려면
  * 새 템플릿을 만들어 카카오 검수를 다시 받아야 한다.
  * ADMIN_NOTIFY_PHONE 환경변수(관리자 휴대폰 번호)가 있어야 동작한다.
  */
@@ -144,7 +145,7 @@ export async function sendReminderD1Alimtalk(input: { phone: string; time: strin
   });
 }
 
-/** 일주일 전 안내 알림톡 템플릿이 등록되어 있는지. 없으면 호출하는 쪽이 문자(SMS)로 대신 보낸다. */
+/** 일주일 전 안내 알림톡 템플릿이 등록되어 있는지. 없으면 일주일 전 안내는 보내지 않는다. */
 export function hasReminderD7Template(): boolean {
   return !!process.env.SOLAPI_TEMPLATE_REMINDER_D7;
 }
@@ -157,6 +158,25 @@ export async function sendReminderD7Alimtalk(input: { phone: string; date: strin
   const templateId = process.env.SOLAPI_TEMPLATE_REMINDER_D7;
   if (!templateId) {
     return { ok: false, error: "일주일 전 안내 알림톡 미설정 (SOLAPI_TEMPLATE_REMINDER_D7 환경변수 필요)" };
+  }
+  return sendAlimtalk({
+    to: input.phone,
+    templateId,
+    variables: { "#{날짜}": input.date, "#{시간}": input.time },
+    // 일주일 전 안내는 문자로 대신 보내지 않는다(요청에 따라).
+    fallbackSms: false,
+  });
+}
+
+/**
+ * 예약 일정 변경(연기) 안내 알림톡. 승인된 문구:
+ * "[PDM 박동만성형외과] 상담 예약 일정이 변경되었습니다. 변경된 일시: #{날짜} #{시간} …"
+ * 템플릿 ID는 SOLAPI_TEMPLATE_RESCHEDULED에 등록한다.
+ */
+export async function sendRescheduledAlimtalk(input: { phone: string; date: string; time: string }): Promise<AlimtalkResult> {
+  const templateId = process.env.SOLAPI_TEMPLATE_RESCHEDULED;
+  if (!templateId) {
+    return { ok: false, error: "일정 변경 안내 알림톡 미설정 (SOLAPI_TEMPLATE_RESCHEDULED 환경변수 필요)" };
   }
   return sendAlimtalk({
     to: input.phone,

@@ -400,7 +400,7 @@ export default function AlimtalkSendPage() {
                             </span>
                           )}
                         </div>
-                        <div className="mt-1 rounded-[3px_10px_10px_10px] bg-[#fee500] px-2.5 py-1.5 text-[0.76rem] leading-[1.5] text-[#3c1e1e]">
+                        <div className="mt-1 whitespace-pre-line rounded-[3px_10px_10px_10px] bg-[#fee500] px-2.5 py-1.5 text-[0.76rem] leading-[1.5] text-[#3c1e1e]">
                           {reservationPreview(r)}
                         </div>
                       </div>
@@ -429,7 +429,7 @@ export default function AlimtalkSendPage() {
                 ))}
               </div>
               <div className="mt-3 text-[0.76rem] font-semibold text-[var(--ink-soft)]">발송될 내용 미리보기</div>
-              <div className="mt-1 rounded-[4px_14px_14px_14px] bg-[#fee500] px-3.5 py-3 text-[0.82rem] leading-[1.6] text-[#3c1e1e]">
+              <div className="mt-1 whitespace-pre-line rounded-[4px_14px_14px_14px] bg-[#fee500] px-3.5 py-3 text-[0.82rem] leading-[1.6] text-[#3c1e1e]">
                 {manualPreview}
               </div>
               <p className="mt-1.5 text-[0.72rem] text-[var(--ink-soft)]">모든 받는 사람에게 같은 문구가 갑니다.</p>

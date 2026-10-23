@@ -13,9 +13,7 @@ import {
   kstMidnightUTC,
 } from "@/lib/admin/time";
 import { kstInstant, kstMidnightInstant, kstDateTimeKey, isClosedDay, isSlotInPast, TIMES, alimtalkLabels } from "@/lib/booking";
-import { sendReservationConfirmedAlimtalk } from "@/lib/notifications/alimtalk";
-import { sendSms } from "@/lib/notifications/sms";
-import { HOSPITAL_PREFIX } from "@/lib/notifications/text-utils";
+import { sendReservationConfirmedAlimtalk, sendRescheduledAlimtalk } from "@/lib/notifications/alimtalk";
 import { expireStaleHeldReservations } from "@/lib/payments/toss";
 
 const SLOT_DURATION_MIN = 90;
@@ -481,20 +479,14 @@ export async function createAdminReservation(input: {
   // 환자에게 예약 확정 안내. 실패해도 예약 등록은 이미 끝났으므로 경고만 돌려준다.
   if (input.notify !== false) {
     const { dateLabel, timeLabel } = alimtalkLabels(start.toISOString());
-    // 승인된 알림톡 문구는 "Face Lift 상담 예약이 확정되었습니다"로 고정이라, 관리자가 직접 "Face Lift"라고
-    // 입력한 경우에만 쓴다. 시술명을 비웠거나 다른 시술이면 시술명을 멋대로 넣지 않도록 문자(SMS/LMS)로 보낸다.
-    const isFaceLift = procedureName.replace(/\s/g, "").toLowerCase() === "facelift";
-    const sent = isFaceLift
-      ? await sendReservationConfirmedAlimtalk({ phone, date: dateLabel, time: timeLabel })
-      : await sendSms({
-          to: phone,
-          text: `${HOSPITAL_PREFIX}${dateLabel} ${timeLabel} ${procedureName ? `${procedureName} ` : ""}상담 예약이 확정되었습니다.`,
-        });
+    // 승인된 알림톡 문구("[PDM박동만성형외과] #{날짜} #{시간} 상담 예약이 확정되었습니다.")에는 시술명이 없어
+    // 시술명을 입력했는지와 관계없이 항상 알림톡으로 보낸다.
+    const sent = await sendReservationConfirmedAlimtalk({ phone, date: dateLabel, time: timeLabel });
     await supabase.from("notifications").insert({
       reservation_id: newReservation.id,
       consultation_id: consultation.id,
       recipient_patient_id: patient.id,
-      channel: isFaceLift ? "alimtalk" : "sms",
+      channel: "alimtalk",
       template_key: "reservation_confirmed",
       status: sent.ok ? "sent" : "failed",
       sent_at: sent.ok ? new Date().toISOString() : null,
@@ -514,7 +506,7 @@ export async function createAdminReservation(input: {
 /**
  * 예약자가 날짜 연기(변경)를 요청했을 때, 확정된 예약을 새 날짜·시간으로 옮긴다. 예약금을 다시 받지 않고
  * 같은 예약 기록이 새 슬롯으로 이동하며, 기존 슬롯은 자동으로 다시 열린다. notify가 true(기본)이면
- * 새 일시로 예약 확정 안내(알림톡, 시술명이 Face Lift가 아니면 문자)를 보낸다.
+ * 새 일시로 일정 변경 안내 알림톡을 보낸다.
  * 서버 액션은 바깥에서도 호출될 수 있어 관리자 로그인을 한 번 더 확인한다.
  */
 export async function rescheduleReservation(input: {
@@ -569,7 +561,6 @@ export async function rescheduleReservation(input: {
   const reservation = resvList.find((r) => r.status === "confirmed");
   if (!reservation) return { ok: false, error: "확정된 예약만 날짜를 옮길 수 있습니다." };
   const patient = one(reservation.patients);
-  const source = one(reservation.consultations)?.source;
 
   const { data: procedure } = await supabase.from("procedures").select("id").eq("is_active", true).limit(1).maybeSingle();
   if (!procedure) return { ok: false, error: "시술 정보를 찾을 수 없습니다." };
@@ -639,22 +630,13 @@ export async function rescheduleReservation(input: {
   if (input.notify === false || !patient?.phone) return { ok: true };
 
   const { dateLabel, timeLabel } = alimtalkLabels(to.start.toISOString());
-  // 승인된 알림톡 문구는 "Face Lift 상담 예약이 확정되었습니다"로 고정이다. 시술명을 Face Lift로 입력했거나
-  // (입력 없는) 온라인 예약이면 알림톡, 그 밖의 수기 예약은 시술명을 틀리게 넣지 않도록 문자로 보낸다.
-  const named = (reservation.procedure_name ?? "").trim();
-  const isFaceLift = named ? named.replace(/\s/g, "").toLowerCase() === "facelift" : source !== "admin";
-  const sent = isFaceLift
-    ? await sendReservationConfirmedAlimtalk({ phone: patient.phone, date: dateLabel, time: timeLabel })
-    : await sendSms({
-        to: patient.phone,
-        text: `${HOSPITAL_PREFIX}상담 예약이 ${dateLabel} ${timeLabel}으로 변경되었습니다.`,
-      });
+  const sent = await sendRescheduledAlimtalk({ phone: patient.phone, date: dateLabel, time: timeLabel });
   await supabase.from("notifications").insert({
     reservation_id: reservation.id,
     consultation_id: reservation.consultation_id,
     recipient_patient_id: reservation.patient_id,
-    channel: isFaceLift ? "alimtalk" : "sms",
-    template_key: "reservation_confirmed",
+    channel: "alimtalk",
+    template_key: "rescheduled",
     status: sent.ok ? "sent" : "failed",
     sent_at: sent.ok ? new Date().toISOString() : null,
   });
