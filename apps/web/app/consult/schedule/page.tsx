@@ -162,12 +162,12 @@ export default function SchedulePage() {
                     disabled={!status.open}
                     title={status.title ?? redDayName(new Date(y, m, d)) ?? undefined}
                     onClick={() => status.open && openTimeView(d)}
-                    className={`relative flex aspect-square flex-col items-center justify-center gap-[3px] rounded-lg font-[family-name:var(--font-mono-kr)] text-[0.8rem] ${
+                    className={`relative flex aspect-square flex-col items-center justify-center gap-[3px] rounded-lg font-[family-name:var(--font-body)] text-[0.9rem] font-bold ${
                       isRedDay(new Date(y, m, d))
                         ? "text-[var(--danger)]"
                         : status.open
                           ? "text-[var(--ink)]"
-                          : "text-[var(--ink-faint)]"
+                          : "text-[var(--ink-soft)]"
                     } ${
                       status.open ? "cursor-pointer hover:bg-[var(--accent-soft)]" : "cursor-not-allowed"
                     } ${isToday ? "shadow-[inset_0_0_0_1.4px_var(--accent-ink)]" : ""}`}
