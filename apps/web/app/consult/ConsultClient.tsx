@@ -82,6 +82,8 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
   function handleEnded() {
     setPlaying(false);
     markWatched();
+    // 영상이 끝나면 클릭 없이 바로 다음 단계(진행 과정 보기)로 넘어간다.
+    router.push("/consult/steps");
   }
 
   // 영상 미등록 시: 재생 흐름을 흉내내는 시뮬레이션
@@ -95,6 +97,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
           if (timerRef.current) clearInterval(timerRef.current);
           setPlaying(false);
           markWatched();
+          router.push("/consult/steps");
         }
         return next;
       });
