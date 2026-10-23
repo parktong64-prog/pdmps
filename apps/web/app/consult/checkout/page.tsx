@@ -98,7 +98,7 @@ function CheckoutForm() {
                 예약금 결제를 진행하기 위해 예약자 정보를 확인합니다.
               </p>
 
-              <form onSubmit={handleSubmit} className="flex flex-col gap-[18px]" noValidate>
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
                 <div className="flex flex-col gap-1.5">
                   <label htmlFor="f-name" className="text-[0.8rem] font-bold">
                     이름<span className="ml-0.5 text-[var(--accent)]">*</span>
@@ -115,7 +115,7 @@ function CheckoutForm() {
                       errors.name ? "border-[var(--danger)]" : "border-[var(--line)]"
                     }`}
                   />
-                  <div className="flex min-h-[1.1em] items-center gap-1.5 text-[0.74rem] text-[var(--danger)]">
+                  <div className="flex items-center gap-1.5 text-[0.74rem] text-[var(--danger)] empty:hidden">
                     {errors.name}
                   </div>
                 </div>
@@ -137,7 +137,7 @@ function CheckoutForm() {
                       errors.phone ? "border-[var(--danger)]" : "border-[var(--line)]"
                     }`}
                   />
-                  <div className="flex min-h-[1.1em] items-center gap-1.5 text-[0.74rem] text-[var(--danger)]">
+                  <div className="flex items-center gap-1.5 text-[0.74rem] text-[var(--danger)] empty:hidden">
                     {errors.phone}
                   </div>
                 </div>
