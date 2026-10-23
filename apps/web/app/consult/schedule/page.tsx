@@ -221,7 +221,7 @@ export default function SchedulePage() {
                     type="button"
                     disabled={taken}
                     onClick={() => pickTime(time)}
-                    className={`rounded-lg border py-6 font-[family-name:var(--font-body)] text-[1.35rem] font-bold leading-tight transition-colors ${
+                    className={`rounded-lg border px-1 py-6 font-[family-name:var(--font-body)] text-[1.7rem] font-bold leading-tight tracking-tight transition-colors ${
                       taken
                         ? "cursor-not-allowed border-[var(--line)] bg-[var(--page-bg)] font-bold text-[var(--ink-soft)] line-through"
                         : isSelected
