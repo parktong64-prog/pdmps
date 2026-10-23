@@ -1,40 +1,16 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
-import { KakaoShareButton } from "./KakaoShareButton";
 
-type ConcernKey = "nasolabial" | "jawline" | "neck";
-
-const CONCERNS: Record<ConcernKey, { title: string; body: string; tip: string }> = {
-  nasolabial: {
-    title: "팔자주름",
-    body: "코 옆에서 입가로 이어지는 깊은 주름으로, 나이가 들며 볼과 중안면부가 아래로 처지면서 더 두드러지게 나타납니다.",
-    tip: "처진 볼과 피부를 끌어올려 팔자주름을 완화하는 데 도움을 줄 수 있어요.",
-  },
-  jawline: {
-    title: "턱선 처짐",
-    body: "턱과 목의 경계가 흐려지고 갸름했던 라인이 아래로 처지는 현상으로, 피부 아래 근막(SMAS)이 이완되며 나타납니다.",
-    tip: "근막(SMAS)을 끌어올려 고정해 턱선을 선명하게 정리합니다.",
-  },
-  neck: {
-    title: "목주름",
-    body: "목 피부와 근육의 탄력이 떨어지며 생기는 가로 또는 세로 주름으로, 나이보다 더 들어 보이게 하는 대표적인 부위예요.",
-    tip: "넥 리프팅을 함께 진행하면 목선 개선에 도움이 됩니다.",
-  },
+const FACELIFT = {
+  title: "안면거상술",
+  body: "나이가 들면서 볼과 중안면부가 아래로 처지고, 팔자주름이 깊어지며 턱선이 흐려지고 목 주름도 두드러지게 나타납니다.",
+  tip: "처진 피부 아래 근막(SMAS)을 끌어올려 고정해 팔자주름·턱선·목선을 함께 정리하는 데 도움을 줄 수 있어요.",
 };
-
-const CHIPS: { key: ConcernKey; label: string }[] = [
-  { key: "nasolabial", label: "팔자주름" },
-  { key: "jawline", label: "턱선 처짐" },
-  { key: "neck", label: "목주름" },
-];
 
 export default function HomeClient({ basePrice }: { basePrice: number }) {
   useFunnelTrack("home");
-  const [active, setActive] = useState<ConcernKey>("nasolabial");
-  const concern = CONCERNS[active];
 
   return (
     <div className="flex-1 bg-[var(--page-bg)] text-[var(--ink)]">
@@ -48,12 +24,6 @@ export default function HomeClient({ basePrice }: { basePrice: number }) {
             ●
             <span className="absolute -right-px -top-px h-2 w-2 rounded-full border-2 border-[var(--page-bg)] bg-[var(--accent)]" />
           </div>
-        </div>
-
-        {/* 배너 */}
-        <div className="mb-6 rounded-2xl bg-[var(--accent-soft)] px-[18px] py-4">
-          <b className="mb-1 block text-sm text-[var(--accent-ink)]">가을 Face Lift 상담 주간</b>
-          <span className="text-xs text-[var(--ink-soft)]">박동만 원장 직접 상담</span>
         </div>
 
         {/* Face Lift 소개 */}
@@ -77,28 +47,11 @@ export default function HomeClient({ basePrice }: { basePrice: number }) {
         <h2 className="mb-3.5 font-[family-name:var(--font-display)] text-[1.05rem] font-bold">
           이런 분께 추천해요
         </h2>
-        <div className="mb-4 flex flex-wrap gap-2">
-          {CHIPS.map((chip) => (
-            <button
-              key={chip.key}
-              type="button"
-              onClick={() => setActive(chip.key)}
-              className={`rounded-full border px-4 py-2.5 text-[0.82rem] font-semibold transition-colors ${
-                active === chip.key
-                  ? "border-[var(--accent)] bg-[var(--accent)] text-white"
-                  : "border-[var(--line)] bg-[var(--card-bg)] text-[var(--ink-soft)]"
-              }`}
-            >
-              {chip.label}
-            </button>
-          ))}
-        </div>
-
         <div className="mb-3.5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-[18px]">
-          <div className="mb-2 text-sm font-bold">{concern.title}</div>
-          <div className="text-[0.84rem] leading-[1.7] text-[var(--ink-soft)]">{concern.body}</div>
+          <div className="mb-2 text-sm font-bold">{FACELIFT.title}</div>
+          <div className="text-[0.84rem] leading-[1.7] text-[var(--ink-soft)]">{FACELIFT.body}</div>
           <div className="mt-3 border-t border-dashed border-[var(--line)] pt-3 text-[0.8rem] leading-[1.6] text-[var(--accent-ink)]">
-            <b className="text-[var(--ink)]">Face Lift는</b> {concern.tip}
+            <b className="text-[var(--ink)]">안면거상술은</b> {FACELIFT.tip}
           </div>
         </div>
 
@@ -112,10 +65,6 @@ export default function HomeClient({ basePrice }: { basePrice: number }) {
         >
           상담 시작하기
         </Link>
-
-        <div className="mt-3">
-          <KakaoShareButton />
-        </div>
       </div>
     </div>
   );
