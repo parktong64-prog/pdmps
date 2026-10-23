@@ -237,7 +237,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
           <button
             type="button"
             onClick={() => router.push("/consult/steps")}
-            className="rounded-[10px] bg-[var(--accent)] py-3.5 text-center text-[0.92rem] font-bold text-white transition-[filter,opacity] hover:brightness-[1.06]"
+            className="rounded-[11px] bg-[var(--accent)] px-3 py-[22px] text-center text-[1.7rem] font-bold leading-tight tracking-wide text-white transition-[filter,opacity] hover:brightness-[1.06]"
           >
             다음 · 진행 과정 보기
           </button>
