@@ -199,13 +199,13 @@ export default function SchedulePage() {
             <button
               type="button"
               onClick={() => setSelected(null)}
-              className="mb-4 text-[0.78rem] text-[var(--ink-soft)] underline underline-offset-2"
+              className="mb-4 text-[0.98rem] font-bold text-[var(--ink-soft)] underline underline-offset-2"
             >
               ‹ 다른 날짜 선택
             </button>
-            <div className="mb-3.5 text-[0.88rem] font-bold">
+            <div className="mb-3.5 text-[1.12rem] font-bold">
               {selected.m + 1}월 {selected.d}일({selected.weekday})
-              <span className="mt-0.5 block text-[0.78rem] font-medium text-[var(--ink-soft)]">
+              <span className="mt-0.5 block text-[0.98rem] font-semibold text-[var(--ink-soft)]">
                 박동만 원장 · 예약 가능 시간
               </span>
             </div>
@@ -219,7 +219,7 @@ export default function SchedulePage() {
                     type="button"
                     disabled={taken}
                     onClick={() => pickTime(time)}
-                    className={`rounded-lg border py-3 font-[family-name:var(--font-mono-kr)] text-[0.82rem] transition-colors ${
+                    className={`rounded-lg border py-4 font-[family-name:var(--font-body)] text-[1.05rem] font-bold transition-colors ${
                       taken
                         ? "cursor-not-allowed border-[var(--line)] bg-[var(--page-bg)] font-bold text-[var(--ink-soft)] line-through"
                         : isSelected
@@ -237,15 +237,15 @@ export default function SchedulePage() {
 
         {selected && (
           <div className="sticky bottom-4 mt-5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-[18px] shadow-[0_18px_40px_-24px_rgba(42,31,34,0.35)]">
-            <div className="flex justify-between py-0.5 text-[0.82rem] text-[var(--ink-soft)]">
+            <div className="flex justify-between py-1 text-[1.02rem] text-[var(--ink-soft)]">
               <span>시술</span>
               <b className="font-semibold text-[var(--ink)]">Face Lift</b>
             </div>
-            <div className="flex justify-between py-0.5 text-[0.82rem] text-[var(--ink-soft)]">
+            <div className="flex justify-between py-1 text-[1.02rem] text-[var(--ink-soft)]">
               <span>담당</span>
               <b className="font-semibold text-[var(--ink)]">박동만 원장</b>
             </div>
-            <div className="flex justify-between py-0.5 text-[0.82rem] text-[var(--ink-soft)]">
+            <div className="flex justify-between py-1 text-[1.02rem] text-[var(--ink-soft)]">
               <span>일시</span>
               <b className="font-semibold text-[var(--ink)]">{when ?? "-"}</b>
             </div>
@@ -253,11 +253,11 @@ export default function SchedulePage() {
               type="button"
               disabled={!when}
               onClick={handleNext}
-              className="mt-3 block w-full rounded-[10px] bg-[var(--accent)] py-3 text-center text-[0.9rem] font-bold text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-40"
+              className="mt-3 block w-full rounded-[10px] bg-[var(--accent)] py-3.5 text-center text-[1.12rem] font-bold text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-40"
             >
               다음 · 예약자 정보 입력
             </button>
-            <div className="mt-2.5 text-center text-[0.68rem] text-[var(--ink-soft)]">
+            <div className="mt-2.5 text-center text-[0.85rem] font-semibold text-[var(--ink-soft)]">
               선택한 시간은 결제 전까지 10분간 임시로 잡아드려요
             </div>
           </div>
