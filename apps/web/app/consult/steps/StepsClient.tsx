@@ -139,8 +139,8 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
               />
               {/* 영상 아래 자막 — 합친 영상은 지금 재생 구간의 진행 과정을 보여준다 */}
               <div className="mt-3 rounded-lg bg-[var(--accent-soft)] px-4 py-3.5">
-                <div className="text-[1.05rem] font-bold text-[var(--accent-ink)]">{caption.title}</div>
-                <p className="mt-1 text-[0.9rem] leading-[1.6] font-semibold text-[var(--ink)]">{caption.description}</p>
+                <div className="text-[2.1rem] leading-tight font-bold text-[var(--accent-ink)]">{caption.title}</div>
+                <p className="mt-2 text-[1.8rem] leading-[1.5] font-semibold text-[var(--ink)]">{caption.description}</p>
               </div>
             </>
           ) : (
