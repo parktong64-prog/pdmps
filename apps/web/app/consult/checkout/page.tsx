@@ -210,7 +210,7 @@ function CheckoutForm() {
                   <span>담당</span>
                   <b className="font-semibold text-[var(--ink)]">박동만 원장</b>
                 </div>
-                <div className="flex justify-between py-1.5 text-[1.32rem] text-[var(--ink-soft)]">
+                <div className="flex justify-between gap-2 whitespace-nowrap py-1.5 text-[clamp(0.9rem,calc((100vw_-_150px)/12),1.32rem)] text-[var(--ink-soft)]">
                   <span>일시</span>
                   <b className="font-semibold text-[var(--ink)]">{scheduleLabel}</b>
                 </div>
