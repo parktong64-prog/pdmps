@@ -194,7 +194,7 @@ function CheckoutForm() {
               <div className="mb-2.5 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
                 예약금 결제
               </div>
-              <h1 className="mb-2 whitespace-nowrap font-[family-name:var(--font-display)] text-[clamp(1rem,calc((100vw_-_110px)/12.6),1.5rem)] font-bold">
+              <h1 className="mb-2 whitespace-nowrap font-[family-name:var(--font-display)] text-[clamp(0.95rem,calc((100vw_-_110px)/14),1.5rem)] tracking-tight font-bold">
                 예약 내용을 확인해주세요
               </h1>
               <p className="mb-2.5 text-[1.24rem] leading-[1.5] font-semibold text-[var(--ink-soft)]">
@@ -236,7 +236,7 @@ function CheckoutForm() {
                 type="button"
                 disabled={paying}
                 onClick={handlePay}
-                className="mt-[18px] block w-full rounded-[11px] bg-[var(--accent)] px-2 py-[22px] text-center text-[1.84rem] font-bold leading-tight tracking-tight text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-60"
+                className="mt-[18px] block w-full rounded-[11px] bg-[var(--accent)] px-2 whitespace-nowrap py-[22px] text-center text-[clamp(1.1rem,calc((100vw_-_110px)/10.5),1.84rem)] font-bold leading-tight tracking-tight text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-60"
               >
                 {paying ? "결제창 여는 중…" : "50,000원 결제하기"}
               </button>
