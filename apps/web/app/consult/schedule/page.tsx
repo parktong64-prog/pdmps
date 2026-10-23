@@ -7,8 +7,8 @@ import { getMonthSlotStates, type TimeState } from "@/lib/schedule/actions";
 import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
 
 const now = new Date();
-// 병원이 예약을 열어둔 기간: 이번 달부터 2개월 뒤까지
-const MONTHS = [0, 1, 2].map((i) => {
+// 병원이 예약을 열어둔 기간: 이번 달부터 5개월 뒤까지(총 6개월)
+const MONTHS = [0, 1, 2, 3, 4, 5].map((i) => {
   const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
   return { y: d.getFullYear(), m: d.getMonth() };
 });

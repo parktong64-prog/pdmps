@@ -11,7 +11,7 @@ import {
 } from "@/lib/schedule/actions";
 
 const now = new Date();
-const MONTHS = [0, 1, 2].map((i) => {
+const MONTHS = [0, 1, 2, 3, 4, 5].map((i) => {
   const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
   return { y: d.getFullYear(), m: d.getMonth() };
 });
