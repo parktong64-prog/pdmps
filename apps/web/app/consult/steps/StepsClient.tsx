@@ -118,9 +118,11 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
               <video
                 ref={videoRef}
                 key={step.media_url}
-                src={step.media_url}
+                // #t=0.1: 재생 전에도 첫 화면이 보이게 한다(검은 상자로 보이는 휴대폰 방지)
+                src={`${step.media_url}#t=0.1`}
                 controls
                 playsInline
+                preload="metadata"
                 onLoadedMetadata={(e) => {
                   // 안내 영상은 1.2배속으로 재생한다
                   e.currentTarget.defaultPlaybackRate = 1.2;
