@@ -176,7 +176,11 @@ export default function SchedulePage() {
                     {status.open ? (
                       <span className="h-1 w-1 rounded-full bg-[var(--accent)]" />
                     ) : status.reason ? (
-                      <span className="font-[family-name:var(--font-body)] text-[0.6rem] font-bold text-[var(--ink-soft)]">
+                      <span
+                        className={`font-[family-name:var(--font-body)] text-[0.6rem] font-bold ${
+                          status.reason === "휴" ? "text-[var(--danger)]" : "text-[var(--ink-soft)]"
+                        }`}
+                      >
                         {status.reason}
                       </span>
                     ) : null}
