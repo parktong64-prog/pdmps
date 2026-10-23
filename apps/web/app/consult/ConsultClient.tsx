@@ -18,6 +18,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
   const [progress, setProgress] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [watched, setWatched] = useState(false);
+  const [autoMuted, setAutoMuted] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -37,6 +38,25 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
       if (timerRef.current) clearInterval(timerRef.current);
     };
   }, []);
+
+  // 홈의 "상담예약하기"를 눌러 이 화면에 들어오면 영상을 바로 재생한다. 아직 끝까지 보지 않은 경우만.
+  // 브라우저가 소리 있는 자동재생을 막으면 소리를 끈 채로 재생하고, 영상 컨트롤로 소리를 켤 수 있다.
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !video?.video_url) return;
+    try {
+      if (localStorage.getItem(STORAGE_KEY) === "1") return;
+    } catch {
+      // 저장소 접근이 안 되면 미시청으로 보고 그대로 재생한다
+    }
+    el.play().catch(() => {
+      el.muted = true;
+      setAutoMuted(true);
+      el.play().catch(() => {
+        // 이것도 막히면 중앙의 재생 버튼으로 직접 시작한다
+      });
+    });
+  }, [video?.video_url]);
 
   function markWatched() {
     setWatched(true);
@@ -127,6 +147,9 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
                 playsInline
                 onPlay={() => setPlaying(true)}
                 onPause={() => setPlaying(false)}
+                onVolumeChange={(e) => {
+                  if (!e.currentTarget.muted) setAutoMuted(false);
+                }}
                 onTimeUpdate={handleTimeUpdate}
                 onEnded={handleEnded}
                 className="h-full w-full"
@@ -185,6 +208,11 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
               <span>{playing ? "재생 중…" : "아직 시청하지 않았어요"}</span>
             )}
           </div>
+          {autoMuted && playing && !watched && (
+            <p className="mt-2 text-[0.72rem] leading-[1.5] font-semibold text-[var(--accent-ink)]">
+              소리가 꺼진 채로 재생 중이에요. 영상 아래 스피커 버튼을 눌러 소리를 켜세요.
+            </p>
+          )}
           {!video?.video_url && (
             <p className="mt-2.5 text-[0.7rem] leading-[1.5] text-[var(--ink-soft)]">
               실제 시술 안내 영상 업로드 전 미리보기 화면입니다. 재생 버튼을 누르면 시청 흐름을
