@@ -211,7 +211,7 @@ export default function SchedulePage() {
                 박동만 원장 · 예약 가능 시간
               </span>
             </div>
-            <div className="mx-auto grid max-w-[330px] grid-cols-3 gap-2">
+            <div className="mx-auto grid max-w-[270px] grid-cols-3 gap-1.5">
               {TIMES.map((time) => {
                 const taken = !!slotStates?.[`${selected.key}_${time}`] || isSlotInPast(selected.key, time);
                 const isSelected = selected.time === time;
@@ -221,7 +221,7 @@ export default function SchedulePage() {
                     type="button"
                     disabled={taken}
                     onClick={() => pickTime(time)}
-                    className={`rounded-lg border px-0.5 py-4 font-[family-name:var(--font-body)] text-[1.7rem] font-bold leading-tight tracking-tight transition-colors ${
+                    className={`rounded-lg border px-0.5 py-2.5 font-[family-name:var(--font-body)] text-[1.35rem] font-bold leading-tight tracking-tight transition-colors ${
                       taken
                         ? "cursor-not-allowed border-[var(--line)] bg-[var(--page-bg)] font-bold text-[var(--ink-soft)] line-through"
                         : isSelected
