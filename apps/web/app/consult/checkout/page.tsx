@@ -194,7 +194,7 @@ function CheckoutForm() {
               <div className="mb-2.5 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
                 예약금 결제
               </div>
-              <h1 className="mb-2 font-[family-name:var(--font-display)] text-[1.5rem] font-bold">
+              <h1 className="mb-2 whitespace-nowrap font-[family-name:var(--font-display)] text-[clamp(1rem,calc((100vw_-_110px)/12.6),1.5rem)] font-bold">
                 예약 내용을 확인해주세요
               </h1>
               <p className="mb-2.5 text-[1.24rem] leading-[1.5] font-semibold text-[var(--ink-soft)]">
