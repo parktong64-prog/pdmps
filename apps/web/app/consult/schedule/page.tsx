@@ -108,7 +108,7 @@ export default function SchedulePage() {
                 aria-label="이전 달"
                 disabled={monthIndex === 0}
                 onClick={() => setMonthIndex((i) => Math.max(0, i - 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] text-[0.9rem] disabled:cursor-not-allowed disabled:opacity-30"
+                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--ink)] pb-0.5 text-[1.9rem] leading-none font-bold text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-30"
               >
                 ‹
               </button>
@@ -120,7 +120,7 @@ export default function SchedulePage() {
                 aria-label="다음 달"
                 disabled={monthIndex === MONTHS.length - 1}
                 onClick={() => setMonthIndex((i) => Math.min(MONTHS.length - 1, i + 1))}
-                className="flex h-8 w-8 items-center justify-center rounded-full border border-[var(--line)] text-[0.9rem] disabled:cursor-not-allowed disabled:opacity-30"
+                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--ink)] pb-0.5 text-[1.9rem] leading-none font-bold text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-30"
               >
                 ›
               </button>
