@@ -211,7 +211,7 @@ export default function SchedulePage() {
                 박동만 원장 · 예약 가능 시간
               </span>
             </div>
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-3 gap-3">
               {TIMES.map((time) => {
                 const taken = !!slotStates?.[`${selected.key}_${time}`] || isSlotInPast(selected.key, time);
                 const isSelected = selected.time === time;
@@ -221,7 +221,7 @@ export default function SchedulePage() {
                     type="button"
                     disabled={taken}
                     onClick={() => pickTime(time)}
-                    className={`rounded-lg border py-4 font-[family-name:var(--font-body)] text-[1.05rem] font-bold transition-colors ${
+                    className={`rounded-lg border py-6 font-[family-name:var(--font-body)] text-[1.35rem] font-bold leading-tight transition-colors ${
                       taken
                         ? "cursor-not-allowed border-[var(--line)] bg-[var(--page-bg)] font-bold text-[var(--ink-soft)] line-through"
                         : isSelected
@@ -238,7 +238,7 @@ export default function SchedulePage() {
         )}
 
         {selected && (
-          <div className="sticky bottom-4 mt-5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-[18px] shadow-[0_18px_40px_-24px_rgba(42,31,34,0.35)]">
+          <div className="mt-5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-[18px] shadow-[0_18px_40px_-24px_rgba(42,31,34,0.35)]">
             <div className="flex justify-between py-1 text-[1.02rem] text-[var(--ink-soft)]">
               <span>시술</span>
               <b className="font-semibold text-[var(--ink)]">Face Lift</b>
