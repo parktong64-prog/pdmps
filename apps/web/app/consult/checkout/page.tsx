@@ -91,16 +91,16 @@ function CheckoutForm() {
               <div className="mb-2.5 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
                 Face Lift 전문 · 박동만 원장
               </div>
-              <h1 className="mb-2 font-[family-name:var(--font-display)] text-[1.5rem] font-bold">
+              <h1 className="mb-2 font-[family-name:var(--font-display)] text-[1.8rem] font-bold">
                 예약자 정보를 입력해주세요
               </h1>
-              <p className="mb-7 text-[1.15rem] leading-[1.6] text-[var(--ink-soft)]">
+              <p className="mb-7 text-[1.28rem] leading-[1.6] text-[var(--ink-soft)]">
                 예약금 결제를 진행하기 위해 예약자 정보를 확인합니다.
               </p>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="f-name" className="text-[1.06rem] font-bold">
+                  <label htmlFor="f-name" className="text-[1.16rem] font-bold">
                     이름<span className="ml-0.5 text-[var(--accent)]">*</span>
                   </label>
                   <input
@@ -111,17 +111,17 @@ function CheckoutForm() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     aria-invalid={!!errors.name}
-                    className={`rounded-[9px] border px-[13px] py-[11px] text-[1.2rem] outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--focus-ring)] ${
+                    className={`rounded-[9px] border px-[13px] py-[11px] text-[1.34rem] outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--focus-ring)] ${
                       errors.name ? "border-[var(--danger)]" : "border-[var(--line)]"
                     }`}
                   />
-                  <div className="flex items-center gap-1.5 text-[0.98rem] text-[var(--danger)] empty:hidden">
+                  <div className="flex items-center gap-1.5 text-[1.08rem] text-[var(--danger)] empty:hidden">
                     {errors.name}
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="f-phone" className="text-[1.06rem] font-bold">
+                  <label htmlFor="f-phone" className="text-[1.16rem] font-bold">
                     전화번호<span className="ml-0.5 text-[var(--accent)]">*</span>
                   </label>
                   <input
@@ -133,16 +133,16 @@ function CheckoutForm() {
                     value={phone}
                     onChange={(e) => setPhone(formatPhone(e.target.value))}
                     aria-invalid={!!errors.phone}
-                    className={`rounded-[9px] border px-[13px] py-[11px] text-[1.2rem] outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--focus-ring)] ${
+                    className={`rounded-[9px] border px-[13px] py-[11px] text-[1.34rem] outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--focus-ring)] ${
                       errors.phone ? "border-[var(--danger)]" : "border-[var(--line)]"
                     }`}
                   />
-                  <div className="flex items-center gap-1.5 text-[0.98rem] text-[var(--danger)] empty:hidden">
+                  <div className="flex items-center gap-1.5 text-[1.08rem] text-[var(--danger)] empty:hidden">
                     {errors.phone}
                   </div>
                 </div>
 
-                <label className="flex items-start gap-2.5 pt-0.5 text-[1.04rem] leading-[1.55] text-[var(--ink-soft)]">
+                <label className="flex items-start gap-2.5 pt-0.5 text-[1.14rem] leading-[1.55] text-[var(--ink-soft)]">
                   <input
                     type="checkbox"
                     checked={consent}
@@ -163,18 +163,18 @@ function CheckoutForm() {
                   </span>
                 </label>
                 {errors.consent && (
-                  <div className="text-[0.98rem] text-[var(--danger)]">{errors.consent}</div>
+                  <div className="text-[1.08rem] text-[var(--danger)]">{errors.consent}</div>
                 )}
 
                 {submitError && (
-                  <div className="rounded-[10px] bg-[var(--danger-soft)] px-3 py-2.5 text-[1.04rem] leading-[1.55] text-[var(--danger)]">
+                  <div className="rounded-[10px] bg-[var(--danger-soft)] px-3 py-2.5 text-[1.14rem] leading-[1.55] text-[var(--danger)]">
                     {submitError}
                   </div>
                 )}
 
                 <button
                   type="submit"
-                  className="mt-1 rounded-[10px] bg-[var(--accent)] py-[13px] text-[1.2rem] font-bold text-white transition-[filter,transform] hover:brightness-[1.06] active:scale-[0.99]"
+                  className="mt-1 rounded-[10px] bg-[var(--accent)] py-[13px] text-[1.34rem] font-bold text-white transition-[filter,transform] hover:brightness-[1.06] active:scale-[0.99]"
                 >
                   다음 · 예약금 결제
                 </button>
@@ -187,38 +187,38 @@ function CheckoutForm() {
               <button
                 type="button"
                 onClick={() => setStep("form")}
-                className="mb-4 text-[1.04rem] text-[var(--ink-soft)] underline underline-offset-2"
+                className="mb-4 text-[1.14rem] text-[var(--ink-soft)] underline underline-offset-2"
               >
                 ‹ 예약자 정보 다시 입력
               </button>
               <div className="mb-2.5 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
                 예약금 결제
               </div>
-              <h1 className="mb-2 font-[family-name:var(--font-display)] text-[1.5rem] font-bold">
+              <h1 className="mb-2 font-[family-name:var(--font-display)] text-[1.8rem] font-bold">
                 예약 내용을 확인해주세요
               </h1>
-              <p className="mb-7 text-[1.15rem] leading-[1.6] text-[var(--ink-soft)]">
+              <p className="mb-7 text-[1.28rem] leading-[1.6] text-[var(--ink-soft)]">
                 결제가 완료되면 예약이 바로 확정됩니다.
               </p>
 
               <div className="rounded-xl border border-[var(--line)] p-4">
-                <div className="flex justify-between py-1.5 text-[1.1rem] text-[var(--ink-soft)]">
+                <div className="flex justify-between py-1.5 text-[1.22rem] text-[var(--ink-soft)]">
                   <span>시술</span>
                   <b className="font-semibold text-[var(--ink)]">Face Lift</b>
                 </div>
-                <div className="flex justify-between py-1.5 text-[1.1rem] text-[var(--ink-soft)]">
+                <div className="flex justify-between py-1.5 text-[1.22rem] text-[var(--ink-soft)]">
                   <span>담당</span>
                   <b className="font-semibold text-[var(--ink)]">박동만 원장</b>
                 </div>
-                <div className="flex justify-between py-1.5 text-[1.1rem] text-[var(--ink-soft)]">
+                <div className="flex justify-between py-1.5 text-[1.22rem] text-[var(--ink-soft)]">
                   <span>일시</span>
                   <b className="font-semibold text-[var(--ink)]">{scheduleLabel}</b>
                 </div>
                 <div className="mt-1.5 flex items-baseline justify-between border-t border-dashed border-[var(--line)] pt-3">
-                  <span className="text-[1.1rem] text-[var(--ink-soft)]">예약금</span>
-                  <span className="text-[1.2rem] font-bold">50,000원</span>
+                  <span className="text-[1.22rem] text-[var(--ink-soft)]">예약금</span>
+                  <span className="text-[1.34rem] font-bold">50,000원</span>
                 </div>
-                <div className="mt-3 rounded-[9px] bg-[var(--danger-soft)] px-3 py-2.5 text-[0.98rem] leading-[1.55] text-[var(--danger)]">
+                <div className="mt-3 rounded-[9px] bg-[var(--danger-soft)] px-3 py-2.5 text-[1.08rem] leading-[1.55] text-[var(--danger)]">
                   예약금은 취소·변경·노쇼 등 사유와 관계없이 환불되지 않습니다.{" "}
                   <Link href="/refund" target="_blank" className="underline underline-offset-2">
                     환불 규정 보기
@@ -227,7 +227,7 @@ function CheckoutForm() {
               </div>
 
               {submitError && (
-                <div className="mt-3.5 rounded-[10px] bg-[var(--danger-soft)] px-3 py-2.5 text-[1.04rem] leading-[1.55] text-[var(--danger)]">
+                <div className="mt-3.5 rounded-[10px] bg-[var(--danger-soft)] px-3 py-2.5 text-[1.14rem] leading-[1.55] text-[var(--danger)]">
                   {submitError}
                 </div>
               )}
@@ -236,7 +236,7 @@ function CheckoutForm() {
                 type="button"
                 disabled={paying}
                 onClick={handlePay}
-                className="mt-[18px] block w-full rounded-[10px] bg-[var(--accent)] py-[13px] text-center text-[1.2rem] font-bold text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-60"
+                className="mt-[18px] block w-full rounded-[10px] bg-[var(--accent)] py-[13px] text-center text-[1.34rem] font-bold text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-60"
               >
                 {paying ? "결제창 여는 중…" : "50,000원 결제하기"}
               </button>
