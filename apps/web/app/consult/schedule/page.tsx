@@ -239,17 +239,13 @@ export default function SchedulePage() {
 
         {selected && (
           <div className="mt-5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-[18px] shadow-[0_18px_40px_-24px_rgba(42,31,34,0.35)]">
-            <div className="flex justify-between py-1 text-[1.02rem] text-[var(--ink-soft)]">
+            <div className="flex justify-between py-0 text-[1.02rem] leading-snug text-[var(--ink-soft)]">
               <span>시술</span>
               <b className="font-semibold text-[var(--ink)]">Face Lift</b>
             </div>
-            <div className="flex justify-between py-1 text-[1.02rem] text-[var(--ink-soft)]">
+            <div className="flex justify-between py-0 text-[1.02rem] leading-snug text-[var(--ink-soft)]">
               <span>담당</span>
               <b className="font-semibold text-[var(--ink)]">박동만 원장</b>
-            </div>
-            <div className="flex justify-between py-1 text-[1.02rem] text-[var(--ink-soft)]">
-              <span>일시</span>
-              <b className="font-semibold text-[var(--ink)]">{when ?? "-"}</b>
             </div>
             <button
               type="button"
