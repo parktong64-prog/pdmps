@@ -163,9 +163,11 @@ export default function SchedulePage() {
                     title={status.title ?? redDayName(new Date(y, m, d)) ?? undefined}
                     onClick={() => status.open && openTimeView(d)}
                     className={`relative flex aspect-square flex-col items-center justify-center gap-[3px] rounded-lg font-[family-name:var(--font-body)] text-[0.9rem] font-bold ${
-                      isRedDay(new Date(y, m, d))
-                        ? "text-[var(--danger)]"
-                        : status.open
+                      new Date(y, m, d) < TODAY
+                        ? "text-[#b3a9ab]" // 지나간 날은 (주말·공휴일이어도) 회색
+                        : isRedDay(new Date(y, m, d))
+                          ? "text-[var(--danger)]"
+                          : status.open
                           ? "text-[var(--ink)]"
                           : "text-[var(--ink-soft)]"
                     } ${
