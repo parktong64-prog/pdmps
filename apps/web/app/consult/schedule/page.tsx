@@ -86,12 +86,12 @@ export default function SchedulePage() {
 
   return (
     <div className="flex-1 bg-[var(--page-bg)] text-[var(--ink)]">
-      <div className="mx-auto max-w-[520px] px-5 py-12 pb-24">
-        <div className="mb-6">
-          <div className="mb-2.5 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
+      <div className="mx-auto max-w-[520px] px-5 pt-3 pb-12">
+        <div className="mb-3">
+          <div className="mb-1 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
             Face Lift 전문 · 박동만 원장
           </div>
-          <h1 className="mb-2.5 font-[family-name:var(--font-display)] text-[1.6rem] font-bold">
+          <h1 className="mb-1 font-[family-name:var(--font-display)] text-[1.6rem] font-bold">
             예약 캘린더
           </h1>
           <p className="text-[1.02rem] leading-[1.65] font-bold text-[var(--ink)]">
