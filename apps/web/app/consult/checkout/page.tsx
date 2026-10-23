@@ -187,7 +187,7 @@ function CheckoutForm() {
               <button
                 type="button"
                 onClick={() => setStep("form")}
-                className="mb-4 text-[0.78rem] text-[var(--ink-soft)] underline underline-offset-2"
+                className="mb-4 text-[1rem] font-bold text-[var(--ink-soft)] underline underline-offset-2"
               >
                 ‹ 예약자 정보 다시 입력
               </button>
