@@ -8,6 +8,6 @@ export const BUSINESS = {
   bizNo: "774-10-02660",
   address: "서울 서초구 강남대로 601 5층",
   phone: "02-512-9300",
-  privacyOfficer: { name: "박동규", email: "parktong64@gmail.com" },
+  privacyOfficer: { name: "박동규", email: "pspdm0308@naver.com" },
   policyDate: "2026년 9월 28일",
 } as const;
