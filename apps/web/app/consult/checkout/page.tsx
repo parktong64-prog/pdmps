@@ -100,7 +100,7 @@ function CheckoutForm() {
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-3" noValidate>
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="f-name" className="text-[0.8rem] font-bold">
+                  <label htmlFor="f-name" className="text-[0.96rem] font-bold">
                     이름<span className="ml-0.5 text-[var(--accent)]">*</span>
                   </label>
                   <input
@@ -111,7 +111,7 @@ function CheckoutForm() {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     aria-invalid={!!errors.name}
-                    className={`rounded-[9px] border px-[13px] py-[11px] text-[0.92rem] outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--focus-ring)] ${
+                    className={`rounded-[9px] border px-[13px] py-[11px] text-[1.1rem] outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--focus-ring)] ${
                       errors.name ? "border-[var(--danger)]" : "border-[var(--line)]"
                     }`}
                   />
@@ -121,7 +121,7 @@ function CheckoutForm() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label htmlFor="f-phone" className="text-[0.8rem] font-bold">
+                  <label htmlFor="f-phone" className="text-[0.96rem] font-bold">
                     전화번호<span className="ml-0.5 text-[var(--accent)]">*</span>
                   </label>
                   <input
@@ -133,7 +133,7 @@ function CheckoutForm() {
                     value={phone}
                     onChange={(e) => setPhone(formatPhone(e.target.value))}
                     aria-invalid={!!errors.phone}
-                    className={`rounded-[9px] border px-[13px] py-[11px] text-[0.92rem] outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--focus-ring)] ${
+                    className={`rounded-[9px] border px-[13px] py-[11px] text-[1.1rem] outline-none focus:border-[var(--accent)] focus:shadow-[0_0_0_4px_var(--focus-ring)] ${
                       errors.phone ? "border-[var(--danger)]" : "border-[var(--line)]"
                     }`}
                   />
