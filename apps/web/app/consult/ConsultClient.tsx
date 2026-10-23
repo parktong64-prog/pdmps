@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
 
 const STORAGE_KEY = "faceLiftVideoWatched";
+// 안내 영상 재생 속도 (1.2배속)
+const PLAYBACK_RATE = 1.2;
 
 type VideoInfo = {
   title: string;
@@ -49,6 +51,8 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
     } catch {
       // 저장소 접근이 안 되면 미시청으로 보고 그대로 재생한다
     }
+    el.defaultPlaybackRate = PLAYBACK_RATE;
+    el.playbackRate = PLAYBACK_RATE;
     el.play().catch(() => {
       el.muted = true;
       setAutoMuted(true);
@@ -150,6 +154,10 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
                 playsInline
                 onPlay={() => setPlaying(true)}
                 onPause={() => setPlaying(false)}
+                onLoadedMetadata={(e) => {
+                  e.currentTarget.defaultPlaybackRate = PLAYBACK_RATE;
+                  e.currentTarget.playbackRate = PLAYBACK_RATE;
+                }}
                 onVolumeChange={(e) => {
                   if (!e.currentTarget.muted) setAutoMuted(false);
                 }}

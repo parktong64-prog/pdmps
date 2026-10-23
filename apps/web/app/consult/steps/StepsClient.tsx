@@ -96,6 +96,11 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
                 src={step.media_url}
                 controls
                 playsInline
+                onLoadedMetadata={(e) => {
+                  // 안내 영상은 1.2배속으로 재생한다
+                  e.currentTarget.defaultPlaybackRate = 1.2;
+                  e.currentTarget.playbackRate = 1.2;
+                }}
                 className="mb-4 w-full rounded-lg bg-black"
               />
             ) : (
