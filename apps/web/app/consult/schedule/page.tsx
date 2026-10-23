@@ -172,7 +172,8 @@ export default function SchedulePage() {
                       status.open ? "cursor-pointer hover:bg-[var(--accent-soft)]" : "cursor-not-allowed"
                     } ${isToday ? "shadow-[inset_0_0_0_1.4px_var(--accent-ink)]" : ""}`}
                   >
-                    <span>{d}</span>
+                    {/* 글꼴의 가장 굵은 두께(700)보다 조금 더 굵어 보이도록 글자 테두리를 얇게 덧입힌다 */}
+                    <span className="[-webkit-text-stroke:0.45px_currentColor]">{d}</span>
                     {status.open ? (
                       <span className="h-1 w-1 rounded-full bg-[var(--accent)]" />
                     ) : status.reason ? (
