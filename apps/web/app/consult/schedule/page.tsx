@@ -126,7 +126,7 @@ export default function SchedulePage() {
               </button>
             </div>
 
-            <div className="mb-3.5 flex gap-4 text-[0.68rem] text-[var(--ink-soft)]">
+            <div className="mb-3.5 flex gap-4 text-[0.75rem] font-bold text-[var(--ink)]">
               <span className="inline-flex items-center gap-1.5">
                 <i className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
                 예약 가능
@@ -141,7 +141,7 @@ export default function SchedulePage() {
               {[...WEEKDAY_LABEL.slice(1), WEEKDAY_LABEL[0]].map((w, i) => (
                 <span
                   key={w}
-                  className={`py-1 text-center text-[0.68rem] ${i >= 5 ? "text-[var(--danger)]" : "text-[var(--ink-soft)]"}`}
+                  className={`py-1 text-center text-[0.75rem] font-bold ${i >= 5 ? "text-[var(--danger)]" : "text-[var(--ink)]"}`}
                 >
                   {w}
                 </span>
