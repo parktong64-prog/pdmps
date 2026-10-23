@@ -83,26 +83,30 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
           </p>
         </div>
 
-        {/* 진행 표시 — 각 막대를 눌러 해당 단계로 바로 이동 */}
-        <div className="mb-6 flex items-center justify-center gap-2">
-          {steps.map((s, i) => (
-            <button
-              key={s.id}
-              type="button"
-              aria-label={`${i + 1}단계 · ${s.title}`}
-              onClick={() => {
-                setIndex(i);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className={`h-1.5 flex-1 rounded-full transition-colors ${
-                i <= index ? "bg-[var(--accent)]" : "bg-[var(--line)] hover:bg-[var(--accent-soft)]"
-              }`}
-            />
-          ))}
-        </div>
-        <div className="mb-6 text-center text-[0.76rem] font-semibold text-[var(--ink-soft)]">
-          {index + 1} / {steps.length}
-        </div>
+        {/* 진행 표시 — 각 막대를 눌러 해당 단계로 바로 이동. 단계가 하나뿐이면 표시하지 않는다 */}
+        {steps.length > 1 && (
+          <>
+            <div className="mb-6 flex items-center justify-center gap-2">
+              {steps.map((s, i) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  aria-label={`${i + 1}단계 · ${s.title}`}
+                  onClick={() => {
+                    setIndex(i);
+                    window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  className={`h-1.5 flex-1 rounded-full transition-colors ${
+                    i <= index ? "bg-[var(--accent)]" : "bg-[var(--line)] hover:bg-[var(--accent-soft)]"
+                  }`}
+                />
+              ))}
+            </div>
+            <div className="mb-6 text-center text-[0.76rem] font-semibold text-[var(--ink-soft)]">
+              {index + 1} / {steps.length}
+            </div>
+          </>
+        )}
 
         {/* 현재 단계 카드 */}
         <div className="mb-8 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-6">
@@ -162,6 +166,7 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
 
         {/* 이전/다음 */}
         <div className="flex gap-2.5">
+          {steps.length > 1 && (
           <button
             type="button"
             onClick={goPrev}
@@ -170,6 +175,7 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
           >
             ‹ 이전
           </button>
+          )}
           <button
             type="button"
             onClick={goNext}
