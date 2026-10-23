@@ -176,7 +176,7 @@ export default function SchedulePage() {
                     {status.open ? (
                       <span className="h-1 w-1 rounded-full bg-[var(--accent)]" />
                     ) : status.reason ? (
-                      <span className="font-[family-name:var(--font-body)] text-[0.52rem] text-[var(--ink-faint)]">
+                      <span className="font-[family-name:var(--font-body)] text-[0.6rem] font-bold text-[var(--ink-soft)]">
                         {status.reason}
                       </span>
                     ) : null}
@@ -216,7 +216,7 @@ export default function SchedulePage() {
                     onClick={() => pickTime(time)}
                     className={`rounded-lg border py-3 font-[family-name:var(--font-mono-kr)] text-[0.82rem] transition-colors ${
                       taken
-                        ? "cursor-not-allowed border-[var(--line)] bg-[var(--page-bg)] text-[var(--line)] line-through"
+                        ? "cursor-not-allowed border-[var(--line)] bg-[var(--page-bg)] font-bold text-[var(--ink-soft)] line-through"
                         : isSelected
                           ? "border-[var(--accent)] bg-[var(--accent)] text-white"
                           : "border-[var(--line)] bg-[var(--card-bg)] text-[var(--ink)] hover:border-[var(--accent)]"
