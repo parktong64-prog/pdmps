@@ -84,7 +84,7 @@ function CheckoutForm() {
 
   return (
     <div className="flex-1 bg-[var(--page-bg)] text-[var(--ink)]">
-      <div className="flex justify-center px-5 py-14">
+      <div className="flex justify-center px-5 pt-3 pb-14">
         <div className="w-full max-w-[440px] rounded-[18px] border border-[var(--line)] bg-[var(--card-bg)] p-8 shadow-[0_24px_60px_-32px_rgba(42,31,34,0.35)]">
           {step === "form" && (
             <>
