@@ -174,7 +174,7 @@ function CheckoutForm() {
 
                 <button
                   type="submit"
-                  className="mt-1 rounded-[10px] bg-[var(--accent)] py-[13px] text-[0.92rem] font-bold text-white transition-[filter,transform] hover:brightness-[1.06] active:scale-[0.99]"
+                  className="mt-1 rounded-[10px] bg-[var(--accent)] py-[16px] text-[1.1rem] font-bold text-white transition-[filter,transform] hover:brightness-[1.06] active:scale-[0.99]"
                 >
                   다음 · 예약금 결제
                 </button>
