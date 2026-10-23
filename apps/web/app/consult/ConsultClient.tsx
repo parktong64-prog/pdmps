@@ -241,7 +241,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
           >
             다음 · 진행 과정 보기
           </button>
-          <span className="text-center text-[0.72rem] text-[var(--ink-soft)]">
+          <span className="text-center text-[0.72rem] font-bold text-[var(--ink)]">
             {watched ? "시청이 완료되었습니다" : "영상을 끝까지 보지 않아도 다음 단계로 진행할 수 있어요"}
           </span>
         </div>
