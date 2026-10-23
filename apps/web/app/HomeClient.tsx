@@ -36,7 +36,7 @@ export default function HomeClient({ basePrice }: { basePrice: number }) {
             <div className="text-sm font-bold">Face Lift (안면거상술)</div>
             <div className="mt-1 font-[family-name:var(--font-mono-kr)] text-[0.86rem] font-semibold text-[var(--accent-ink)]">
               ₩{basePrice.toLocaleString()}
-              <span className="ml-1 font-[family-name:var(--font-body)] text-[0.68rem] font-normal text-[var(--ink-soft)]">
+              <span className="ml-1 font-[family-name:var(--font-body)] text-[0.68rem] font-medium text-[var(--ink-soft)]">
                 VAT 포함
               </span>
             </div>

@@ -39,6 +39,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   return (
     <div className="flex min-h-screen flex-col bg-[var(--page-bg)] text-[var(--ink)] md:flex-row">
+      {/* 환자 화면용으로 키운 글씨(html 120%, body 500)를 관리자 화면에서는 원래 크기로 되돌린다. */}
+      <style>{"html{font-size:100%}body{font-weight:400}"}</style>
       <AlertBanner />
       <nav className="flex flex-none flex-col gap-0.5 overflow-x-auto bg-[var(--sidebar-bg)] p-3.5 text-[var(--sidebar-ink)] md:w-[220px] md:overflow-visible md:p-5">
         <div className="mb-5 hidden font-[family-name:var(--font-display)] text-[1.1rem] font-bold text-[var(--brand-green)] md:block">

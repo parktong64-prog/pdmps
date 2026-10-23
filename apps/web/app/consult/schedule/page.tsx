@@ -200,7 +200,7 @@ export default function SchedulePage() {
             </button>
             <div className="mb-3.5 text-[0.88rem] font-bold">
               {selected.m + 1}월 {selected.d}일({selected.weekday})
-              <span className="mt-0.5 block text-[0.78rem] font-normal text-[var(--ink-soft)]">
+              <span className="mt-0.5 block text-[0.78rem] font-medium text-[var(--ink-soft)]">
                 박동만 원장 · 예약 가능 시간
               </span>
             </div>

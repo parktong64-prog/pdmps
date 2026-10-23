@@ -162,7 +162,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
               </div>
               <div className="absolute bottom-3 left-3.5 text-left text-sm font-semibold text-white">
                 {video?.title ?? "Face Lift 과정 안내"}
-                <span className="mt-0.5 block text-[0.66rem] font-normal text-[#d8cdd0]">
+                <span className="mt-0.5 block text-[0.66rem] font-medium text-[#d8cdd0]">
                   박동만 원장 · {durationLabel}
                 </span>
               </div>

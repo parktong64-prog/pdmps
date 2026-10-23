@@ -4,7 +4,7 @@
   --page-bg: #f6f1ee;
   --card-bg: #ffffff;
   --ink: #2a1f22;
-  --ink-soft: #6f6265;
+  --ink-soft: #4f4346;
   --line: #e8e0dd;
   --accent: #a1546a;
   --accent-soft: #f4e6ea;
@@ -42,7 +42,7 @@
     --page-bg: #1b1517;
     --card-bg: #241d20;
     --ink: #f3ebe9;
-    --ink-soft: #b6a8ac;
+    --ink-soft: #d0c4c7;
     --line: #3a2f33;
     --accent: #e08aa1;
     --accent-soft: #3a2530;
@@ -81,8 +81,15 @@
   --font-mono-kr: var(--font-ibm-plex-mono), ui-monospace, monospace;
 }
 
+/* 환자 화면은 글씨를 20% 키우고 진하게 보여준다. 관리자 화면은 레이아웃 크기를 유지하려고
+   admin/layout.tsx에서 이 두 값을 되돌린다. */
+html {
+  font-size: 120%;
+}
+
 body {
   background: var(--page-bg);
   color: var(--ink);
   font-family: var(--font-body);
+  font-weight: 500;
 }
