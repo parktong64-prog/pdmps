@@ -63,7 +63,7 @@ export default function HomeClient({ basePrice }: { basePrice: number }) {
           href="/consult"
           className="block rounded-[11px] bg-[var(--accent)] py-[15px] text-center text-[0.92rem] font-bold text-white transition-[filter] hover:brightness-[1.06]"
         >
-          상담 시작하기
+          상담예약하기
         </Link>
       </div>
     </div>
