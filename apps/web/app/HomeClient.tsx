@@ -6,7 +6,6 @@ import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
 const FACELIFT = {
   title: "안면거상술",
   body: "나이가 들면서 볼과 중안면부가 아래로 처지고, 팔자주름이 깊어지며 턱선이 흐려지고 목 주름도 두드러지게 나타납니다.",
-  tip: "처진 피부 아래 근막(SMAS)을 끌어올려 고정해 팔자주름·턱선·목선을 함께 정리하는 데 도움을 줄 수 있어요.",
 };
 
 export default function HomeClient({ basePrice }: { basePrice: number }) {
@@ -50,9 +49,6 @@ export default function HomeClient({ basePrice }: { basePrice: number }) {
         <div className="mb-3.5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-[18px]">
           <div className="mb-2 text-sm font-bold">{FACELIFT.title}</div>
           <div className="text-[0.84rem] leading-[1.7] text-[var(--ink-soft)]">{FACELIFT.body}</div>
-          <div className="mt-3 border-t border-dashed border-[var(--line)] pt-3 text-[0.8rem] leading-[1.6] text-[var(--accent-ink)]">
-            <b className="text-[var(--ink)]">안면거상술은</b> {FACELIFT.tip}
-          </div>
         </div>
 
         <p className="mx-0.5 mb-7 text-[0.72rem] leading-[1.6] text-[var(--ink-soft)]">
