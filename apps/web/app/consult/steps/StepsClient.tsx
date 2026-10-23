@@ -153,16 +153,6 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
           )}
         </div>
 
-        {/* 안내 사항 */}
-        <div className="mb-8 flex gap-2.5 rounded-xl bg-[var(--warn-soft)] px-4 py-3.5 text-[0.78rem] leading-[1.65] text-[var(--warn-ink)]">
-          <span>⚠</span>
-          <span>
-            <b className="text-[var(--ink)]">안내 사항.</b> 위 내용은 Face Lift(안면거상술)의
-            일반적인 진행 과정을 설명한 것으로, 실제 절개 범위·마취 방법·회복 기간은 개인의 얼굴
-            구조와 상태에 따라 달라지며 방문 상담을 통해 원장이 최종 결정합니다.
-          </span>
-        </div>
-
         {/* 이전/다음 */}
         <div className="flex gap-2.5">
           {steps.length > 1 && (
