@@ -236,7 +236,7 @@ function CheckoutForm() {
                 type="button"
                 disabled={paying}
                 onClick={handlePay}
-                className="mt-[18px] block w-full rounded-[10px] bg-[var(--accent)] py-[13px] text-center text-[0.92rem] font-bold text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-60"
+                className="mt-[18px] block w-full rounded-[11px] bg-[var(--accent)] px-2 py-[22px] text-center text-[1.84rem] font-bold leading-tight tracking-tight text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-60"
               >
                 {paying ? "결제창 여는 중…" : "50,000원 결제하기"}
               </button>
