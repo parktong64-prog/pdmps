@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProcedureStep } from "@/lib/admin/media";
 import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
@@ -9,6 +9,25 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
   useFunnelTrack("steps");
   const router = useRouter();
   const [index, setIndex] = useState(0);
+  const [time, setTime] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const currentUrl = steps[index]?.media_url ?? null;
+  const currentIsVideo = steps[index]?.media_type === "video";
+
+  // 단계가 바뀌면(또는 처음 들어오면) 영상을 바로 재생한다. 소리 있는 자동재생이 막히면 소리를 끄고 재생한다.
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !currentUrl || !currentIsVideo) return;
+    el.defaultPlaybackRate = 1.2;
+    el.playbackRate = 1.2;
+    el.play().catch(() => {
+      el.muted = true;
+      el.play().catch(() => {
+        // 이것도 막히면 영상의 재생 버튼으로 직접 시작한다
+      });
+    });
+  }, [index, currentUrl, currentIsVideo]);
 
   if (steps.length === 0) {
     return (
@@ -30,6 +49,11 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
   const step = steps[index];
   const isFirst = index === 0;
   const isLast = index === steps.length - 1;
+
+  // 합친 영상(segments)이면 재생 위치에 맞는 구간의 제목·설명, 아니면 단계 자체의 제목·설명
+  const segments = step.segments && step.segments.length > 0 ? step.segments : null;
+  const activeSegment = segments ? ([...segments].reverse().find((sg) => time >= sg.start) ?? segments[0]) : null;
+  const caption = activeSegment ?? { title: step.title, description: step.description };
 
   function goNext() {
     if (isLast) {
@@ -84,14 +108,15 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
         <div className="mb-8 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-6">
           <div className="mb-4 flex items-center gap-3">
             <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--accent-soft)] font-[family-name:var(--font-mono-kr)] text-[0.92rem] font-semibold text-[var(--accent-ink)]">
-              {step.step_order}
+              {index + 1}
             </span>
             <h2 className="text-[1.05rem] font-bold">{step.title}</h2>
           </div>
 
-          {step.media_url &&
-            (step.media_type === "video" ? (
+          {step.media_url && step.media_type === "video" ? (
+            <>
               <video
+                ref={videoRef}
                 key={step.media_url}
                 src={step.media_url}
                 controls
@@ -100,19 +125,27 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
                   // 안내 영상은 1.2배속으로 재생한다
                   e.currentTarget.defaultPlaybackRate = 1.2;
                   e.currentTarget.playbackRate = 1.2;
+                  setTime(0);
                 }}
-                className="mb-4 w-full rounded-lg bg-black"
+                onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
+                onEnded={goNext}
+                className="w-full rounded-lg bg-black"
               />
-            ) : (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={step.media_url}
-                alt={step.title}
-                className="mb-4 w-full rounded-lg object-cover"
-              />
-            ))}
-
-          <p className="text-[0.9rem] leading-[1.7] text-[var(--ink-soft)]">{step.description}</p>
+              {/* 영상 아래 자막 — 합친 영상은 지금 재생 구간의 진행 과정을 보여준다 */}
+              <div className="mt-3 rounded-lg bg-[var(--accent-soft)] px-4 py-3.5">
+                <div className="text-[1.05rem] font-bold text-[var(--accent-ink)]">{caption.title}</div>
+                <p className="mt-1 text-[0.9rem] leading-[1.6] font-semibold text-[var(--ink)]">{caption.description}</p>
+              </div>
+            </>
+          ) : (
+            <>
+              {step.media_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={step.media_url} alt={step.title} className="mb-4 w-full rounded-lg object-cover" />
+              )}
+              <p className="text-[0.9rem] leading-[1.7] text-[var(--ink-soft)]">{step.description}</p>
+            </>
+          )}
         </div>
 
         {/* 안내 사항 */}

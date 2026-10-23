@@ -5,6 +5,7 @@ import StepsClient from "./StepsClient";
 export const dynamic = "force-dynamic";
 
 export default async function StepsPage() {
-  const steps = await getProcedureSteps();
+  // 숨김 처리한 단계(하나로 합친 영상으로 대체된 단계)는 환자 화면에 보이지 않는다.
+  const steps = (await getProcedureSteps()).filter((s) => !s.hidden);
   return <StepsClient steps={steps} />;
 }

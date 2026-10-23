@@ -457,6 +457,7 @@ function StepsTab() {
               <div className="text-[0.86rem] font-bold">{step.title}</div>
               <div className="mt-0.5 text-[0.72rem] text-[var(--ink-soft)]">
                 {uploadingId === step.id ? "처리 중…" : step.media_url ? `${step.media_type === "video" ? "동영상" : "사진"} 등록됨` : "미등록"}
+                {step.hidden && " · 환자 화면에서 숨김"}
               </div>
             </div>
 

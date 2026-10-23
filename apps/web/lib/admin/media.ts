@@ -27,6 +27,9 @@ function mediaTypeFromContentType(contentType: string): StepMediaType | null {
 
 export type StepMediaType = "image" | "video";
 
+/** 여러 영상을 하나로 합친 경우, 구간별 자막 (start는 영상 시작부터의 초) */
+export type StepSegment = { start: number; title: string; description: string };
+
 export type ProcedureStep = {
   id: string;
   step_order: number;
@@ -34,15 +37,18 @@ export type ProcedureStep = {
   description: string;
   media_url: string | null;
   media_type: StepMediaType | null;
+  /** true면 환자용 진행 과정 화면에서 숨긴다 (관리자 화면에는 그대로 보인다) */
+  hidden: boolean;
+  segments: StepSegment[] | null;
 };
 
 export async function getProcedureSteps(): Promise<ProcedureStep[]> {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("procedure_steps")
-    .select("id, step_order, title, description, media_url, media_type")
+    .select("id, step_order, title, description, media_url, media_type, hidden, segments")
     .order("step_order", { ascending: true });
-  return data ?? [];
+  return (data ?? []) as ProcedureStep[];
 }
 
 /**
