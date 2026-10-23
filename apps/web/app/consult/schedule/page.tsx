@@ -94,7 +94,7 @@ export default function SchedulePage() {
           <h1 className="mb-2.5 font-[family-name:var(--font-display)] text-[1.6rem] font-bold">
             예약 캘린더
           </h1>
-          <p className="text-[0.88rem] leading-[1.65] text-[var(--ink-soft)]">
+          <p className="text-[1.02rem] leading-[1.65] font-bold text-[var(--ink)]">
             병원에서 열어둔 날짜 중 원하는 날을 고르면, 그 날의 예약 가능한 시간을 선택할 수
             있어요.
           </p>
