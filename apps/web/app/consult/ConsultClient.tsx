@@ -114,13 +114,13 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
 
   return (
     <div className="flex-1 bg-[var(--page-bg)] text-[var(--ink)]">
-      <div className="mx-auto max-w-[640px] px-5 py-12 pb-16">
+      <div className="mx-auto max-w-[640px] px-5 pt-4 pb-10">
         {/* 히어로 */}
-        <div className="mb-7">
-          <div className="mb-2.5 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
+        <div className="mb-3">
+          <div className="mb-1 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
             Face Lift 전문 · 박동만 원장
           </div>
-          <h1 className="mb-2.5 font-[family-name:var(--font-display)] text-[1.7rem] font-bold">
+          <h1 className="mb-1.5 font-[family-name:var(--font-display)] text-[1.7rem] font-bold">
             수술 방법 안내
           </h1>
           <p className="text-sm leading-[1.65] text-[var(--ink-soft)]">
@@ -130,7 +130,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
         </div>
 
         {/* 팩트 스트립 */}
-        <div className="mb-8 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--line)]">
+        <div className="mb-3 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--line)]">
           {[
             { v: "3~4시간", l: "평균 소요시간" },
             { v: "수면·국소", l: "마취 방법" },
@@ -144,7 +144,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
         </div>
 
         {/* 영상 카드 */}
-        <div className="mb-9 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-[18px]">
+        <div className="mb-4 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-3">
           {video?.video_url ? (
             <div className="relative aspect-video w-full overflow-hidden rounded-[11px] bg-black">
               <video
