@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash } from "crypto";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendAlimtalk } from "@/lib/notifications/alimtalk";
@@ -27,6 +28,61 @@ async function requireAdmin(): Promise<{ ok: true; email: string } | { ok: false
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
   return data.user ? { ok: true, email: data.user.email ?? "" } : { ok: false };
+}
+
+// 같은 번호로 같은 안내를 1시간 안에 다시 보내지 않는다 (확인창을 두 번 누르거나 새로고침해서 중복 발송되는 것을 막는다).
+const DUPLICATE_WINDOW_MS = 60 * 60 * 1000;
+const DUPLICATE_REASON = "1시간 이내에 같은 안내를 이미 발송해서 건너뛰었습니다.";
+
+const sha = (algo: string, value: string) => createHash(algo).update(value).digest("hex");
+
+type Claim = { ok: true; release: () => Promise<void> } | { ok: false };
+
+/**
+ * 발송 직전에 (번호, 안내 종류) 기록을 먼저 남기고, 1시간 안에 더 먼저 남은 기록이 있으면 이번 발송은 건너뛴다.
+ * 기록을 먼저 남기는 방식이라 두 요청이 동시에 들어와도 가장 먼저 남긴 하나만 발송된다.
+ * 발송이 실패하면 release()로 기록을 지워 바로 다시 보낼 수 있게 한다. 번호는 해시로만 저장한다.
+ */
+async function claimSend(phone: string, key: string): Promise<Claim> {
+  const supabase = createAdminClient();
+  const phoneHash = sha("sha256", phone);
+  const nothing: Claim = { ok: true, release: async () => {} };
+
+  // 오래된 기록은 지나가는 김에 정리한다.
+  await supabase.from("manual_send_log").delete().lt("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
+
+  const { data: mine, error } = await supabase
+    .from("manual_send_log")
+    .insert({ phone_hash: phoneHash, dedupe_key: key })
+    .select("id, created_at")
+    .single();
+  if (error || !mine) {
+    // 기록 장치가 고장났다고 발송 자체를 막지는 않는다.
+    console.error("중복 발송 기록 저장 실패:", error?.message);
+    return nothing;
+  }
+
+  const { data: earlier } = await supabase
+    .from("manual_send_log")
+    .select("id, created_at")
+    .eq("phone_hash", phoneHash)
+    .eq("dedupe_key", key)
+    .gte("created_at", new Date(Date.now() - DUPLICATE_WINDOW_MS).toISOString())
+    .neq("id", mine.id);
+  const myTime = new Date(mine.created_at as string).getTime();
+  const lost = (earlier ?? []).some((r) => {
+    const time = new Date(r.created_at as string).getTime();
+    return time < myTime || (time === myTime && (r.id as string) < (mine.id as string));
+  });
+
+  const release = async () => {
+    await supabase.from("manual_send_log").delete().eq("id", mine.id);
+  };
+  if (lost) {
+    await release();
+    return { ok: false };
+  }
+  return { ok: true, release };
 }
 
 export type ManualTemplateInfo = { key: string; available: boolean };
@@ -84,9 +140,17 @@ export async function sendAlimtalkBatch(input: {
   async function worker() {
     while (next < phones.length) {
       const phone = phones[next++];
+      const claim = await claimSend(phone, `alimtalk:${input.templateKey}`);
+      if (!claim.ok) {
+        failed.push({ phone, reason: DUPLICATE_REASON });
+        continue;
+      }
       const res = await sendAlimtalk({ to: phone, templateId: templateId!, variables });
       if (res.ok) sent++;
-      else failed.push({ phone, reason: res.error.slice(0, 120) });
+      else {
+        failed.push({ phone, reason: res.error.slice(0, 120) });
+        await claim.release();
+      }
     }
   }
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, phones.length) }, worker));
@@ -256,9 +320,17 @@ export async function sendAlimtalkToReservations(input: { templateKey: string; r
   async function worker() {
     while (next < jobs.length) {
       const job = jobs[next++];
+      const claim = await claimSend(job.phone, `alimtalk:${input.templateKey}`);
+      if (!claim.ok) {
+        failed.push({ phone: job.label, reason: DUPLICATE_REASON });
+        continue;
+      }
       const res = await sendAlimtalk({ to: job.phone, templateId: templateId!, variables: job.variables });
       if (res.ok) sent++;
-      else failed.push({ phone: job.label, reason: res.error.slice(0, 120) });
+      else {
+        failed.push({ phone: job.label, reason: res.error.slice(0, 120) });
+        await claim.release();
+      }
       // 발송 이력과 중복 발송 방지(전날 안내)를 위해 환자별로 남긴다.
       const { error } = await supabase.from("notifications").insert({
         reservation_id: job.row.id,
@@ -310,9 +382,17 @@ export async function sendTextBatch(input: { text: string; withPrefix: boolean; 
   async function worker() {
     while (next < phones.length) {
       const phone = phones[next++];
+      const claim = await claimSend(phone, `text:${sha("sha1", text)}`);
+      if (!claim.ok) {
+        failed.push({ phone, reason: DUPLICATE_REASON });
+        continue;
+      }
       const res = await sendSms({ to: phone, text });
       if (res.ok) sent++;
-      else failed.push({ phone, reason: res.error.slice(0, 120) });
+      else {
+        failed.push({ phone, reason: res.error.slice(0, 120) });
+        await claim.release();
+      }
     }
   }
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, phones.length) }, worker));
@@ -369,9 +449,17 @@ export async function sendTextToReservations(input: {
   async function worker() {
     while (next < jobs.length) {
       const job = jobs[next++];
+      const claim = await claimSend(job.phone, `text:${sha("sha1", job.text)}`);
+      if (!claim.ok) {
+        failed.push({ phone: job.label, reason: DUPLICATE_REASON });
+        continue;
+      }
       const res = await sendSms({ to: job.phone, text: job.text });
       if (res.ok) sent++;
-      else failed.push({ phone: job.label, reason: res.error.slice(0, 120) });
+      else {
+        failed.push({ phone: job.label, reason: res.error.slice(0, 120) });
+        await claim.release();
+      }
       const { error } = await supabase.from("notifications").insert({
         reservation_id: job.row.id,
         consultation_id: job.row.consultation_id,
