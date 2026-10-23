@@ -142,15 +142,15 @@ function CheckoutForm() {
                   </div>
                 </div>
 
-                <label className="flex items-start gap-2.5 pt-0.5 text-[0.78rem] leading-[1.55] text-[var(--ink-soft)]">
+                <label className="flex items-start gap-3 pt-0.5 text-[0.92rem] leading-[1.55] font-semibold text-[var(--ink)]">
                   <input
                     type="checkbox"
                     checked={consent}
                     onChange={(e) => setConsent(e.target.checked)}
-                    className="mt-[3px] h-4 w-4 flex-none accent-[var(--accent)]"
+                    className="mt-[2px] h-6 w-6 flex-none accent-[var(--accent)]"
                   />
                   <span>
-                    <b className="font-semibold text-[var(--ink)]">개인정보 수집·이용에 동의합니다.</b> 입력하신
+                    <b className="font-bold text-[var(--ink)]">개인정보 수집·이용에 동의합니다.</b> 입력하신
                     정보는 예약·결제 확인 및 안내 목적으로만 사용되며, 관련 법령에 따른 기간 동안 보관 후
                     파기됩니다.{" "}
                     <Link href="/privacy" target="_blank" className="underline underline-offset-2">
@@ -163,7 +163,7 @@ function CheckoutForm() {
                   </span>
                 </label>
                 {errors.consent && (
-                  <div className="text-[0.74rem] text-[var(--danger)]">{errors.consent}</div>
+                  <div className="text-[0.86rem] font-semibold text-[var(--danger)]">{errors.consent}</div>
                 )}
 
                 {submitError && (
