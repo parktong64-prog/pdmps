@@ -1,0 +1,281 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { WEEKDAY_LABEL, TIMES, dateKey, isClosedDay, isRedDay, redDayName, isSlotInPast } from "@/lib/booking";
+import { getMonthSlotStates, type TimeState } from "@/lib/schedule/actions";
+import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
+import { ENG, SITE_EN, localePath, type Lang } from "@/lib/i18n/patient";
+
+const now = new Date();
+// 병원이 예약을 열어둔 기간: 이번 달부터 5개월 뒤까지(총 6개월)
+const MONTHS = [0, 1, 2, 3, 4, 5].map((i) => {
+  const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+  return { y: d.getFullYear(), m: d.getMonth() };
+});
+const TODAY = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+function dayStatus(y: number, m: number, d: number, slotStates: Record<string, TimeState>) {
+  const key = dateKey(y, m, d);
+  const date = new Date(y, m, d);
+  if (date < TODAY) return { open: false, reason: null as string | null, title: undefined as string | undefined };
+  if (isClosedDay(date)) return { open: false, reason: "휴", title: redDayName(date) ?? undefined };
+  // 오늘이라면 이미 지난 시간대는 선택할 수 없으므로 남은 시간이 없으면 마감으로 본다.
+  const hasOpenTime = TIMES.some((t) => !slotStates[`${key}_${t}`] && !isSlotInPast(key, t));
+  if (!hasOpenTime) return { open: false, reason: "마감", title: undefined };
+  return { open: true, reason: null, title: undefined };
+}
+
+type Selected = { y: number; m: number; d: number; key: string; weekday: string; time: string | null };
+
+/** 13:00 → 1:00 PM (영어 화면용 12시간제) */
+function time12(time: string) {
+  const [h, mm] = time.split(":").map(Number);
+  return `${((h + 11) % 12) + 1}:${String(mm).padStart(2, "0")} ${h >= 12 ? "PM" : "AM"}`;
+}
+
+export default function ScheduleClient({ lang = "ko" }: { lang?: Lang }) {
+  useFunnelTrack("schedule");
+  const en = lang === "en";
+  const E = ENG.schedule;
+  const router = useRouter();
+  const [monthIndex, setMonthIndex] = useState(0);
+  const [selected, setSelected] = useState<Selected | null>(null);
+  const [slotStates, setSlotStates] = useState<Record<string, TimeState> | null>(null);
+
+  const { y, m } = MONTHS[monthIndex];
+  // 월요일부터 시작하는 달력 — 1일 앞에 채울 빈 칸 수 (일요일은 6칸, 월요일은 0칸).
+  const firstWeekday = (new Date(y, m, 1).getDay() + 6) % 7;
+  const daysInMonth = new Date(y, m + 1, 0).getDate();
+
+  const reload = useCallback(() => {
+    getMonthSlotStates(y, m).then(setSlotStates);
+  }, [y, m]);
+
+  useEffect(() => {
+    reload();
+  }, [reload]);
+
+  const days = useMemo(() => {
+    if (!slotStates) return [];
+    const arr: { d: number; status: ReturnType<typeof dayStatus>; isToday: boolean }[] = [];
+    for (let d = 1; d <= daysInMonth; d++) {
+      arr.push({
+        d,
+        status: dayStatus(y, m, d, slotStates),
+        isToday: y === TODAY.getFullYear() && m === TODAY.getMonth() && d === TODAY.getDate(),
+      });
+    }
+    return arr;
+  }, [y, m, daysInMonth, slotStates]);
+
+  function openTimeView(d: number) {
+    const key = dateKey(y, m, d);
+    const dow = new Date(y, m, d).getDay();
+    const weekday = en ? E.weekdayShort[dow] : WEEKDAY_LABEL[dow];
+    setSelected({ y, m, d, key, weekday, time: null });
+  }
+
+  function pickTime(time: string) {
+    setSelected((prev) => (prev ? { ...prev, time } : prev));
+  }
+
+  const when = selected?.time
+    ? en
+      ? `${selected.weekday}, ${E.monthShort[selected.m]} ${selected.d} · ${time12(selected.time)} (KST)`
+      : `${selected.m + 1}월 ${selected.d}일(${selected.weekday}) ${selected.time}`
+    : null;
+
+  function handleNext() {
+    if (!selected?.time) return;
+    const params = new URLSearchParams({
+      date: selected.key,
+      time: selected.time,
+      when: when ?? "",
+    });
+    router.push(`${localePath(lang, "/consult/checkout")}?${params.toString()}`);
+  }
+
+  return (
+    <div className="flex-1 bg-[var(--page-bg)] text-[var(--ink)]">
+      <div className="mx-auto max-w-[520px] px-5 pt-3 pb-12">
+        <div className="mb-3">
+          <div className="mb-1 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
+            {en ? SITE_EN.eyebrow : "Face Lift 전문 · 박동만 원장"}
+          </div>
+          <h1 className="mb-1 font-[family-name:var(--font-display)] text-[1.6rem] font-bold">
+            {en ? E.title : "예약 캘린더"}
+          </h1>
+          <p className="text-[1.02rem] leading-[1.65] font-bold text-[var(--ink)]">
+            {en ? E.lead : "병원에서 열어둔 날짜 중 원하는 날을 고르면, 그 날의 예약 가능한 시간을 선택할 수 있어요."}
+          </p>
+        </div>
+
+        {!selected ? (
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-5">
+            <div className="mb-4 flex items-center justify-between">
+              <button
+                type="button"
+                aria-label={en ? E.prev : "이전 달"}
+                disabled={monthIndex === 0}
+                onClick={() => setMonthIndex((i) => Math.max(0, i - 1))}
+                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--ink)] pb-0.5 text-[1.9rem] leading-none font-bold text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                ‹
+              </button>
+              <div className="font-[family-name:var(--font-display)] text-[1.05rem] font-bold">
+                {en ? E.monthLabel(y, m) : `${y}년 ${m + 1}월`}
+              </div>
+              <button
+                type="button"
+                aria-label={en ? E.next : "다음 달"}
+                disabled={monthIndex === MONTHS.length - 1}
+                onClick={() => setMonthIndex((i) => Math.min(MONTHS.length - 1, i + 1))}
+                className="flex h-11 w-11 items-center justify-center rounded-full border-2 border-[var(--ink)] pb-0.5 text-[1.9rem] leading-none font-bold text-[var(--ink)] disabled:cursor-not-allowed disabled:opacity-30"
+              >
+                ›
+              </button>
+            </div>
+
+            <div className="mb-3.5 flex gap-4 text-[0.75rem] font-bold text-[var(--ink)]">
+              <span className="inline-flex items-center gap-1.5">
+                <i className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--accent)]" />
+                {en ? E.legendOpen : "예약 가능"}
+              </span>
+              <span className="inline-flex items-center gap-1.5">
+                <i className="inline-block h-1.5 w-1.5 rounded-full bg-[var(--ink-faint)]" />
+                {en ? E.legendClosed : "휴진 · 마감"}
+              </span>
+            </div>
+
+            <div className="mb-1 grid grid-cols-7">
+              {(en ? E.weekdays : [...WEEKDAY_LABEL.slice(1), WEEKDAY_LABEL[0]]).map((w, i) => (
+                <span
+                  key={w}
+                  className={`py-1 text-center text-[0.75rem] font-bold ${i >= 5 ? "text-[var(--danger)]" : "text-[var(--ink)]"}`}
+                >
+                  {w}
+                </span>
+              ))}
+            </div>
+
+            {slotStates === null ? (
+              <div className="py-10 text-center text-[0.82rem] text-[var(--ink-soft)]">{en ? E.loading : "불러오는 중…"}</div>
+            ) : (
+              <div className="grid grid-cols-7 gap-[3px]">
+                {Array.from({ length: firstWeekday }).map((_, i) => (
+                  <div key={`blank-${i}`} />
+                ))}
+                {days.map(({ d, status, isToday }) => (
+                  <button
+                    key={d}
+                    type="button"
+                    disabled={!status.open}
+                    title={status.title ?? redDayName(new Date(y, m, d)) ?? undefined}
+                    onClick={() => status.open && openTimeView(d)}
+                    className={`relative flex aspect-square flex-col items-center justify-center gap-[3px] rounded-lg font-[family-name:var(--font-body)] text-[0.9rem] font-bold ${
+                      new Date(y, m, d) < TODAY
+                        ? "text-[#b3a9ab]" // 지나간 날은 (주말·공휴일이어도) 회색
+                        : isRedDay(new Date(y, m, d))
+                          ? "text-[var(--danger)]"
+                          : status.open
+                          ? "text-[var(--ink)]"
+                          : "text-[var(--ink-soft)]"
+                    } ${
+                      status.open ? "cursor-pointer hover:bg-[var(--accent-soft)]" : "cursor-not-allowed"
+                    } ${isToday ? "shadow-[inset_0_0_0_1.4px_var(--accent-ink)]" : ""}`}
+                  >
+                    {/* 글꼴의 가장 굵은 두께(700)보다 조금 더 굵어 보이도록 글자 테두리를 얇게 덧입힌다 */}
+                    <span className="[-webkit-text-stroke:0.45px_currentColor]">{d}</span>
+                    {status.open ? (
+                      <span className="h-1 w-1 rounded-full bg-[var(--accent)]" />
+                    ) : status.reason ? (
+                      <span
+                        className={`font-[family-name:var(--font-body)] text-[0.6rem] font-bold ${
+                          status.reason === "휴" ? "text-[var(--danger)]" : "text-[var(--ink-soft)]"
+                        }`}
+                      >
+                        {en ? (status.reason === "휴" ? E.holidayMark : E.closedMark) : status.reason}
+                      </span>
+                    ) : null}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <p className="mt-3.5 text-center text-[0.7rem] leading-[1.6] text-[var(--ink-soft)]">
+              {en ? `${E.footnote} ${E.tzNote}` : "병원 관리자가 등록한 진료 가능 일정 기준입니다. 이후 일정은 순차적으로 열립니다."}
+            </p>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-5">
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="mb-4 text-[0.98rem] font-bold text-[var(--ink-soft)] underline underline-offset-2"
+            >
+              {en ? E.anotherDate : "‹ 다른 날짜 선택"}
+            </button>
+            <div className="mb-3.5 text-[1.12rem] font-bold">
+              {en ? E.dayTitle(selected.m, selected.d, selected.weekday) : `${selected.m + 1}월 ${selected.d}일(${selected.weekday})`}
+              <span className="mt-0.5 block text-[0.98rem] font-semibold text-[var(--ink-soft)]">
+                {en ? E.availableTimes : "박동만 원장 · 예약 가능 시간"}
+              </span>
+            </div>
+            <div className="mx-auto grid max-w-[270px] grid-cols-3 gap-1.5">
+              {TIMES.map((time) => {
+                const taken = !!slotStates?.[`${selected.key}_${time}`] || isSlotInPast(selected.key, time);
+                const isSelected = selected.time === time;
+                return (
+                  <button
+                    key={time}
+                    type="button"
+                    disabled={taken}
+                    onClick={() => pickTime(time)}
+                    className={`rounded-lg border px-0.5 py-2.5 font-[family-name:var(--font-body)] text-[1.35rem] font-bold leading-tight tracking-tight transition-colors ${
+                      taken
+                        ? "cursor-not-allowed border-[var(--line)] bg-[var(--page-bg)] font-bold text-[var(--ink-soft)] line-through"
+                        : isSelected
+                          ? "border-[var(--accent)] bg-[var(--accent)] text-white"
+                          : "border-[var(--line)] bg-[var(--card-bg)] text-[var(--ink)] hover:border-[var(--accent)]"
+                    }`}
+                  >
+                    {taken ? (en ? `${time12(time)} · ${E.timeFull}` : `${time} 마감`) : en ? time12(time) : time}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {selected && (
+          <div className="mt-5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-[18px] shadow-[0_18px_40px_-24px_rgba(42,31,34,0.35)]">
+            <div className="flex justify-between py-0 text-[1.02rem] leading-[1.15] text-[var(--ink-soft)]">
+              <span>{en ? E.rowProcedure : "시술"}</span>
+              <b className="font-semibold text-[var(--ink)]">Face Lift</b>
+            </div>
+            <div className="flex justify-between py-0 text-[1.02rem] leading-[1.15] text-[var(--ink-soft)]">
+              <span>{en ? E.rowDoctor : "담당"}</span>
+              <b className="font-semibold text-[var(--ink)]">{en ? E.doctor : "박동만 원장"}</b>
+            </div>
+            <div className="flex justify-between py-0 text-[1.02rem] leading-[1.15] text-[var(--ink-soft)]">
+              <span>{en ? E.rowWhen : "일시"}</span>
+              <b className="font-semibold text-[var(--ink)]">{when ?? "-"}</b>
+            </div>
+            <button
+              type="button"
+              disabled={!when}
+              onClick={handleNext}
+              className="mt-3 block w-full rounded-[10px] bg-[var(--accent)] py-3.5 text-center text-[1.12rem] font-bold text-white transition-[filter,opacity] hover:brightness-[1.06] disabled:pointer-events-none disabled:opacity-40"
+            >
+              {en ? E.cta : "다음 · 예약자 정보 입력"}
+            </button>
+            <div className="mt-2.5 text-center text-[0.85rem] font-semibold text-[var(--ink-soft)]">
+              {en ? E.hold : "선택한 시간은 결제 전까지 10분간 임시로 잡아드려요"}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

@@ -57,7 +57,7 @@ export async function getDashboardData() {
         .select("id, status, reservation_slots!inner(start_at)")
         .gte("reservation_slots.start_at", week.start.toISOString())
         .lt("reservation_slots.start_at", week.end.toISOString()),
-      supabase.from("payments").select("amount").eq("status", "paid").gte("paid_at", month.start.toISOString()).lt("paid_at", month.end.toISOString()),
+      supabase.from("payments").select("amount").eq("status", "paid").neq("currency", "USD").gte("paid_at", month.start.toISOString()).lt("paid_at", month.end.toISOString()),
     ]);
   const [{ count: todayNewConsultations }, { count: needsReviewCount }, { data: recentRows }, { data: weekReservations }, { data: monthPayments }] = results;
 
@@ -770,7 +770,7 @@ export type PatientDetail = {
   history: string;
   ai: { severity: number; label: string; areas: string[]; needsReview: boolean; hasData: boolean };
   reservationList: { when: string; status: "confirmed" | "pending" | "cancelled"; label: string }[];
-  paymentList: { type: string; amount: number; status: string; date: string }[];
+  paymentList: { type: string; amount: number; currency: "KRW" | "USD"; status: string; date: string }[];
   photos: number;
 };
 
@@ -820,8 +820,8 @@ export async function getPatientDetail(patientId: string): Promise<PatientDetail
   const reservationIds = (reservations ?? []).map((r) => r.id as string);
 
   const { data: payments } = reservationIds.length
-    ? await supabase.from("payments").select("type, amount, status, paid_at, created_at, refundable").in("reservation_id", reservationIds)
-    : { data: [] as { type: string; amount: number; status: string; paid_at: string | null; created_at: string; refundable: boolean }[] };
+    ? await supabase.from("payments").select("type, amount, currency, status, paid_at, created_at, refundable").in("reservation_id", reservationIds)
+    : { data: [] as { type: string; amount: number; currency: string | null; status: string; paid_at: string | null; created_at: string; refundable: boolean }[] };
 
   const RES_STATUS: Record<string, { status: "confirmed" | "pending" | "cancelled"; label: string }> = {
     confirmed: { status: "confirmed", label: "확정" },
@@ -867,6 +867,7 @@ export async function getPatientDetail(patientId: string): Promise<PatientDetail
     paymentList: (payments ?? []).map((p) => ({
       type: p.type === "deposit" ? "예약금" : "시술비",
       amount: p.amount,
+      currency: p.currency === "USD" ? ("USD" as const) : ("KRW" as const),
       status: PAY_STATUS_LABEL[p.status] ?? p.status,
       date: p.paid_at ? formatDateDotKST(p.paid_at) : "-",
     })),
@@ -881,6 +882,7 @@ export type PaymentRow = {
   patient: string;
   type: "예약금" | "시술비";
   amount: number;
+  currency: "KRW" | "USD";
   method: string;
   date: string;
   status: "pending" | "paid" | "refunded" | "failed" | "cancelled";
@@ -897,7 +899,7 @@ export async function getPayments(options?: {
   const { data, error } = await supabase
     .from("payments")
     .select(
-      "id, type, amount, status, pg_provider, paid_at, created_at, refundable, reservations(patients(name), reservation_slots(start_at))",
+      "id, type, amount, currency, status, pg_provider, paid_at, created_at, refundable, reservations(patients(name), reservation_slots(start_at))",
     )
     .order("created_at", { ascending: false });
 
@@ -940,6 +942,7 @@ export async function getPayments(options?: {
         patient: patientObj?.name ?? "-",
         type: p.type === "deposit" ? "예약금" : "시술비",
         amount: p.amount as number,
+        currency: p.currency === "USD" ? ("USD" as const) : ("KRW" as const),
         method: p.pg_provider ?? "-",
         date: p.paid_at ? formatDateDotKST(p.paid_at) : p.created_at ? formatDateDotKST(p.created_at) : "-",
         status: p.status as PaymentRow["status"],
@@ -955,7 +958,7 @@ export async function getPayments(options?: {
     const dayStart = startOfTodayKST(new Date(now.getTime() - i * 24 * 60 * 60 * 1000));
     const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
     const sum = (data ?? [])
-      .filter((p) => p.status === "paid" && p.paid_at && new Date(p.paid_at) >= dayStart && new Date(p.paid_at) < dayEnd)
+      .filter((p) => p.status === "paid" && p.currency !== "USD" && p.paid_at && new Date(p.paid_at) >= dayStart && new Date(p.paid_at) < dayEnd)
       .reduce((acc, p) => acc + (p.amount as number), 0);
     const kst = new Date(dayStart.getTime() + 9 * 60 * 60 * 1000);
     days.push({ d: `${kst.getUTCMonth() + 1}/${kst.getUTCDate()}`, v: sum });
@@ -963,12 +966,14 @@ export async function getPayments(options?: {
 
   // 상단 요약 지표(누적 매출 등)는 보관함 토글과 무관하게 항상 전체 결제 기록 기준으로 낸다 —
   // 목록에서 오래된 건을 숨긴다고 해서 누적 매출이 줄어든 것처럼 보이면 안 되기 때문.
-  const paidAll = data.filter((p) => p.status === "paid");
+  // 매출 합계는 원화(KRW) 결제만 — 영어 예약금($)은 목록에만 표시한다.
+  const paidAll = data.filter((p) => p.status === "paid" && p.currency !== "USD");
+  const krwCount = data.filter((p) => p.currency !== "USD").length;
   const stats = {
     totalRevenue: paidAll.reduce((sum, p) => sum + (p.amount as number), 0),
-    totalCount: data.length,
-    refundedSum: data.filter((p) => p.status === "refunded").reduce((sum, p) => sum + (p.amount as number), 0),
-    successRate: data.length > 0 ? Math.round((paidAll.length / data.length) * 1000) / 10 : 0,
+    totalCount: data.filter((p) => p.currency !== "USD").length,
+    refundedSum: data.filter((p) => p.status === "refunded" && p.currency !== "USD").reduce((sum, p) => sum + (p.amount as number), 0),
+    successRate: krwCount > 0 ? Math.round((paidAll.length / krwCount) * 1000) / 10 : 0,
   };
 
   return { rows, revenue: days, stats };

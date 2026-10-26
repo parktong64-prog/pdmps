@@ -10,7 +10,7 @@ export function localePath(lang: Lang, path: string) {
 }
 
 /** 영어 예약금 (달러). 원화 예약금은 DB(procedures.deposit_amount)에서 읽는다. */
-export const EN_DEPOSIT_USD = 100;
+export const EN_DEPOSIT_USD = 200;
 
 export const TEXT = {
   ko: {
@@ -64,7 +64,7 @@ export const ENG = {
       { v: "Sedation / local", l: "Anesthesia" },
       { v: "Same-day home", l: "Hospital stay" },
     ],
-    notWatched: "You have not watched the video yet",
+    notWatched: "You haven't watched the video yet",
     playing: "Playing…",
     watched: "Watched",
     autoMuted: "Playing without sound. Tap the speaker button under the video to turn the sound on.",
@@ -121,7 +121,9 @@ export const ENG = {
     doctor: "Dr. Park Dong-man",
     cta: "Next · Your Information",
     hold: "The time you choose is held for 10 minutes until payment.",
-    weekdayLong: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    weekdayShort: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    monthShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    tzNote: "All times are Korea Standard Time (KST, UTC+9).",
   },
   // 예약자 정보 + 결제
   checkout: {
@@ -134,8 +136,9 @@ export const ENG = {
     emailPh: "name@example.com",
     phone: "Phone (with country code)",
     phonePh: "+1 555 123 4567",
-    consent:
-      "I agree to the collection and use of personal information. Your details are used only to confirm your booking and contact you, and are kept for the period required by law.",
+    consentLead: "I agree to the collection and use of my personal information.",
+    consentRest:
+      "Your details are used only to confirm your booking and contact you, and are kept for the period required by law.",
     privacy: "Privacy Policy",
     terms: "Terms",
     errName: "Please enter your name.",

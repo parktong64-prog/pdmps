@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
+import { ENG, SITE_EN, localePath, type Lang } from "@/lib/i18n/patient";
 
 const STORAGE_KEY = "faceLiftVideoWatched";
+const STORAGE_KEY_EN = "faceLiftVideoWatchedEn";
 // 안내 영상 재생 속도 (1.2배속)
 const PLAYBACK_RATE = 1.2;
 
@@ -14,7 +16,10 @@ type VideoInfo = {
   video_url: string | null;
 } | null;
 
-export default function ConsultClient({ video }: { video: VideoInfo }) {
+export default function ConsultClient({ video, lang = "ko" }: { video: VideoInfo; lang?: Lang }) {
+  const en = lang === "en";
+  const E = ENG.consult;
+  const storageKey = en ? STORAGE_KEY_EN : STORAGE_KEY;
   useFunnelTrack("intro_video");
   const router = useRouter();
   const [progress, setProgress] = useState(0);
@@ -28,7 +33,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
     // localStorage는 SSR에서 접근 불가하므로 마운트 후 클라이언트에서만 읽어 상태에 반영한다.
     /* eslint-disable react-hooks/set-state-in-effect */
     try {
-      if (localStorage.getItem(STORAGE_KEY) === "1") {
+      if (localStorage.getItem(storageKey) === "1") {
         setProgress(100);
         setWatched(true);
       }
@@ -47,7 +52,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
     const el = videoRef.current;
     if (!el || !video?.video_url) return;
     try {
-      if (localStorage.getItem(STORAGE_KEY) === "1") return;
+      if (localStorage.getItem(storageKey) === "1") return;
     } catch {
       // 저장소 접근이 안 되면 미시청으로 보고 그대로 재생한다
     }
@@ -66,7 +71,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
     setWatched(true);
     setProgress(100);
     try {
-      localStorage.setItem(STORAGE_KEY, "1");
+      localStorage.setItem(storageKey, "1");
     } catch {
       // 저장 실패해도 이번 세션 진행에는 지장 없음
     }
@@ -87,7 +92,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
     setPlaying(false);
     markWatched();
     // 영상이 끝나면 클릭 없이 바로 다음 단계(진행 과정 보기)로 넘어간다.
-    router.push("/consult/steps");
+    router.push(localePath(lang, "/consult/steps"));
   }
 
   // 영상 미등록 시: 재생 흐름을 흉내내는 시뮬레이션
@@ -101,7 +106,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
           if (timerRef.current) clearInterval(timerRef.current);
           setPlaying(false);
           markWatched();
-          router.push("/consult/steps");
+          router.push(localePath(lang, "/consult/steps"));
         }
         return next;
       });
@@ -118,14 +123,15 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
         {/* 히어로 */}
         <div className="mb-3">
           <div className="mb-1 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
-            Face Lift 전문 · 박동만 원장
+            {en ? SITE_EN.eyebrow : "Face Lift 전문 · 박동만 원장"}
           </div>
           <h1 className="mb-1.5 font-[family-name:var(--font-display)] text-[1.7rem] font-bold">
-            수술 방법 안내
+            {en ? E.title : "수술 방법 안내"}
           </h1>
           <p className="text-sm leading-[1.65] text-[var(--ink-soft)]">
-            Face Lift(안면거상술)가 어떤 과정으로 진행되는지 미리 확인하세요. 실제 시술 범위와
-            방법은 방문 상담에서 원장이 진단 후 최종 결정합니다.
+            {en
+              ? E.lead
+              : "Face Lift(안면거상술)가 어떤 과정으로 진행되는지 미리 확인하세요. 실제 시술 범위와 방법은 방문 상담에서 원장이 진단 후 최종 결정합니다."}
           </p>
         </div>
 
@@ -169,7 +175,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
                 <button
                   type="button"
                   onClick={handleRealPlay}
-                  aria-label="시술 안내 영상 재생"
+                  aria-label={en ? E.playLabel : "시술 안내 영상 재생"}
                   className="absolute inset-0 flex items-center justify-center bg-black/10"
                 >
                   <div className="flex h-[58px] w-[58px] items-center justify-center rounded-full bg-white/25">
@@ -182,7 +188,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
             <button
               type="button"
               onClick={handleSimulatedPlay}
-              aria-label="시술 안내 영상 재생"
+              aria-label={en ? E.playLabel : "시술 안내 영상 재생"}
               className="relative aspect-video w-full cursor-pointer overflow-hidden rounded-[11px] border-none bg-[linear-gradient(145deg,#241d20,#3a2c30)] p-0"
             >
               <div className="absolute inset-0 flex items-center justify-center">
@@ -197,7 +203,7 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
               <div className="absolute bottom-3 left-3.5 text-left text-sm font-semibold text-white">
                 {video?.title ?? "Face Lift 과정 안내"}
                 <span className="mt-0.5 block text-[0.66rem] font-medium text-[#d8cdd0]">
-                  박동만 원장 · {durationLabel}
+                  {en ? E.placeholderBy : "박동만 원장"} · {durationLabel}
                 </span>
               </div>
               <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20">
@@ -213,21 +219,22 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
             {watched ? (
               <span className="inline-flex items-center gap-1.5 font-bold text-[var(--success)]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[var(--success)]" />
-                시청 완료
+                {en ? E.watched : "시청 완료"}
               </span>
             ) : (
-              <span>{playing ? "재생 중…" : "아직 시청하지 않았어요"}</span>
+              <span>{playing ? (en ? E.playing : "재생 중…") : en ? E.notWatched : "아직 시청하지 않았어요"}</span>
             )}
           </div>
           {autoMuted && playing && !watched && (
             <p className="mt-2 text-[0.72rem] leading-[1.5] font-semibold text-[var(--accent-ink)]">
-              소리가 꺼진 채로 재생 중이에요. 영상 아래 스피커 버튼을 눌러 소리를 켜세요.
+              {en ? E.autoMuted : "소리가 꺼진 채로 재생 중이에요. 영상 아래 스피커 버튼을 눌러 소리를 켜세요."}
             </p>
           )}
           {!video?.video_url && (
             <p className="mt-2.5 text-[0.7rem] leading-[1.5] text-[var(--ink-soft)]">
-              실제 시술 안내 영상 업로드 전 미리보기 화면입니다. 재생 버튼을 누르면 시청 흐름을
-              확인할 수 있어요.
+              {en
+                ? E.videoMissing
+                : "실제 시술 안내 영상 업로드 전 미리보기 화면입니다. 재생 버튼을 누르면 시청 흐름을 확인할 수 있어요."}
             </p>
           )}
         </div>
@@ -236,13 +243,19 @@ export default function ConsultClient({ video }: { video: VideoInfo }) {
         <div className="flex flex-col gap-2.5">
           <button
             type="button"
-            onClick={() => router.push("/consult/steps")}
-            className="rounded-[11px] bg-[var(--accent)] px-3 py-[22px] text-center text-[1.7rem] font-bold leading-tight tracking-wide text-white transition-[filter,opacity] hover:brightness-[1.06]"
+            onClick={() => router.push(localePath(lang, "/consult/steps"))}
+            className={`rounded-[11px] bg-[var(--accent)] px-3 py-[22px] text-center font-bold leading-tight tracking-wide text-white transition-[filter,opacity] hover:brightness-[1.06] ${en ? "text-[1.35rem]" : "text-[1.7rem]"}`}
           >
-            다음 · 진행 과정 보기
+            {en ? E.next : "다음 · 진행 과정 보기"}
           </button>
           <span className="text-center text-[0.72rem] font-bold text-[var(--ink)]">
-            {watched ? "시청이 완료되었습니다" : "영상을 끝까지 보지 않아도 다음 단계로 진행할 수 있어요"}
+            {watched
+              ? en
+                ? E.nextHintWatched
+                : "시청이 완료되었습니다"
+              : en
+                ? E.nextHintNotWatched
+                : "영상을 끝까지 보지 않아도 다음 단계로 진행할 수 있어요"}
           </span>
         </div>
       </div>

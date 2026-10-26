@@ -4,9 +4,14 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { ProcedureStep } from "@/lib/admin/media";
 import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
+import { ENG, localePath, type Lang } from "@/lib/i18n/patient";
 
-export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
+export default function StepsClient({ steps, lang = "ko" }: { steps: ProcedureStep[]; lang?: Lang }) {
   useFunnelTrack("steps");
+  const en = lang === "en";
+  const E = ENG.steps;
+  // 영어 화면은 한국어 제목을 영어로 바꿔 보여준다 (등록된 단계 제목 기준)
+  const tr = (title: string) => (en ? (E.captions[title] ?? title) : title);
   const router = useRouter();
   const [index, setIndex] = useState(0);
   const [time, setTime] = useState(0);
@@ -33,13 +38,13 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
     return (
       <div className="flex-1 bg-[var(--page-bg)] text-[var(--ink)]">
         <div className="mx-auto max-w-[640px] px-5 py-12 pb-16 text-center">
-          <p className="mb-6 text-[0.88rem] text-[var(--ink-soft)]">등록된 진행 과정이 없습니다.</p>
+          <p className="mb-6 text-[0.88rem] text-[var(--ink-soft)]">{en ? E.empty : "등록된 진행 과정이 없습니다."}</p>
           <button
             type="button"
-            onClick={() => router.push("/consult/schedule")}
+            onClick={() => router.push(localePath(lang, "/consult/schedule"))}
             className="rounded-[10px] bg-[var(--accent)] px-6 py-3.5 text-[0.92rem] font-bold text-white"
           >
-            상담 예약하기
+            {en ? E.book : "상담 예약하기"}
           </button>
         </div>
       </div>
@@ -57,7 +62,7 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
 
   function goNext() {
     if (isLast) {
-      router.push("/consult/schedule");
+      router.push(localePath(lang, "/consult/schedule"));
       return;
     }
     setIndex((i) => Math.min(i + 1, steps.length - 1));
@@ -77,9 +82,9 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
           <div className="mb-2.5 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
             Face Lift 전문 · 박동만 원장
           </div>
-          <h1 className="mb-2.5 font-[family-name:var(--font-display)] text-[1.7rem] font-bold">진행 과정</h1>
+          <h1 className="mb-2.5 font-[family-name:var(--font-display)] text-[1.7rem] font-bold">{en ? E.title : "진행 과정"}</h1>
           <p className="text-sm leading-[1.65] text-[var(--ink-soft)]">
-            Face Lift(안면거상술)가 어떤 순서로 진행되는지 한 단계씩 확인해보세요.
+            {en ? E.lead : "Face Lift(안면거상술)가 어떤 순서로 진행되는지 한 단계씩 확인해보세요."}
           </p>
         </div>
 
@@ -91,7 +96,7 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
                 <button
                   key={s.id}
                   type="button"
-                  aria-label={`${i + 1}단계 · ${s.title}`}
+                  aria-label={`${i + 1} · ${tr(s.title)}`}
                   onClick={() => {
                     setIndex(i);
                     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -114,7 +119,7 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
             <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--accent-soft)] font-[family-name:var(--font-mono-kr)] text-[0.92rem] font-semibold text-[var(--accent-ink)]">
               {index + 1}
             </span>
-            <h2 className="text-[1.05rem] font-bold">{step.title}</h2>
+            <h2 className="text-[1.05rem] font-bold">{tr(step.title)}</h2>
           </div>
 
           {step.media_url && step.media_type === "video" ? (
@@ -139,14 +144,14 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
               />
               {/* 영상 아래 자막 — 합친 영상은 지금 재생 구간의 진행 과정을 보여준다 */}
               <div className="mt-3 rounded-lg bg-[var(--accent-soft)] px-4 py-3.5">
-                <div className="text-[2.1rem] leading-tight font-bold text-[var(--accent-ink)]">{caption.title}</div>
+                <div className="text-[2.1rem] leading-tight font-bold text-[var(--accent-ink)]">{tr(caption.title)}</div>
               </div>
             </>
           ) : (
             <>
               {step.media_url && (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={step.media_url} alt={step.title} className="mb-4 w-full rounded-lg object-cover" />
+                <img src={step.media_url} alt={tr(step.title)} className="mb-4 w-full rounded-lg object-cover" />
               )}
               <p className="text-[0.9rem] leading-[1.7] text-[var(--ink-soft)]">{step.description}</p>
             </>
@@ -162,7 +167,7 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
             disabled={isFirst}
             className="flex-1 rounded-[10px] border border-[var(--line)] py-3.5 text-center text-[0.92rem] font-bold text-[var(--ink)] transition-opacity hover:bg-[var(--accent-soft)] disabled:pointer-events-none disabled:opacity-35"
           >
-            ‹ 이전
+            {en ? E.prev : "‹ 이전"}
           </button>
           )}
           <button
@@ -170,11 +175,11 @@ export default function StepsClient({ steps }: { steps: ProcedureStep[] }) {
             onClick={goNext}
             className={
               isLast
-                ? "flex-[1.4] rounded-[11px] bg-[var(--accent)] px-3 py-[22px] text-center text-[1.7rem] font-bold leading-none tracking-wide text-white transition-[filter] hover:brightness-[1.06]"
+                ? `flex-[1.4] rounded-[11px] bg-[var(--accent)] px-3 py-[22px] text-center font-bold leading-none tracking-wide text-white transition-[filter] hover:brightness-[1.06] ${en ? "text-[1.35rem]" : "text-[1.7rem]"}`
                 : "flex-[1.4] rounded-[10px] bg-[var(--accent)] py-3.5 text-center text-[0.92rem] font-bold text-white transition-[filter] hover:brightness-[1.06]"
             }
           >
-            {isLast ? "상담예약하기" : "다음 ›"}
+            {isLast ? (en ? E.book : "상담예약하기") : en ? E.next : "다음 ›"}
           </button>
         </div>
       </div>

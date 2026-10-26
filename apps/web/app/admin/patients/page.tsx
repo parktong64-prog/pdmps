@@ -334,7 +334,7 @@ export default function PatientsPage() {
               detail.paymentList.map((pay, i) => (
                 <MiniRow
                   key={i}
-                  title={`${pay.type} · ${pay.amount.toLocaleString()}원`}
+                  title={`${pay.type} · ${pay.currency === "USD" ? `$${pay.amount.toLocaleString()}` : `${pay.amount.toLocaleString()}원`}`}
                   meta={pay.date}
                   pill={<StatusPill status="progress" label={pay.status} />}
                 />

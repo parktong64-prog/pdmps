@@ -2,14 +2,11 @@
 
 import Link from "next/link";
 import { useFunnelTrack } from "@/lib/funnel/useFunnelTrack";
+import { TEXT, localePath, EN_DEPOSIT_USD, type Lang } from "@/lib/i18n/patient";
 
-const FACELIFT = {
-  title: "안면거상술",
-  body: "나이가 들면서 볼과 중안면부가 아래로 처지고, 팔자주름이 깊어지며 턱선이 흐려지고 목 주름도 두드러지게 나타납니다.",
-};
-
-export default function HomeClient({ basePrice }: { basePrice: number }) {
+export default function HomeClient({ basePrice, lang = "ko" }: { basePrice: number; lang?: Lang }) {
   useFunnelTrack("home");
+  const t = TEXT[lang];
 
   return (
     <div className="flex-1 bg-[var(--page-bg)] text-[var(--ink)]">
@@ -17,7 +14,7 @@ export default function HomeClient({ basePrice }: { basePrice: number }) {
         {/* 상단 로고 */}
         <div className="mb-6 flex items-center justify-between">
           <div className="font-[family-name:var(--font-display)] text-[1.15rem] font-bold text-[var(--brand-green)]">
-            PDMPS
+            {t.brand}
           </div>
           <div className="relative flex h-[30px] w-[30px] items-center justify-center rounded-full border-[1.4px] border-[var(--line)] text-[var(--ink-soft)] text-xs">
             ●
@@ -26,40 +23,34 @@ export default function HomeClient({ basePrice }: { basePrice: number }) {
         </div>
 
         {/* Face Lift 소개 */}
-        <h2 className="mb-3.5 font-[family-name:var(--font-display)] text-[1.05rem] font-bold">
-          Face Lift 안내
-        </h2>
+        <h2 className="mb-3.5 font-[family-name:var(--font-display)] text-[1.05rem] font-bold">{t.homeGuideTitle}</h2>
         <div className="mb-7 flex items-center gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-3.5">
           <div className="h-14 w-14 flex-none rounded-[11px] bg-linear-to-br from-[var(--accent-soft)] to-[var(--line)]" />
           <div>
-            <div className="text-sm font-bold">Face Lift (안면거상술)</div>
+            <div className="text-sm font-bold">{t.homeProductName}</div>
             <div className="mt-1 font-[family-name:var(--font-mono-kr)] text-[0.86rem] font-semibold text-[var(--accent-ink)]">
-              ₩{basePrice.toLocaleString()}
+              {lang === "en" ? `$${EN_DEPOSIT_USD} deposit` : `₩${basePrice.toLocaleString()}`}
               <span className="ml-1 font-[family-name:var(--font-body)] text-[0.68rem] font-medium text-[var(--ink-soft)]">
-                VAT 포함
+                {lang === "en" ? "booking deposit" : t.homeVat}
               </span>
             </div>
           </div>
         </div>
 
         {/* 고민 부위 */}
-        <h2 className="mb-3.5 font-[family-name:var(--font-display)] text-[1.05rem] font-bold">
-          이런 분께 추천해요
-        </h2>
+        <h2 className="mb-3.5 font-[family-name:var(--font-display)] text-[1.05rem] font-bold">{t.homeForWhom}</h2>
         <div className="mb-3.5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-[18px]">
-          <div className="mb-2 text-sm font-bold">{FACELIFT.title}</div>
-          <div className="text-[0.84rem] leading-[1.7] text-[var(--ink-soft)]">{FACELIFT.body}</div>
+          <div className="mb-2 text-sm font-bold">{t.homeCardTitle}</div>
+          <div className="text-[0.84rem] leading-[1.7] text-[var(--ink-soft)]">{t.homeCardBody}</div>
         </div>
 
-        <p className="mx-0.5 mb-7 text-[0.72rem] leading-[1.6] text-[var(--ink-soft)]">
-          위 설명은 일반적인 특징 안내이며, 정확한 원인과 개선 방법은 방문 상담에서 원장이 직접 확인 후 안내합니다.
-        </p>
+        <p className="mx-0.5 mb-7 text-[0.72rem] leading-[1.6] text-[var(--ink-soft)]">{t.homeDisclaimer}</p>
 
         <Link
-          href="/consult"
+          href={localePath(lang, "/consult")}
           className="block rounded-[11px] bg-[var(--accent)] py-[22px] text-center text-[1.7rem] font-bold leading-none tracking-wide text-white transition-[filter] hover:brightness-[1.06]"
         >
-          상담예약하기
+          {t.homeCta}
         </Link>
       </div>
     </div>

@@ -297,7 +297,23 @@ function formatDuration(sec: number | null) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
+/** 시술 안내 영상 탭 — 한국어 화면용과 영어(해외) 화면용 영상을 각각 올린다. */
 function VideosTab() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <div className="mb-2 text-[0.8rem] font-bold text-[var(--ink-soft)]">한국어 화면 영상</div>
+        <VideoPanel lang="ko" />
+      </div>
+      <div>
+        <div className="mb-2 text-[0.8rem] font-bold text-[var(--ink-soft)]">영어 화면 영상 (해외 환자용 /en)</div>
+        <VideoPanel lang="en" />
+      </div>
+    </div>
+  );
+}
+
+function VideoPanel({ lang }: { lang: "ko" | "en" }) {
   const [id, setId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [durationSec, setDurationSec] = useState<number | null>(null);
@@ -309,7 +325,7 @@ function VideosTab() {
   const fileInput = useRef<HTMLInputElement>(null);
 
   function reload() {
-    getActiveVideo().then((v) => {
+    getActiveVideo(lang).then((v) => {
       if (v) {
         setId(v.id);
         setTitle(v.title);
@@ -328,12 +344,12 @@ function VideosTab() {
     setUploading(true);
     setError(null);
     try {
-      const uploaded = await uploadDirect(file, "intro/main-video");
+      const uploaded = await uploadDirect(file, lang === "en" ? "intro/main-video-en" : "intro/main-video");
       if (!uploaded.ok) {
         setError(uploaded.error);
         return;
       }
-      const result = await finalizeMainVideo(uploaded.path, file.name);
+      const result = await finalizeMainVideo(uploaded.path, file.name, lang);
       if (!result.ok) {
         setError(result.error ?? "저장에 실패했습니다.");
         return;

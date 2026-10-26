@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { alimtalkLabels, isClosedDay, isSlotInPast, TIMES } from "@/lib/booking";
 import { sendReservationNotificationEmail } from "@/lib/notifications/email";
 import { sendReservationConfirmedAlimtalk, sendAdminReservationAlert } from "@/lib/notifications/alimtalk";
+import { EN_DEPOSIT_USD } from "@/lib/i18n/patient";
 
 const SLOT_DURATION_MIN = 90;
 const PAYMENT_HOLD_MIN = 10;
@@ -13,10 +14,13 @@ export type PendingReservationInput = {
   phone: string;
   date: string; // YYYY-MM-DD
   time: string; // HH:mm
+  /** 영어(해외) 예약이면 "en" — 예약금이 달러($)로 정해지고 이메일을 함께 저장한다. */
+  lang?: "ko" | "en";
+  email?: string;
 };
 
 export type PendingReservationResult =
-  | { ok: true; orderId: string; amount: number; orderName: string; customerName: string }
+  | { ok: true; orderId: string; amount: number; currency: "KRW" | "USD"; orderName: string; customerName: string }
   | { ok: false; error: string; status: number };
 
 /**
@@ -26,6 +30,8 @@ export type PendingReservationResult =
  */
 export async function createPendingReservation(input: PendingReservationInput): Promise<PendingReservationResult> {
   const { name, phone, date, time } = input;
+  const lang = input.lang === "en" ? "en" : "ko";
+  const email = (input.email ?? "").trim();
 
   const startAt = new Date(`${date}T${time}:00+09:00`);
   if (Number.isNaN(startAt.getTime()) || !TIMES.includes(time)) {
@@ -85,7 +91,7 @@ export async function createPendingReservation(input: PendingReservationInput): 
   // email은 더 이상 입력받지 않는다 — upsert 대상에서 빼서 기존 환자의 이메일 기록은 그대로 둔다.
   const { data: patient, error: patientErr } = await supabase
     .from("patients")
-    .upsert({ name, phone }, { onConflict: "phone" })
+    .upsert(lang === "en" && email ? { name, phone, email } : { name, phone }, { onConflict: "phone" })
     .select("id")
     .single();
   if (patientErr || !patient) {
@@ -146,6 +152,7 @@ export async function createPendingReservation(input: PendingReservationInput): 
       patient_id: patient.id,
       status: "pending_payment",
       payment_deadline: paymentDeadline.toISOString(),
+      lang,
     })
     .select("id")
     .single();
@@ -158,8 +165,9 @@ export async function createPendingReservation(input: PendingReservationInput): 
   return {
     ok: true,
     orderId: reservation.id,
-    amount: procedure.deposit_amount ?? DEPOSIT_AMOUNT,
-    orderName: "Face Lift 상담 예약금",
+    amount: lang === "en" ? EN_DEPOSIT_USD : (procedure.deposit_amount ?? DEPOSIT_AMOUNT),
+    currency: lang === "en" ? ("USD" as const) : ("KRW" as const),
+    orderName: lang === "en" ? "Face Lift Consultation Deposit" : "Face Lift 상담 예약금",
     customerName: name,
   };
 }
@@ -207,7 +215,7 @@ export async function expireStaleHeldReservations(): Promise<{ expired: number }
 export type ConfirmResult =
   | {
       ok: true;
-      reservation: { name: string; phone: string; when: string };
+      reservation: { name: string; phone: string; email: string | null; when: string; lang: "ko" | "en" };
     }
   | { ok: false; error: string };
 
@@ -220,11 +228,14 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
 
   const { data: reservation } = await supabase
     .from("reservations")
-    .select("id, slot_id, consultation_id, patient_id, status, reservation_slots(start_at), patients(name, phone)")
+    .select("id, slot_id, consultation_id, patient_id, status, lang, reservation_slots(start_at), patients(name, phone, email)")
     .eq("id", params.orderId)
     .maybeSingle();
 
   if (!reservation) return { ok: false, error: "예약 정보를 찾을 수 없습니다." };
+  const isEn = (reservation as { lang?: string }).lang === "en";
+  // 영어 예약금은 달러($)로 정해져 있다 — 금액이 다르면 승인하지 않는다.
+  if (isEn && Number(params.amount) !== EN_DEPOSIT_USD) return { ok: false, error: "Invalid payment amount." };
   // 알림(이메일·알림톡)은 '방금 새로 확정된' 경우에만 보낸다 — 아래에서 이 요청이
   // 실제로 결제를 승인한 최초 호출인지 표시해둔다. 그렇지 않으면 성공 페이지를
   // 새로고침하거나 토스 콜백이 중복으로 와도 매번 알림톡이 다시 나간다.
@@ -267,6 +278,7 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
         reservation_id: reservation.id,
         type: "deposit",
         amount: params.amount,
+        currency: isEn ? "USD" : "KRW",
         pg_provider: "toss",
         pg_transaction_id: payment.paymentKey ?? params.paymentKey,
         status: "paid",
@@ -282,10 +294,13 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
 
   const slot = reservation.reservation_slots as unknown as { start_at: string } | { start_at: string }[] | null;
   const startAt = Array.isArray(slot) ? slot[0]?.start_at : slot?.start_at;
-  const patient = reservation.patients as unknown as { name: string; phone: string } | { name: string; phone: string }[] | null;
+  const patient = reservation.patients as unknown as
+    | { name: string; phone: string; email: string | null }
+    | { name: string; phone: string; email: string | null }[]
+    | null;
   const patientObj = Array.isArray(patient) ? patient[0] : patient;
 
-  const whenLabel = startAt ? formatWhenKST(startAt) : "-";
+  const whenLabel = startAt ? (isEn ? formatWhenEnKST(startAt) : formatWhenKST(startAt)) : "-";
 
   // 관리자 알림 이메일 · 환자 알림톡 — 이번 호출로 '방금 새로 확정된' 경우에만 보낸다.
   // (성공 페이지 새로고침, 토스 콜백 중복 등으로 confirmTossPayment가 다시 호출돼도
@@ -299,12 +314,15 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
     // (관리자 화면의 알림 벨은 /admin에 로그인해서 보고 있을 때만 울린다).
     await sendReservationNotificationEmail({
       name: patientObj.name,
-      phone: patientObj.phone ?? "-",
+      phone: isEn ? `${patientObj.phone ?? "-"} · ${patientObj.email ?? "-"} (English / $${EN_DEPOSIT_USD})` : (patientObj.phone ?? "-"),
       date: dateLabel,
       time: timeLabel,
     });
 
-    const alimtalkResult = patientObj.phone
+    // 해외(영어) 예약은 한국 휴대폰 번호가 아니라 카카오 알림톡을 보낼 수 없다. 화면 안내와 관리자 알림으로 처리한다.
+    const alimtalkResult = isEn
+      ? { ok: false as const, error: "영어 예약 — 알림톡 대상 아님" }
+      : patientObj.phone
       ? await sendReservationConfirmedAlimtalk({
           phone: patientObj.phone,
           date: dateLabel,
@@ -323,14 +341,14 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
       status: alimtalkResult.ok ? "sent" : "failed",
       sent_at: alimtalkResult.ok ? new Date().toISOString() : null,
     });
-    if (!alimtalkResult.ok) {
+    if (!alimtalkResult.ok && !isEn) {
       console.error("알림톡 발송 실패:", alimtalkResult.error);
     }
 
     // 관리자 화면에서 확인 누를 때까지 계속 울리는 알림 — 새 예약 확정을 놓치지 않도록.
     await supabase.from("admin_alerts").insert({
       reservation_id: reservation.id,
-      message: `${patientObj.name}님 예약 확정 · ${dateLabel} ${timeLabel}`,
+      message: `${patientObj.name}님 예약 확정${isEn ? " (영어·$" + EN_DEPOSIT_USD + ")" : ""} · ${dateLabel} ${timeLabel}`,
     });
 
     const adminAlimtalkResult = await sendAdminReservationAlert({ date: dateLabel, time: timeLabel });
@@ -344,9 +362,21 @@ export async function confirmTossPayment(params: { paymentKey: string; orderId: 
     reservation: {
       name: patientObj?.name ?? "-",
       phone: patientObj?.phone ?? "-",
+      email: patientObj?.email ?? null,
       when: whenLabel,
+      lang: isEn ? ("en" as const) : ("ko" as const),
     },
   };
+}
+
+/** 영어 예약 완료 화면용: "Tue, Nov 17 · 2:30 PM (KST)" */
+function formatWhenEnKST(iso: string) {
+  const d = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000);
+  const weekday = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getUTCDay()];
+  const month = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"][d.getUTCMonth()];
+  const h = d.getUTCHours();
+  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  return `${weekday}, ${month} ${d.getUTCDate()} · ${((h + 11) % 12) + 1}:${mm} ${h >= 12 ? "PM" : "AM"} (KST)`;
 }
 
 function formatWhenKST(iso: string) {

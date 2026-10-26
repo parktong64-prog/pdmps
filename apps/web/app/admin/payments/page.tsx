@@ -207,7 +207,7 @@ export default function PaymentsPage() {
                     </span>
                   </td>
                   <td className="border-b border-[var(--line)] px-2.5 py-3 font-[family-name:var(--font-mono-kr)] font-semibold tabular-nums">
-                    {p.amount.toLocaleString()}원
+                    {p.currency === "USD" ? `$${p.amount.toLocaleString()}` : `${p.amount.toLocaleString()}원`}
                   </td>
                   <td className="border-b border-[var(--line)] px-2.5 py-3">{p.method}</td>
                   <td className="border-b border-[var(--line)] px-2.5 py-3">{p.date}</td>
