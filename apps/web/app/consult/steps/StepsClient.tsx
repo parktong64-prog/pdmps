@@ -73,7 +73,7 @@ export default function StepsClient({ steps, lang = "ko" }: { steps: ProcedureSt
     <div className="flex-1 bg-[var(--page-bg)] text-[var(--ink)]">
       <div className="mx-auto max-w-[640px] px-5 py-12 pb-16">
         <div className="mb-7">
-          <div className="mb-2.5 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
+          <div className={`mb-2.5 font-bold text-[var(--accent-ink)] uppercase ${en ? "whitespace-nowrap text-[0.68rem] tracking-[0.05em]" : "text-xs tracking-[0.14em]"}`}>
             {en ? SITE_EN.eyebrow : "Face Lift 전문 · 박동만 원장"}
           </div>
           <h1 className="mb-2.5 font-[family-name:var(--font-display)] text-[1.7rem] font-bold">{en ? E.title : "진행 과정"}</h1>

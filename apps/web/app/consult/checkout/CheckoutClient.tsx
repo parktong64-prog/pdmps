@@ -130,7 +130,7 @@ function CheckoutForm({ lang }: { lang: Lang }) {
         <div className="w-full max-w-[440px] rounded-[18px] border border-[var(--line)] bg-[var(--card-bg)] p-8 shadow-[0_24px_60px_-32px_rgba(42,31,34,0.35)]">
           {step === "form" && (
             <>
-              <div className="mb-2.5 text-xs font-bold tracking-[0.14em] text-[var(--accent-ink)] uppercase">
+              <div className={`mb-2.5 font-bold text-[var(--accent-ink)] uppercase ${en ? "whitespace-nowrap text-[0.68rem] tracking-[0.05em]" : "text-xs tracking-[0.14em]"}`}>
                 {en ? SITE_EN.eyebrow : "Face Lift 전문 · 박동만 원장"}
               </div>
               <h1 className="mb-2 font-[family-name:var(--font-display)] text-[1.5rem] font-bold">
