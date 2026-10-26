@@ -11,6 +11,8 @@ export function localePath(lang: Lang, path: string) {
 
 /** 영어 예약금 (달러). 원화 예약금은 DB(procedures.deposit_amount)에서 읽는다. */
 export const EN_DEPOSIT_USD = 200;
+/** 영어 예약에서 결제가 안 될 때 안내하는 문의 이메일 */
+export const EN_HELP_EMAIL = "pspdm0308@naver.com";
 
 export const TEXT = {
   ko: {
@@ -161,6 +163,7 @@ export const ENG = {
     errBooking: "Something went wrong while booking. Please try again.",
     errPayConfig: "Payment is not set up correctly.",
     errPayGeneric: "Something went wrong with the payment. Please try again later.",
+    payHelp: "If the payment still does not go through, please email us your name, phone number and preferred date and time, and we will help you book.",
     orderName: "Face Lift Consultation Deposit",
   },
   success: {
@@ -184,6 +187,7 @@ export const ENG = {
     cancelled: "You cancelled the payment.",
     aborted: "A problem occurred during payment.",
     rejected: "The card issuer declined the payment.",
+    emailHelp: "Still unable to pay? Please email us your name, phone number and preferred date and time, and we will help you complete your booking.",
   },
 };
 

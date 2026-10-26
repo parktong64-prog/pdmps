@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { loadTossPayments } from "@tosspayments/payment-sdk";
-import { ENG, SITE_EN, EN_DEPOSIT_USD, type Lang } from "@/lib/i18n/patient";
+import { ENG, SITE_EN, EN_DEPOSIT_USD, EN_HELP_EMAIL, type Lang } from "@/lib/i18n/patient";
 
 type FieldErrors = { name?: string; email?: string; phone?: string; consent?: string };
 type Step = "form" | "payment";
@@ -14,6 +14,18 @@ function formatPhone(value: string) {
   if (digits.length > 7) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
   if (digits.length > 3) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
   return digits;
+}
+
+/** 영어 결제 오류 아래에 문의 이메일을 안내한다. */
+function PayHelp({ text }: { text: string }) {
+  return (
+    <div className="mt-2 text-[var(--ink)]">
+      {text}{" "}
+      <a href={`mailto:${EN_HELP_EMAIL}`} className="font-bold underline underline-offset-2">
+        {EN_HELP_EMAIL}
+      </a>
+    </div>
+  );
 }
 
 function CheckoutForm({ lang }: { lang: Lang }) {
@@ -231,6 +243,7 @@ function CheckoutForm({ lang }: { lang: Lang }) {
                 {submitError && (
                   <div className="rounded-[10px] bg-[var(--danger-soft)] px-3 py-2.5 text-[0.78rem] leading-[1.55] text-[var(--danger)]">
                     {submitError}
+                    {en && <PayHelp text={E.payHelp} />}
                   </div>
                 )}
 
@@ -291,6 +304,7 @@ function CheckoutForm({ lang }: { lang: Lang }) {
               {submitError && (
                 <div className="mt-3.5 rounded-[10px] bg-[var(--danger-soft)] px-3 py-2.5 text-[0.78rem] leading-[1.55] text-[var(--danger)]">
                   {submitError}
+                  {en && <PayHelp text={E.payHelp} />}
                 </div>
               )}
 
