@@ -227,11 +227,11 @@ function CheckoutForm({ lang }: { lang: Lang }) {
                         파기됩니다.{" "}
                       </>
                     )}
-                    <Link href="/privacy" target="_blank" className="underline underline-offset-2">
+                    <Link href={en ? "/en/privacy" : "/privacy"} target="_blank" className="underline underline-offset-2">
                       {en ? E.privacy : "개인정보처리방침"}
                     </Link>
                     {" · "}
-                    <Link href="/terms" target="_blank" className="underline underline-offset-2">
+                    <Link href={en ? "/en/terms" : "/terms"} target="_blank" className="underline underline-offset-2">
                       {en ? E.terms : "이용약관"}
                     </Link>
                   </span>
@@ -295,7 +295,7 @@ function CheckoutForm({ lang }: { lang: Lang }) {
                 </div>
                 <div className="mt-3 rounded-[9px] bg-[var(--danger-soft)] px-3 py-2.5 text-[0.74rem] leading-[1.55] text-[var(--danger)]">
                   {en ? E.depositNote : "예약금은 취소·변경·노쇼 등 사유와 관계없이 환불되지 않습니다."}{" "}
-                  <Link href="/refund" target="_blank" className="underline underline-offset-2">
+                  <Link href={en ? "/en/refund" : "/refund"} target="_blank" className="underline underline-offset-2">
                     {en ? E.refundLink : "환불 규정 보기"}
                   </Link>
                 </div>

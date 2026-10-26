@@ -10,4 +10,5 @@ export const BUSINESS = {
   phone: "02-512-9300",
   privacyOfficer: { name: "박동규", email: "pspdm0308@naver.com" },
   policyDate: "2026년 9월 28일",
+  policyDateEn: "September 28, 2026",
 } as const;

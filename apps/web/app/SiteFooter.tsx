@@ -16,14 +16,14 @@ export function SiteFooter({ lang = "ko" }: { lang?: Lang }) {
             Privacy officer {BUSINESS.privacyOfficer.name} ({BUSINESS.privacyOfficer.email})
           </div>
           <div className="mt-2.5 flex flex-wrap gap-x-3.5 gap-y-1 font-medium text-[var(--ink)]">
-            <Link href="/terms" className="underline underline-offset-2">
-              {SITE_EN.terms} (KR)
+            <Link href="/en/terms" className="underline underline-offset-2">
+              {SITE_EN.terms}
             </Link>
-            <Link href="/privacy" className="underline underline-offset-2">
-              {SITE_EN.privacy} (KR)
+            <Link href="/en/privacy" className="underline underline-offset-2">
+              {SITE_EN.privacy}
             </Link>
-            <Link href="/refund" className="underline underline-offset-2">
-              {SITE_EN.refund} (KR)
+            <Link href="/en/refund" className="underline underline-offset-2">
+              {SITE_EN.refund}
             </Link>
           </div>
         </div>
