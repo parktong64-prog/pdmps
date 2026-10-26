@@ -10,9 +10,9 @@ export default function HomeClient({ basePrice, lang = "ko" }: { basePrice: numb
 
   return (
     <div className="flex-1 bg-[var(--page-bg)] text-[var(--ink)]">
-      <div className="mx-auto max-w-[460px] px-5 py-8 pb-16">
+      <div className={`mx-auto max-w-[460px] px-5 pb-16 ${lang === "en" ? "py-3" : "py-8"}`}>
         {/* 상단 로고 */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className={`flex items-center justify-between ${lang === "en" ? "mb-3" : "mb-6"}`}>
           <div className="font-[family-name:var(--font-display)] text-[1.15rem] font-bold text-[var(--brand-green)]">
             {t.brand}
           </div>
@@ -24,7 +24,7 @@ export default function HomeClient({ basePrice, lang = "ko" }: { basePrice: numb
 
         {/* Face Lift 소개 */}
         <h2 className="mb-3.5 font-[family-name:var(--font-display)] text-[1.05rem] font-bold">{t.homeGuideTitle}</h2>
-        <div className="mb-7 flex items-center gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-3.5">
+        <div className={`flex items-center gap-3.5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-3.5 ${lang === "en" ? "mb-4" : "mb-7"}`}>
           <div className="h-14 w-14 flex-none rounded-[11px] bg-linear-to-br from-[var(--accent-soft)] to-[var(--line)]" />
           <div>
             <div className="text-sm font-bold">{t.homeProductName}</div>
@@ -39,12 +39,12 @@ export default function HomeClient({ basePrice, lang = "ko" }: { basePrice: numb
 
         {/* 고민 부위 */}
         <h2 className="mb-3.5 font-[family-name:var(--font-display)] text-[1.05rem] font-bold">{t.homeForWhom}</h2>
-        <div className="mb-3.5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-[18px]">
+        <div className={`mb-3.5 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] ${lang === "en" ? "p-3.5" : "p-[18px]"}`}>
           <div className="mb-2 text-sm font-bold">{t.homeCardTitle}</div>
-          <div className="text-[0.84rem] leading-[1.7] text-[var(--ink-soft)]">{t.homeCardBody}</div>
+          <div className={`text-[0.84rem] text-[var(--ink-soft)] ${lang === "en" ? "leading-[1.5]" : "leading-[1.7]"}`}>{t.homeCardBody}</div>
         </div>
 
-        <p className="mx-0.5 mb-7 text-[0.72rem] leading-[1.6] text-[var(--ink-soft)]">{t.homeDisclaimer}</p>
+        <p className={`mx-0.5 text-[0.72rem] leading-[1.6] text-[var(--ink-soft)] ${lang === "en" ? "mb-4" : "mb-7"}`}>{t.homeDisclaimer}</p>
 
         <Link
           href={localePath(lang, "/consult")}

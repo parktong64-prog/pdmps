@@ -119,7 +119,7 @@ export default function ConsultClient({ video, lang = "ko" }: { video: VideoInfo
 
   return (
     <div className="flex-1 bg-[var(--page-bg)] text-[var(--ink)]">
-      <div className="mx-auto max-w-[640px] px-5 pt-4 pb-10">
+      <div className={`mx-auto max-w-[640px] px-5 pb-10 ${en ? "pt-3" : "pt-4"}`}>
         {/* 히어로 */}
         <div className="mb-3">
           <div className={`mb-1 font-bold text-[var(--accent-ink)] uppercase ${en ? "whitespace-nowrap text-[0.68rem] tracking-[0.05em]" : "text-xs tracking-[0.14em]"}`}>
@@ -128,7 +128,7 @@ export default function ConsultClient({ video, lang = "ko" }: { video: VideoInfo
           <h1 className="mb-1.5 font-[family-name:var(--font-display)] text-[1.7rem] font-bold">
             {en ? E.title : "수술 방법 안내"}
           </h1>
-          <p className="text-sm leading-[1.65] text-[var(--ink-soft)]">
+          <p className={`text-sm text-[var(--ink-soft)] ${en ? "leading-[1.5]" : "leading-[1.65]"}`}>
             {en
               ? E.lead
               : "Face Lift(안면거상술)가 어떤 과정으로 진행되는지 미리 확인하세요. 실제 시술 범위와 방법은 방문 상담에서 원장이 진단 후 최종 결정합니다."}
@@ -145,15 +145,15 @@ export default function ConsultClient({ video, lang = "ko" }: { video: VideoInfo
                 { v: "당일 귀가", l: "입원 여부" },
               ]
           ).map((f) => (
-            <div key={f.l} className="bg-[var(--card-bg)] px-2.5 py-3.5 text-center">
-              <div className="font-[family-name:var(--font-mono-kr)] text-[1.05rem] font-semibold">{f.v}</div>
+            <div key={f.l} className={`bg-[var(--card-bg)] px-2.5 text-center ${en ? "py-2.5" : "py-3.5"}`}>
+              <div className={`font-[family-name:var(--font-mono-kr)] font-semibold ${en ? "text-[0.8rem] leading-tight" : "text-[1.05rem]"}`}>{f.v}</div>
               <div className="mt-1 text-[0.66rem] text-[var(--ink-soft)]">{f.l}</div>
             </div>
           ))}
         </div>
 
         {/* 영상 카드 */}
-        <div className="mb-4 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-3">
+        <div className={`rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] ${en ? "mb-3 p-2" : "mb-4 p-3"}`}>
           {video?.video_url ? (
             <div className="relative aspect-video w-full overflow-hidden rounded-[11px] bg-black">
               <video
