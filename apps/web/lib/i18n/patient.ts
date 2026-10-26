@@ -48,6 +48,7 @@ export const SITE_EN = {
   name: "PDM Plastic Surgery",
   address: "601 Gangnam-daero, Seocho-gu, Seoul (5F, Celltrion Tower)",
   phone: "+82-2-512-9300",
+  website: "http://en.parkdongman.com",
   ceo: "Dongman Park, M.D.",
   eyebrow: "Face Lift Specialist · Dr. Park Dong-man",
   terms: "Terms of Use",

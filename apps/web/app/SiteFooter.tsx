@@ -10,6 +10,7 @@ export function SiteFooter({ lang = "ko" }: { lang?: Lang }) {
           <div className="mb-1 font-semibold text-[var(--ink)]">{SITE_EN.name}</div>
           <div>CEO {SITE_EN.ceo} · Business reg. no. {BUSINESS.bizNo}</div>
           <div>{SITE_EN.address}</div>
+          <div>Website: {SITE_EN.website}</div>
           <div>Tel {SITE_EN.phone}</div>
           <div>
             Privacy officer {BUSINESS.privacyOfficer.name} ({BUSINESS.privacyOfficer.email})
