@@ -137,11 +137,14 @@ export default function ConsultClient({ video, lang = "ko" }: { video: VideoInfo
 
         {/* 팩트 스트립 */}
         <div className="mb-3 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-[var(--line)] bg-[var(--line)]">
-          {[
-            { v: "3~4시간", l: "평균 소요시간" },
-            { v: "수면·국소", l: "마취 방법" },
-            { v: "당일 귀가", l: "입원 여부" },
-          ].map((f) => (
+          {(en
+            ? E.facts
+            : [
+                { v: "3~4시간", l: "평균 소요시간" },
+                { v: "수면·국소", l: "마취 방법" },
+                { v: "당일 귀가", l: "입원 여부" },
+              ]
+          ).map((f) => (
             <div key={f.l} className="bg-[var(--card-bg)] px-2.5 py-3.5 text-center">
               <div className="font-[family-name:var(--font-mono-kr)] text-[1.05rem] font-semibold">{f.v}</div>
               <div className="mt-1 text-[0.66rem] text-[var(--ink-soft)]">{f.l}</div>
