@@ -14,7 +14,6 @@ export default function StepsClient({ steps, lang = "ko" }: { steps: ProcedureSt
   const tr = (title: string) => (en ? (E.captions[title] ?? title) : title);
   const router = useRouter();
   const [index, setIndex] = useState(0);
-  const [time, setTime] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const currentUrl = steps[index]?.media_url ?? null;
@@ -54,11 +53,6 @@ export default function StepsClient({ steps, lang = "ko" }: { steps: ProcedureSt
   const step = steps[index];
   const isFirst = index === 0;
   const isLast = index === steps.length - 1;
-
-  // 합친 영상(segments)이면 재생 위치에 맞는 구간의 제목·설명, 아니면 단계 자체의 제목·설명
-  const segments = step.segments && step.segments.length > 0 ? step.segments : null;
-  const activeSegment = segments ? ([...segments].reverse().find((sg) => time >= sg.start) ?? segments[0]) : null;
-  const caption = activeSegment ?? { title: step.title, description: step.description };
 
   function goNext() {
     if (isLast) {
@@ -136,18 +130,10 @@ export default function StepsClient({ steps, lang = "ko" }: { steps: ProcedureSt
                   // 안내 영상은 1.2배속으로 재생한다
                   e.currentTarget.defaultPlaybackRate = 1.2;
                   e.currentTarget.playbackRate = 1.2;
-                  setTime(0);
                 }}
-                onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)}
                 onEnded={goNext}
                 className="w-full rounded-lg bg-black"
               />
-              {/* 영상 아래 자막 — 합친 영상은 지금 재생 구간의 진행 과정을 보여준다 */}
-              {!en && (
-                <div className="mt-3 rounded-lg bg-[var(--accent-soft)] px-4 py-3.5">
-                  <div className="text-[2.1rem] leading-tight font-bold text-[var(--accent-ink)]">{caption.title}</div>
-                </div>
-              )}
             </>
           ) : (
             <>
