@@ -110,9 +110,12 @@ export default function StepsClient({ steps, lang = "ko" }: { steps: ProcedureSt
         {/* 현재 단계 카드 */}
         <div className="mb-8 rounded-2xl border border-[var(--line)] bg-[var(--card-bg)] p-6">
           <div className="mb-4 flex items-center gap-3">
-            <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--accent-soft)] font-[family-name:var(--font-mono-kr)] text-[0.92rem] font-semibold text-[var(--accent-ink)]">
-              {index + 1}
-            </span>
+            {/* 단계가 하나뿐이면 번호가 의미 없으므로 숨긴다 */}
+            {steps.length > 1 && (
+              <span className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-[var(--accent-soft)] font-[family-name:var(--font-mono-kr)] text-[0.92rem] font-semibold text-[var(--accent-ink)]">
+                {index + 1}
+              </span>
+            )}
             <h2 className="text-[1.05rem] font-bold">{tr(step.title)}</h2>
           </div>
 
