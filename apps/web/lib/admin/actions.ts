@@ -1007,12 +1007,14 @@ export async function updateProcedureSettings(input: { id: string; name: string;
   return { ok: !error, error: error?.message };
 }
 
-export async function getActiveVideo() {
+/** 언어별 안내 영상. 한국어(ko) 화면과 영어(en) 화면이 서로 다른 영상을 쓴다. */
+export async function getActiveVideo(lang: "ko" | "en" = "ko") {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("procedure_videos")
     .select("id, title, duration_sec, is_active, video_url")
     .eq("is_active", true)
+    .eq("lang", lang)
     .order("sort_order", { ascending: true })
     .limit(1)
     .maybeSingle();

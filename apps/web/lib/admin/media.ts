@@ -103,9 +103,15 @@ export async function removeStepMedia(stepId: string) {
 }
 
 /** 브라우저에서 메인 안내 영상 업로드를 마친 뒤, 실제 공개 URL을 계산해 저장한다. */
-export async function finalizeMainVideo(path: string, fileName: string) {
+export async function finalizeMainVideo(path: string, fileName: string, lang: "ko" | "en" = "ko") {
   const supabase = createAdminClient();
-  const { data: video } = await supabase.from("procedure_videos").select("id").eq("is_active", true).limit(1).maybeSingle();
+  const { data: video } = await supabase
+    .from("procedure_videos")
+    .select("id")
+    .eq("is_active", true)
+    .eq("lang", lang)
+    .limit(1)
+    .maybeSingle();
   if (!video) return { ok: false, error: "등록된 영상 항목이 없습니다." };
 
   const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
