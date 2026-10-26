@@ -13,6 +13,9 @@ export const dynamic = "force-dynamic";
 
 export default async function EnStepsPage() {
   // 숨김 처리한 단계는 환자 화면에 보이지 않는다 (한국어 화면과 같은 영상을 쓰고 자막만 영어로 보여준다).
-  const steps = (await getProcedureSteps()).filter((s) => !s.hidden);
+  // 영어 나레이션을 입힌 영상(media_url_en)이 있으면 그것을 쓴다.
+  const steps = (await getProcedureSteps())
+    .filter((s) => !s.hidden)
+    .map((s) => (s.media_url_en ? { ...s, media_url: s.media_url_en } : s));
   return <StepsClient steps={steps} lang="en" />;
 }

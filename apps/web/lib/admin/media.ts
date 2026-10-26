@@ -36,6 +36,8 @@ export type ProcedureStep = {
   title: string;
   description: string;
   media_url: string | null;
+  /** 영어 화면 전용 영상(영어 나레이션). 없으면 media_url을 쓴다. */
+  media_url_en?: string | null;
   media_type: StepMediaType | null;
   /** true면 환자용 진행 과정 화면에서 숨긴다 (관리자 화면에는 그대로 보인다) */
   hidden: boolean;
@@ -46,7 +48,7 @@ export async function getProcedureSteps(): Promise<ProcedureStep[]> {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("procedure_steps")
-    .select("id, step_order, title, description, media_url, media_type, hidden, segments")
+    .select("id, step_order, title, description, media_url, media_url_en, media_type, hidden, segments")
     .order("step_order", { ascending: true });
   return (data ?? []) as ProcedureStep[];
 }
@@ -87,7 +89,7 @@ export async function finalizeStepMedia(stepId: string, path: string, mediaType:
   const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
   const { error } = await supabase
     .from("procedure_steps")
-    .update({ media_url: pub.publicUrl, media_type: mediaType, updated_at: new Date().toISOString() })
+    .update({ media_url: pub.publicUrl, media_url_en: null, media_type: mediaType, updated_at: new Date().toISOString() })
     .eq("id", stepId);
   if (error) return { ok: false, error: "저장에 실패했습니다." };
   return { ok: true, url: pub.publicUrl, mediaType };
@@ -97,7 +99,7 @@ export async function removeStepMedia(stepId: string) {
   const supabase = createAdminClient();
   const { error } = await supabase
     .from("procedure_steps")
-    .update({ media_url: null, media_type: null, updated_at: new Date().toISOString() })
+    .update({ media_url: null, media_url_en: null, media_type: null, updated_at: new Date().toISOString() })
     .eq("id", stepId);
   return { ok: !error };
 }
