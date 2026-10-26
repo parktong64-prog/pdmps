@@ -44,14 +44,12 @@ export default async function FailContent({
           <p className="mb-6 text-[0.76rem] text-[var(--ink-soft)]">
             {en ? E.release : "선점했던 시간은 다시 예약 가능한 상태로 풀렸어요. 원하시면 다시 시도해주세요."}
           </p>
-          {en && (
-            <p className="mb-6 rounded-[10px] bg-[var(--accent-soft)] px-3.5 py-3 text-left text-[0.84rem] leading-[1.6] text-[var(--ink)]">
-              {E.emailHelp}{" "}
-              <a href={`mailto:${EN_HELP_EMAIL}`} className="font-bold text-[var(--accent-ink)] underline underline-offset-2">
-                {EN_HELP_EMAIL}
-              </a>
-            </p>
-          )}
+          <p className="mb-6 rounded-[10px] bg-[var(--accent-soft)] px-3.5 py-3 text-left text-[0.84rem] leading-[1.6] text-[var(--ink)]">
+            {en ? E.emailHelp : "결제가 계속 되지 않으면 성함, 연락처, 희망 일시를 이메일로 보내주세요. 예약을 도와드릴게요."}{" "}
+            <a href={`mailto:${EN_HELP_EMAIL}`} className="font-bold text-[var(--accent-ink)] underline underline-offset-2">
+              {EN_HELP_EMAIL}
+            </a>
+          </p>
           <Link
             href={localePath(lang, "/consult/schedule")}
             className="inline-block rounded-[10px] bg-[var(--accent)] px-6 py-3 text-[0.88rem] font-bold text-white"

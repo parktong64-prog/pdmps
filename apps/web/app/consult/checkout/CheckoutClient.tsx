@@ -243,7 +243,7 @@ function CheckoutForm({ lang }: { lang: Lang }) {
                 {submitError && (
                   <div className="rounded-[10px] bg-[var(--danger-soft)] px-3 py-2.5 text-[0.78rem] leading-[1.55] text-[var(--danger)]">
                     {submitError}
-                    {en && <PayHelp text={E.payHelp} />}
+                    <PayHelp text={en ? E.payHelp : "결제가 계속 되지 않으면 성함, 연락처, 희망 일시를 이메일로 보내주세요. 예약을 도와드릴게요."} />
                   </div>
                 )}
 
@@ -304,7 +304,7 @@ function CheckoutForm({ lang }: { lang: Lang }) {
               {submitError && (
                 <div className="mt-3.5 rounded-[10px] bg-[var(--danger-soft)] px-3 py-2.5 text-[0.78rem] leading-[1.55] text-[var(--danger)]">
                   {submitError}
-                  {en && <PayHelp text={E.payHelp} />}
+                  <PayHelp text={en ? E.payHelp : "결제가 계속 되지 않으면 성함, 연락처, 희망 일시를 이메일로 보내주세요. 예약을 도와드릴게요."} />
                 </div>
               )}
 
