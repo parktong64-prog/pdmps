@@ -105,7 +105,7 @@ export async function removeStepMedia(stepId: string) {
 }
 
 /** 브라우저에서 메인 안내 영상 업로드를 마친 뒤, 실제 공개 URL을 계산해 저장한다. */
-export async function finalizeMainVideo(path: string, fileName: string, lang: "ko" | "en" = "ko") {
+export async function finalizeMainVideo(path: string, fileName: string, lang: "ko" | "en" | "zh" | "ru" = "ko") {
   const supabase = createAdminClient();
   const { data: video } = await supabase
     .from("procedure_videos")

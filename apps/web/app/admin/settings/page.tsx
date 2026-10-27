@@ -297,23 +297,30 @@ function formatDuration(sec: number | null) {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-/** 시술 안내 영상 탭 — 한국어 화면용과 영어(해외) 화면용 영상을 각각 올린다. */
+type VideoLang = "ko" | "en" | "zh" | "ru";
+
+const VIDEO_LANGS: { lang: VideoLang; label: string }[] = [
+  { lang: "ko", label: "한국어 화면 영상" },
+  { lang: "en", label: "영어 화면 영상 (해외 환자용 /en)" },
+  { lang: "zh", label: "중국어 화면 영상" },
+  { lang: "ru", label: "러시아어 화면 영상" },
+];
+
+/** 시술 안내 영상 탭 — 한국어·영어·중국어·러시아어 영상을 2×2로 나란히 올린다. */
 function VideosTab() {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <div className="mb-2 text-[0.8rem] font-bold text-[var(--ink-soft)]">한국어 화면 영상</div>
-        <VideoPanel lang="ko" />
-      </div>
-      <div>
-        <div className="mb-2 text-[0.8rem] font-bold text-[var(--ink-soft)]">영어 화면 영상 (해외 환자용 /en)</div>
-        <VideoPanel lang="en" />
-      </div>
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      {VIDEO_LANGS.map(({ lang, label }) => (
+        <div key={lang} className="min-w-0">
+          <div className="mb-2 text-[0.8rem] font-bold text-[var(--ink-soft)]">{label}</div>
+          <VideoPanel lang={lang} />
+        </div>
+      ))}
     </div>
   );
 }
 
-function VideoPanel({ lang }: { lang: "ko" | "en" }) {
+function VideoPanel({ lang }: { lang: VideoLang }) {
   const [id, setId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [durationSec, setDurationSec] = useState<number | null>(null);
@@ -344,7 +351,7 @@ function VideoPanel({ lang }: { lang: "ko" | "en" }) {
     setUploading(true);
     setError(null);
     try {
-      const uploaded = await uploadDirect(file, lang === "en" ? "intro/main-video-en" : "intro/main-video");
+      const uploaded = await uploadDirect(file, lang === "ko" ? "intro/main-video" : `intro/main-video-${lang}`);
       if (!uploaded.ok) {
         setError(uploaded.error);
         return;
@@ -403,7 +410,7 @@ function VideoPanel({ lang }: { lang: "ko" | "en" }) {
       </div>
       {error && <p className="mt-2.5 text-[0.72rem] text-[var(--danger)]">{error}</p>}
       {videoUrl && (
-        <video key={videoUrl} src={videoUrl} controls className="mt-3.5 w-full max-w-[420px] rounded-xl bg-black" />
+        <video key={videoUrl} src={videoUrl} controls className="mt-3.5 w-full rounded-xl bg-black" />
       )}
     </div>
   );

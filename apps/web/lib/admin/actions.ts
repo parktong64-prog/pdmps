@@ -1013,7 +1013,7 @@ export async function updateProcedureSettings(input: { id: string; name: string;
 }
 
 /** 언어별 안내 영상. 한국어(ko) 화면과 영어(en) 화면이 서로 다른 영상을 쓴다. */
-export async function getActiveVideo(lang: "ko" | "en" = "ko") {
+export async function getActiveVideo(lang: "ko" | "en" | "zh" | "ru" = "ko") {
   const supabase = createAdminClient();
   const { data } = await supabase
     .from("procedure_videos")
